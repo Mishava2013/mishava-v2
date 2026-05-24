@@ -92,6 +92,7 @@ The long-term Mishava architecture includes:
 - Mishava Plus
 - Mishava Team
 - Mishava Admin / Governance
+- Compliance / Accessibility / Security / Procurement Readiness
 
 Suggested long-term architecture:
 
@@ -109,6 +110,7 @@ Mishava Core Trust Engine
   - Plus
   - Team
   - Admin / Governance
+  - Compliance / Accessibility / Security / Procurement Readiness
 ```
 
 Current planning sequence:
@@ -143,6 +145,41 @@ Future navigation or product access may include:
 - Admin
 
 Internal and institutional surfaces should not clutter early public navigation unless they are product-ready.
+
+## 5A. End-Of-Build Readiness Planning Track
+
+Add a dedicated planning track:
+
+> Compliance / Accessibility / Security / Procurement Readiness
+
+This is a planning and requirements track, not a new product surface and not an
+immediate implementation scope unless explicitly marked later. It should be
+used to make Mishava credible over time for stringent buyers, including
+government agencies, public-sector procurement offices, banks, financial
+institutions, foundations, NGOs, universities, school districts, public
+authorities, enterprise procurement teams, and media/research access users.
+
+Source-of-truth document:
+
+- `docs/mishava-compliance-accessibility-security-readiness.md`
+
+This track should distinguish:
+
+- What must be built into the product from day one.
+- What must be documented before launch.
+- What must be reviewed by counsel or outside specialists.
+- What can be independently audited or certified later.
+- What is required only for specific customers, such as federal agencies, banks,
+  healthcare-adjacent buyers, or public-sector programs.
+
+Important positioning:
+
+- Do not claim compliance or certification before outside review is complete.
+- Use language like "designed for," "aligned with," "readiness roadmap,"
+  "targeting," or "internally mapped to" until an outside audit, certification,
+  or legal review is actually complete.
+- This track should be done at the end of the build or as release acceptance
+  criteria, not as premature overbuilding.
 
 ## 6. First Screens To Design And Build
 
