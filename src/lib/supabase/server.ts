@@ -27,6 +27,13 @@ export type SupabaseServerClient = {
   ): Promise<T | null>;
 };
 
+export function isSupabaseServerConfigured() {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY),
+  );
+}
+
 export function createSupabaseServerClient(): SupabaseServerClient {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_ANON_KEY;

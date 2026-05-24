@@ -49,6 +49,20 @@ slice:
 The current auth layer is an abstraction around a signed/session cookie shape so
 we can wire the final auth provider without rewriting route permissions.
 
+## Release 4 Shopping POC
+
+Release 4 adds database-backed shopping foundations without fake product data:
+
+- Public `/shopping` reads active product records from `shopping_products`.
+- Product detail pages read `shopping_places_to_buy` for seller and fulfillment
+  records.
+- Products can only show an evidence score when linked to a published score
+  snapshot.
+- `/app/shopping-priorities` saves starter priority answers and the five
+  automatic-zero Off / Warn me / Hide settings for authenticated users.
+- Shopping remains non-commission based, and payment fields remain excluded from
+  ranking.
+
 ## Verification
 
 ```bash
