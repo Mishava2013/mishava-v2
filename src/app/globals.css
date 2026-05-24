@@ -818,6 +818,94 @@ textarea {
   padding: 16px;
 }
 
+.evidence-library {
+  display: grid;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.evidence-record {
+  background: var(--white);
+  border: 1px solid var(--light-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-subtle);
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.record-header {
+  align-items: start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.record-header h3 {
+  font-size: 20px;
+  margin-top: 8px;
+}
+
+.record-header p,
+.record-note,
+.muted-copy {
+  color: var(--secondary-text);
+  line-height: 1.5;
+}
+
+.record-note a {
+  color: var(--brand-blue);
+  overflow-wrap: anywhere;
+}
+
+.inline-workflow {
+  border-top: 1px solid var(--light-border);
+  padding-top: 12px;
+}
+
+.inline-workflow summary {
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.compact-form {
+  margin-top: 14px;
+}
+
+.fieldset-panel {
+  border: 1px solid var(--light-border);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.fieldset-panel legend {
+  font-weight: 750;
+  padding: 0 6px;
+}
+
+.checkbox-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.check-card {
+  align-items: start;
+  background: var(--paper);
+  border: 1px solid var(--light-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 16px minmax(0, 1fr);
+  padding: 12px;
+}
+
+.check-card small {
+  color: var(--muted-text);
+  display: block;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+
 @media (max-width: 900px) {
   .header-inner {
     align-items: flex-start;

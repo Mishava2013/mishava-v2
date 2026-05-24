@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
+import { createStructuredClaimDraft } from "@/lib/ngo-evidence-reports";
 import { createEvidenceRecord } from "@/lib/release-2-5-workflows";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -44,3 +45,35 @@ export async function createEvidenceAction(formData: FormData) {
   redirect(`/org/evidence?created=evidence&id=${result.evidenceId}`);
 }
 
+export async function createStructuredClaimDraftAction(formData: FormData) {
+  const { session, organizationId } = await requireCurrentOrganizationMembership();
+
+  const result = await createStructuredClaimDraft({
+    client: createSupabaseServerClient(),
+    session,
+    input: {
+      organizationId,
+      evidenceItemId: String(formData.get("evidenceItemId") ?? ""),
+      statement: String(formData.get("statement") ?? ""),
+      pillarId: String(formData.get("pillarId") ?? "governance"),
+      factType:
+        formData.get("factType") === "negative"
+          ? "negative"
+          : formData.get("factType") === "positive"
+            ? "positive"
+            : formData.get("factType") === "corrective_action"
+              ? "corrective_action"
+              : formData.get("factType") === "gap"
+                ? "gap"
+                : formData.get("factType") === "unknown"
+                  ? "unknown"
+                  : "neutral",
+    },
+  });
+
+  if (!result.ok) {
+    redirect(`/org/evidence?error=${encodeURIComponent(result.message)}`);
+  }
+
+  redirect(`/org/evidence?created=claim&id=${result.claimId}`);
+}
