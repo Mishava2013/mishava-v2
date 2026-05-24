@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
+import { ngoTiers } from "@/lib/ngo";
 
 export default function NgoPage() {
   return (
@@ -36,11 +37,48 @@ export default function NgoPage() {
       </div>
 
       <section className="section">
-        <Link className="button primary" href="/org/profile">
-          Open NGO workspace foundation
-        </Link>
+        <h2>NGO access model</h2>
+        <p className="section-intro">
+          NGO pricing stays accessible. AI and deeper report workflows are tied
+          to paid tiers so Mishava does not create runaway AI cost without revenue.
+        </p>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>Price</th>
+              <th>AI access</th>
+              <th>Evidence</th>
+              <th>Reports</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ngoTiers.map((tier) => (
+              <tr key={tier.code}>
+                <td>{tier.name}</td>
+                <td>{tier.price}</td>
+                <td>{tier.aiAccess}</td>
+                <td>{tier.evidenceLimit}</td>
+                <td>{tier.reportAccess}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <section className="section">
+        <div className="hero-actions">
+          <Link className="button primary" href="/ngo/onboarding">
+            Start NGO onboarding
+          </Link>
+          <Link className="button" href="/ngo/reports">
+            Review report tools
+          </Link>
+          <Link className="button" href="/ngo/sharing">
+            Scoped sharing
+          </Link>
+        </div>
       </section>
     </>
   );
 }
-
