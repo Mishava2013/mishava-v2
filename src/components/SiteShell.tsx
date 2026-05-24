@@ -32,9 +32,6 @@ export function SiteShell({ children }: { children: ReactNode }) {
             <Link className="button" href="/app">
               Sign in
             </Link>
-            <Link className="button primary" href="/ngo">
-              Start NGO
-            </Link>
           </div>
         </div>
       </header>
@@ -42,7 +39,11 @@ export function SiteShell({ children }: { children: ReactNode }) {
       <footer className="footer">
         <div className="footer-inner">
           <span>Clear evidence, fair discovery, no paid trust advantage.</span>
-          <span>Payment unlocks tools, never trust advantage.</span>
+          <span>
+            <Link href="/ngo">NGO access</Link> ·{" "}
+            <Link href="/business">Business access</Link> · Payment unlocks
+            tools, never trust advantage.
+          </span>
         </div>
       </footer>
     </div>

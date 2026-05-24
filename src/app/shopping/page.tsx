@@ -1,8 +1,24 @@
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
-import { PageHeader } from "@/components/PageHeader";
-import { ScoreExplainer } from "@/components/ScoreExplainer";
 import { getShoppingProducts } from "@/lib/shopping";
+
+const departmentLinks = [
+  "Baby",
+  "Household",
+  "Personal care",
+  "Kitchen",
+  "Apparel",
+  "Toys",
+  "Local picks",
+];
+
+const quickFilters = [
+  "Pickup nearby",
+  "Ships today",
+  "Evidence checked",
+  "Small business",
+  "Family owned",
+];
 
 export default async function ShoppingPage({
   searchParams,
@@ -15,55 +31,114 @@ export default async function ShoppingPage({
   });
 
   return (
-    <>
-      <PageHeader eyebrow="Shopping" title="Search the web through trust context.">
-        Mishava shopping will feel familiar: strong search, simple filters, product
-        browsing, places to buy, and score details on demand. The first product
-        proof of concept starts with diapers and baby wipes using real data only.
-      </PageHeader>
+    <div className="shopping-storefront">
+      <div className="storefront-topline">
+        <span>Preview storefront</span>
+        <Link className="button ink" href="/app/shopping-priorities">
+          Set shopping priorities
+        </Link>
+      </div>
 
-      <form className="toolbar" role="search">
+      <form className="storefront-search" role="search">
         <input
-          className="search-input"
+          aria-label="Search products, brands, sellers, or local stores"
           defaultValue={params.q ?? ""}
           name="q"
-          placeholder="Search products, brands, sellers, or local stores"
+          placeholder="Search products, brands, sellers, or local favorites"
         />
-        <select className="select-input" defaultValue={params.source ?? "all"} name="source">
-          <option value="all">All sources</option>
-          <option value="online">Online</option>
-          <option value="local">Local radius</option>
-        </select>
-        <select className="select-input" defaultValue={params.sort ?? "evidence"} name="sort">
-          <option value="evidence">Evidence Score</option>
-          <option value="values">Your Values Score</option>
-          <option value="price">Price</option>
-          <option value="distance">Distance</option>
-        </select>
         <button className="button primary" type="submit">
           Search
         </button>
       </form>
 
-      <div className="surface-list">
-        <ScoreExplainer />
-        <div className="card">
-          <h3>Real data rule</h3>
+      <nav aria-label="Shopping departments" className="department-rail">
+        {departmentLinks.map((department) => (
+          <Link href={`/shopping?q=${encodeURIComponent(department)}`} key={department}>
+            {department}
+          </Link>
+        ))}
+      </nav>
+
+      <div className="shopping-masthead">
+        <div>
+          <p className="storefront-kicker">Shopping</p>
+          <h1>Everyday products, clearer proof.</h1>
           <p>
-            Mishava does not seed fake products, fake prices, fake sellers, or
-            invented trust scores. Products appear only after real source data is
-            added to the database.
+            Browse familiar shelves with evidence details available when a real
+            score snapshot exists. Payment never changes placement.
           </p>
-          <div className="status-row">
-            <span className="tag">No paid ranking</span>
-            <span className="tag">No commission ranking</span>
-            <span className="tag">No fake score</span>
-          </div>
+        </div>
+        <div className="storefront-promise">
+          <strong>Score on demand</strong>
+          <span>Evidence first. Values overlay after priorities are set.</span>
         </div>
       </div>
 
-      <section className="section">
-        <h2>Shopping results</h2>
+      <div className="shopping-layout">
+        <aside className="shopping-filters" aria-label="Shopping filters">
+          <div className="filter-block">
+            <h2>Shop by</h2>
+            <label>
+              Source
+              <select defaultValue={params.source ?? "all"} form="shopping-controls" name="source">
+                <option value="all">All sources</option>
+                <option value="online">Online</option>
+                <option value="local">Local radius</option>
+              </select>
+            </label>
+            <label>
+              Sort
+              <select defaultValue={params.sort ?? "evidence"} form="shopping-controls" name="sort">
+                <option value="evidence">Evidence Score</option>
+                <option value="values">Your Values Score</option>
+                <option value="price">Price</option>
+                <option value="distance">Distance</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="filter-block">
+            <h2>Quick filters</h2>
+            <div className="filter-stack">
+              {quickFilters.map((filter) => (
+                <label className="check-row" key={filter}>
+                  <input type="checkbox" />
+                  <span>{filter}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="filter-note">
+            <strong>No paid ranking</strong>
+            <span>Tools, hosting, and catalogs can be paid. Placement cannot.</span>
+          </div>
+        </aside>
+
+        <section className="shopping-results" aria-labelledby="shopping-results-title">
+          <div className="results-heading">
+            <div>
+              <p className="storefront-kicker">Real data only</p>
+              <h2 id="shopping-results-title">Shopping results</h2>
+            </div>
+            <form className="compact-controls" id="shopping-controls">
+              <input name="q" type="hidden" value={params.q ?? ""} />
+              <button className="button" type="submit">
+                Apply
+              </button>
+            </form>
+          </div>
+
+          <div className="trust-callout">
+            <span className="score-pill">
+              {params.sort === "values" ? "Your Values Score" : "Evidence Score"}
+            </span>
+            <p>
+              Shoppers can click a score for the evidence details. If there is
+              no real snapshot, Mishava shows pending evidence instead of a made-up score.
+            </p>
+          </div>
+
         {!configured ? (
           <EmptyState title="Shopping database is not configured yet">
             Add Supabase environment variables and real product records before
@@ -79,13 +154,18 @@ export default async function ShoppingPage({
             {products.map((product) => (
               <Link className="product-card" href={`/shopping/products/${product.slug}`} key={product.id}>
                 <div className="product-media">
-                  {product.image_url ? "Product image available" : product.category}
+                  {product.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img alt="" src={product.image_url} />
+                  ) : (
+                    <span>{product.category}</span>
+                  )}
                 </div>
                 <div className="product-body">
-                  <h3>{product.name}</h3>
                   <p className="product-meta">
                     {product.brand_name ?? "Brand not listed"}
                   </p>
+                  <h3>{product.name}</h3>
                   <span className="score-chip">
                     {product.evidence_score === null
                       ? "Evidence Score pending"
@@ -109,7 +189,8 @@ export default async function ShoppingPage({
             ))}
           </div>
         )}
-      </section>
-    </>
+        </section>
+      </div>
+    </div>
   );
 }
