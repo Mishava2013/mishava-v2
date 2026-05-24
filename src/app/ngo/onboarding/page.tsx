@@ -3,8 +3,15 @@ import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { WorkflowList } from "@/components/WorkflowList";
 import { evidenceIntakeTypes, ngoOnboardingSteps } from "@/lib/ngo";
+import { createNgoOnboardingAction } from "./actions";
 
-export default function NgoOnboardingPage() {
+export default async function NgoOnboardingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const params = await searchParams;
+
   return (
     <>
       <PageHeader eyebrow="NGO onboarding" title="Set up an NGO trust profile.">
@@ -13,22 +20,34 @@ export default function NgoOnboardingPage() {
         without the organization approval flow.
       </PageHeader>
 
+      {params.error ? (
+        <div className="notice" role="status">
+          {params.error === "auth_required"
+            ? "Sign in is required before an NGO profile can be saved."
+            : decodeURIComponent(params.error)}
+        </div>
+      ) : null}
+
       <WorkflowList items={ngoOnboardingSteps} />
 
       <section className="section">
         <h2>Profile setup draft</h2>
-        <form className="form-grid">
+        <form action={createNgoOnboardingAction} className="form-grid">
           <div className="field">
             <label htmlFor="public-name">Public organization name</label>
-            <input id="public-name" placeholder="Organization name" />
+            <input id="public-name" name="publicName" placeholder="Organization name" required />
+          </div>
+          <div className="field">
+            <label htmlFor="legal-name">Legal organization name</label>
+            <input id="legal-name" name="legalName" placeholder="Legal name, if different" />
           </div>
           <div className="field">
             <label htmlFor="country">Country</label>
-            <input id="country" placeholder="Country or market" />
+            <input id="country" name="country" placeholder="Country or market" required />
           </div>
           <div className="field">
             <label htmlFor="mission-area">Mission area</label>
-            <select id="mission-area" defaultValue="">
+            <select id="mission-area" name="missionArea" defaultValue="" required>
               <option value="" disabled>
                 Select a mission area
               </option>
@@ -40,8 +59,16 @@ export default function NgoOnboardingPage() {
             </select>
           </div>
           <div className="field">
+            <label htmlFor="website-url">Website URL</label>
+            <input id="website-url" name="websiteUrl" placeholder="https://example.org" />
+          </div>
+          <div className="field">
+            <label htmlFor="registration-id">Registration identifier</label>
+            <input id="registration-id" name="registrationIdentifier" placeholder="Optional public registration ID" />
+          </div>
+          <div className="field">
             <label htmlFor="visibility">Default visibility</label>
-            <select id="visibility" defaultValue="private">
+            <select id="visibility" name="defaultVisibility" defaultValue="private">
               <option value="private">Private until approved</option>
               <option value="approved_viewer">Approved viewers only</option>
               <option value="public_summary">Public summary</option>
@@ -49,7 +76,12 @@ export default function NgoOnboardingPage() {
           </div>
           <div className="field full">
             <label htmlFor="summary">Mission summary</label>
-            <textarea id="summary" placeholder="Plain-language organization summary" />
+            <textarea id="summary" name="summary" placeholder="Plain-language organization summary" />
+          </div>
+          <div className="field full">
+            <button className="button primary" type="submit">
+              Save NGO profile
+            </button>
           </div>
         </form>
       </section>
@@ -82,4 +114,3 @@ export default function NgoOnboardingPage() {
     </>
   );
 }
-

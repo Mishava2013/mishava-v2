@@ -31,6 +31,24 @@ Open [http://localhost:3000](http://localhost:3000).
   claims, scoring versions, snapshots, pricing records, feature gates, and
   append-only audit logs.
 
+## Release 2.5 Functional Foundation Cleanup
+
+Release 2.5 turns the static scaffold into the first database-backed product
+slice:
+
+- `/app`, `/org/*`, and `/admin/*` are protected by middleware and server layouts.
+- Org routes require a current organization context and membership.
+- Admin routes require Mishava admin, methodology owner, or support role.
+- NGO onboarding can create an organization, initial membership, NGO profile,
+  and audit event through a server action.
+- Manual evidence entry can create an evidence item, optional NGO evidence
+  submission, and audit event through a server action.
+- Score snapshot public visibility now requires both publication and public
+  visibility.
+
+The current auth layer is an abstraction around a signed/session cookie shape so
+we can wire the final auth provider without rewriting route permissions.
+
 ## Verification
 
 ```bash
