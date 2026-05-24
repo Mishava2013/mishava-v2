@@ -2432,6 +2432,25 @@ Need to define:
 - How to prevent reports from becoming attack tools
 - How to protect small businesses from unfair reputational harm
 
+### Remaining Pre-Launch Governance And Commercial Review
+
+Need to define before public launch or sensitive paid workflows:
+
+- Launch gates
+- Support/operations playbooks
+- Refund/outcome-neutral paid service rules
+- Source licensing/data rights
+- Gov public-record boundaries
+- High-risk category policy
+- AI vendor/data-sharing policy
+- Reviewer training/certification
+- Abuse/manipulation prevention
+- Methodology testing/backtesting
+- Investor/funder narrative
+- Competitive landscape
+
+These areas are expanded in `docs/mishava-v2-milestone-1-build-backlog.md`.
+
 ## 30. Decisions From 10-Area Planning Review
 
 This section records planning decisions made after the strategic gap list. These decisions should guide the next planning pass, but they do not replace detailed implementation specifications.
