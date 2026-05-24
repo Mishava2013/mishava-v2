@@ -2,7 +2,13 @@ import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { ScoreExplainer } from "@/components/ScoreExplainer";
-import { getShoppingProductBySlug } from "@/lib/shopping";
+import {
+  formatFreshness,
+  formatPrice,
+  getProductTrustLabel,
+  getShoppingProductBySlug,
+  hasPublishedEvidenceScore,
+} from "@/lib/shopping";
 
 export default async function ProductPage({
   params,
@@ -15,19 +21,63 @@ export default async function ProductPage({
   return (
     <>
       <PageHeader eyebrow="Product profile" title={product?.name ?? "Product not available"}>
-        Product pages will show the selected product, business or brand context,
-        places to buy, local availability, score detail, evidence, and why the
-        product appears. This page will not display invented product data.
+        Product pages show only real product and place-to-buy records. If scoring
+        evidence is not ready, Mishava labels the trust context as pending rather
+        than inventing a number.
       </PageHeader>
       <div className="surface-list">
-        <ScoreExplainer />
+        {product ? (
+          <div className="evidence-panel">
+            <h2 className="panel-title">{getProductTrustLabel(product)}</h2>
+            <div className="score-row">
+              <div className="score-badge">
+                {hasPublishedEvidenceScore(product) ? product.evidence_score : "--"}
+              </div>
+              <p className="score-caption">
+                {hasPublishedEvidenceScore(product)
+                  ? "This score is backed by a published score snapshot."
+                  : "Evidence profile pending. No public score appears until real reviewed evidence and a published snapshot exist."}
+              </p>
+            </div>
+            <div className="metric-grid">
+              <div className="metric">
+                <span>Coverage</span>
+                <strong>{product.evidence_coverage ?? "Pending"}</strong>
+              </div>
+              <div className="metric">
+                <span>Recency</span>
+                <strong>{product.evidence_recency ?? "Pending"}</strong>
+              </div>
+              <div className="metric">
+                <span>Source</span>
+                <strong>{product.source_name ?? "Not listed"}</strong>
+              </div>
+              <div className="metric">
+                <span>Review</span>
+                <strong>{product.source_review_status}</strong>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <ScoreExplainer />
+        )}
         <div className="card">
-          <h3>Places to buy</h3>
+          <h3>{product?.brand_name ?? "Brand or seller context"}</h3>
           {product ? (
-            <p>
-              Places to buy are shown only from real source records. Ranking is
-              not commission-based and payment cannot create placement advantage.
-            </p>
+            <>
+              <p>
+                Category: {product.category}. Places to buy are shown only from
+                real source records. Ranking is not commission-based and payment
+                cannot create placement advantage.
+              </p>
+              <div className="status-row">
+                <span className="tag">No commission ranking</span>
+                <span className="tag">No paid placement</span>
+                <span className="tag">
+                  {product.source_url ? "Source URL recorded" : "Source URL pending"}
+                </span>
+              </div>
+            </>
           ) : (
             <p>
               This product slug has no active real product record available.
@@ -62,9 +112,10 @@ export default async function ProductPage({
               <tr>
                 <th>Seller</th>
                 <th>Type</th>
+                <th>Price</th>
                 <th>Availability</th>
                 <th>Fulfillment</th>
-                <th>Source</th>
+                <th>Source freshness</th>
               </tr>
             </thead>
             <tbody>
@@ -72,6 +123,7 @@ export default async function ProductPage({
                 <tr key={place.id}>
                   <td>{place.seller_name}</td>
                   <td>{place.seller_type}</td>
+                  <td>{formatPrice(place)}</td>
                   <td>{place.availability_status ?? "Not listed"}</td>
                   <td>
                     {[
@@ -83,11 +135,13 @@ export default async function ProductPage({
                       .join(", ") || "Not listed"}
                   </td>
                   <td>
-                    {place.url ? (
-                      <Link href={place.url}>External source</Link>
-                    ) : (
-                      "No public URL"
-                    )}
+                    <div className="status-row">
+                      <span className="tag">{place.source_review_status}</span>
+                      <span className="tag">
+                        {formatFreshness(place.source_captured_at ?? place.last_checked_at)}
+                      </span>
+                    </div>
+                    {place.url ? <Link href={place.url}>External seller page</Link> : "No public URL"}
                   </td>
                 </tr>
               ))}

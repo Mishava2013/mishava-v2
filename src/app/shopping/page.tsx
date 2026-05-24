@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
-import { getShoppingProducts } from "@/lib/shopping";
+import { getProductTrustLabel, getShoppingProducts } from "@/lib/shopping";
 
 const departmentLinks = [
-  "Baby",
+  "Baby products",
+  "Diapers",
+  "Wipes",
   "Household",
   "Personal care",
-  "Kitchen",
-  "Apparel",
   "Toys",
   "Local picks",
 ];
@@ -28,6 +28,8 @@ export default async function ShoppingPage({
   const params = await searchParams;
   const { products, configured } = await getShoppingProducts({
     query: params.q,
+    category: params.q ? undefined : "baby-products",
+    sort: params.sort,
   });
 
   return (
@@ -64,8 +66,9 @@ export default async function ShoppingPage({
           <p className="storefront-kicker">Shopping</p>
           <h1>Everyday products, clearer proof.</h1>
           <p>
-            Browse familiar shelves with evidence details available when a real
-            score snapshot exists. Payment never changes placement.
+            The first proof of concept is baby products: diapers, wipes, and
+            related basics from real source records only. Payment never changes
+            placement.
           </p>
         </div>
         <div className="storefront-promise">
@@ -90,7 +93,6 @@ export default async function ShoppingPage({
               Sort
               <select defaultValue={params.sort ?? "evidence"} form="shopping-controls" name="sort">
                 <option value="evidence">Evidence Score</option>
-                <option value="values">Your Values Score</option>
                 <option value="price">Price</option>
                 <option value="distance">Distance</option>
               </select>
@@ -119,7 +121,7 @@ export default async function ShoppingPage({
           <div className="results-heading">
             <div>
               <p className="storefront-kicker">Real data only</p>
-              <h2 id="shopping-results-title">Shopping results</h2>
+              <h2 id="shopping-results-title">Baby products POC</h2>
             </div>
             <form className="compact-controls" id="shopping-controls">
               <input name="q" type="hidden" value={params.q ?? ""} />
@@ -130,12 +132,12 @@ export default async function ShoppingPage({
           </div>
 
           <div className="trust-callout">
-            <span className="score-pill">
-              {params.sort === "values" ? "Your Values Score" : "Evidence Score"}
-            </span>
+            <span className="score-pill">Evidence Score</span>
             <p>
-              Shoppers can click a score for the evidence details. If there is
-              no real snapshot, Mishava shows pending evidence instead of a made-up score.
+              Shoppers can click through for trust details. If there is no real
+              published score snapshot, Mishava shows score pending or draft
+              trust context instead of a made-up number. Personal values
+              sorting stays off until Shopping Priorities are complete.
             </p>
           </div>
 
@@ -145,9 +147,10 @@ export default async function ShoppingPage({
             Mishava displays product results.
           </EmptyState>
         ) : products.length === 0 ? (
-          <EmptyState title="No real products found">
-            No active real product records matched this search. Mishava will not
-            show placeholder product cards as shopping results.
+          <EmptyState title="No real baby product records found">
+            No active real product records matched this proof-of-concept view.
+            Mishava will not show placeholder diapers, wipes, stores, prices, or
+            scores as shopping results.
           </EmptyState>
         ) : (
           <div className="product-grid">
@@ -166,22 +169,18 @@ export default async function ShoppingPage({
                     {product.brand_name ?? "Brand not listed"}
                   </p>
                   <h3>{product.name}</h3>
-                  <span className="score-chip">
-                    {product.evidence_score === null
-                      ? "Evidence Score pending"
-                      : `Evidence Score ${product.evidence_score}`}
-                  </span>
+                  <span className="score-chip">{getProductTrustLabel(product)}</span>
                   <div className="status-row">
                     <span className="tag">
-                      {product.evidence_coverage ?? "Pending"} coverage
+                      {product.evidence_coverage ?? "Evidence profile pending"}
                     </span>
                     <span className="tag">
-                      {product.evidence_recency ?? "Pending"} recency
+                      {product.source_review_status} source
                     </span>
                     <span className="tag">
                       {product.score_snapshot_id
                         ? "Snapshot linked"
-                        : "No public score snapshot"}
+                        : "Score pending"}
                     </span>
                   </div>
                 </div>
