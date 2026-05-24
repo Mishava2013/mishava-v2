@@ -720,20 +720,48 @@ Milestone 1 is acceptable when:
 
 ## 18. Recommended Build Order
 
-1. Foundation scaffold
-2. Design tokens and logo assets
-3. Database/auth/org foundation
-4. Evidence/scoring schema
-5. NGO profile/onboarding
-6. Admin pricing/category/scoring config
-7. Shopping POC with real product data
-8. Shopping Priorities
-9. Business/local claim/catalog foundation
-10. Consumer Plus/Deep Review foundation
-11. AI limited workflows
-12. Guardrail tests
-13. Legal/policy shells
-14. Mobile and accessibility pass
+Milestone 1 should be delivered through six release slices:
+
+1. **Release 1: Foundation**
+   - Foundation
+   - Design system
+   - Auth
+   - Database
+   - Roles
+   - Audit logs
+
+2. **Release 2: NGO**
+   - NGO profiles
+   - NGO onboarding
+   - Evidence intake
+   - Basic reports
+
+3. **Release 3: Scoring And Guardrails**
+   - Scoring foundation
+   - Score snapshots
+   - Admin guardrails
+   - Payment firewall tests
+
+4. **Release 4: Shopping**
+   - Shopping POC
+   - Product pages
+   - Places to buy
+   - Shopping Priorities
+
+5. **Release 5: Business / Local**
+   - Business/local profiles
+   - Claim flow
+   - Catalog foundation
+
+6. **Release 6: Plus / Launch Readiness**
+   - Plus foundation
+   - Stripe test mode
+   - Legal/trust pages
+   - Mobile/accessibility QA
+
+Release sequencing principle:
+
+Build NGO early to establish trust credibility, then bring Shopping online close behind so the evidence system and consumer discovery grow together.
 
 ## 19. Remaining Pre-Launch Planning Gates
 
