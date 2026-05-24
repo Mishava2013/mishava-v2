@@ -19,17 +19,51 @@ export type VisibilityLevel =
   | "public_summary"
   | "public_full_record";
 
+export const allowedRankingInputs = [
+  "search_match",
+  "evidence_score",
+  "user_preference_match",
+  "evidence_coverage",
+  "evidence_recency",
+  "verification_confidence",
+  "category_fit",
+  "local_distance_availability",
+] as const;
+
+export const forbiddenTrustInfluenceInputs = [
+  "payment_status",
+  "subscription_tier",
+  "hosted_profile_enabled",
+  "claimed_profile_status",
+  "sponsorship_status",
+  "ad_spend",
+  "paid_boost",
+  "sales_commission",
+  "affiliate_fee",
+  "referral_fee",
+] as const;
+
+export const billableInfrastructureSurfaces = [
+  "billable_entitlements",
+  "profile_tools",
+  "hosted_pages",
+  "catalogs",
+  "reports",
+] as const;
+
+export const trustCalculationSurfaces = [
+  "score_calculation",
+  "ranking_calculation",
+  "verification_status",
+  "credibility_labels",
+] as const;
+
 export const paymentFirewall = {
   rankingPaymentBoostAllowed: false,
-  forbiddenRankingInputs: [
-    "payment_status",
-    "subscription_tier",
-    "hosted_profile_enabled",
-    "ad_spend",
-    "sponsorship",
-    "paid_boost",
-    "sales_commission",
-  ],
+  allowedRankingInputs,
+  forbiddenRankingInputs: forbiddenTrustInfluenceInputs,
+  billableInfrastructureSurfaces,
+  trustCalculationSurfaces,
   allowedMonetization: [
     "tools",
     "hosting",
@@ -58,4 +92,3 @@ export const releaseOneObjects = [
   "pricing records",
   "feature gates",
 ];
-

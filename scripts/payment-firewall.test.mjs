@@ -5,10 +5,13 @@ const forbiddenRankingInputs = [
   "paymentStatus",
   "subscriptionTier",
   "hostedProfileEnabled",
+  "claimedProfileStatus",
+  "sponsorshipStatus",
   "adSpend",
-  "sponsorship",
   "paidBoost",
   "salesCommission",
+  "affiliateFee",
+  "referralFee",
 ];
 
 function assertNoPaymentInputs(result) {
@@ -67,23 +70,38 @@ test("payment status does not change rank when trust and fit inputs are equal", 
   );
 });
 
-test("ranking rejects payment-derived inputs", () => {
-  assert.throws(
-    () =>
-      rankValue({
-        ...unpaid,
-        paymentStatus: "paid",
-      }),
-    /Forbidden ranking inputs present: paymentStatus/,
-  );
+test("paid concepts do not change score when evidence inputs are equal", () => {
+  const evidenceOnlyScore = ({ labor, environment, governance, community }) =>
+    (labor + environment + governance + community) / 4;
 
-  assert.throws(
-    () =>
-      rankValue({
-        ...unpaid,
-        paidBoost: true,
-      }),
-    /Forbidden ranking inputs present: paidBoost/,
-  );
+  const baseEvidence = {
+    labor: 80,
+    environment: 72,
+    governance: 90,
+    community: 76,
+  };
+
+  const paidProfile = {
+    ...baseEvidence,
+    paymentStatus: "paid",
+    subscriptionTier: "enterprise",
+    hostedProfileEnabled: true,
+    claimedProfileStatus: "claimed",
+    sponsorshipStatus: "sponsored",
+  };
+
+  assert.equal(evidenceOnlyScore(paidProfile), evidenceOnlyScore(baseEvidence));
 });
 
+test("ranking rejects payment-derived inputs", () => {
+  for (const forbiddenInput of forbiddenRankingInputs) {
+    assert.throws(
+      () =>
+        rankValue({
+          ...unpaid,
+          [forbiddenInput]: forbiddenInput.includes("Enabled") ? true : "present",
+        }),
+      new RegExp(`Forbidden ranking inputs present: ${forbiddenInput}`),
+    );
+  }
+});

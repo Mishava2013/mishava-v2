@@ -49,13 +49,36 @@ export type RankableResult = {
   locationOrLogisticsFit: number;
   availabilityFit: number;
   createdAt: string;
-  paymentStatus?: string;
-  subscriptionTier?: string;
-  hostedProfileEnabled?: boolean;
-  adSpend?: number;
-  sponsorship?: string;
-  paidBoost?: boolean;
-  salesCommission?: number;
+};
+
+export type ForbiddenTrustInfluenceInput = {
+  paymentStatus?: unknown;
+  subscriptionTier?: unknown;
+  hostedProfileEnabled?: unknown;
+  claimedProfileStatus?: unknown;
+  sponsorshipStatus?: unknown;
+  adSpend?: unknown;
+  paidBoost?: unknown;
+  salesCommission?: unknown;
+  affiliateFee?: unknown;
+  referralFee?: unknown;
+};
+
+export type BillableEntitlements = {
+  planCode?: string;
+  profileToolsEnabled?: boolean;
+  hostedPagesEnabled?: boolean;
+  catalogLimit?: number;
+  reportExportAllowed?: boolean;
+  teamMemberLimit?: number;
+};
+
+export type TrustCalculationInput = {
+  evidenceScore: number | null;
+  userPreferenceMatch?: number;
+  evidenceCoverage: Level;
+  evidenceRecency: Recency;
+  verificationConfidence: Confidence;
 };
 
 export const defaultScoringVersion: ScoringVersion = {
@@ -135,12 +158,18 @@ export function scoreLabel(score: number | null) {
 }
 
 export function assertRankingInputsRespectPaymentFirewall(result: RankableResult) {
+  assertNoForbiddenTrustInfluenceInputs(result);
+}
+
+export function assertNoForbiddenTrustInfluenceInputs(
+  input: Record<string, unknown>,
+) {
   const forbiddenKeys = paymentFirewall.forbiddenRankingInputs;
   const presentForbiddenInputs = forbiddenKeys.filter((key) => {
     const camelKey = key.replace(/_([a-z])/g, (_, letter: string) =>
       letter.toUpperCase(),
-    ) as keyof RankableResult;
-    return result[camelKey] !== undefined && result[camelKey] !== null;
+    );
+    return input[camelKey] !== undefined && input[camelKey] !== null;
   });
 
   if (presentForbiddenInputs.length > 0) {
@@ -148,6 +177,12 @@ export function assertRankingInputsRespectPaymentFirewall(result: RankableResult
       `Forbidden ranking inputs present: ${presentForbiddenInputs.join(", ")}`,
     );
   }
+}
+
+export function assertBillableEntitlementsDoNotContainTrustControls(
+  entitlements: BillableEntitlements & ForbiddenTrustInfluenceInput,
+) {
+  assertNoForbiddenTrustInfluenceInputs(entitlements as Record<string, unknown>);
 }
 
 export function calculateResultRank(result: RankableResult) {
@@ -214,4 +249,3 @@ export function buildScoreExplanation({
     why,
   };
 }
-
