@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import { paymentFirewall } from "@/lib/foundation";
 import { sdgNames } from "@/lib/sample-data";
+import { defaultScoringVersion } from "@/lib/scoring";
 
 export default function MethodologyPage() {
   return (
@@ -27,6 +28,25 @@ export default function MethodologyPage() {
         </div>
       </div>
       <section className="section">
+        <h2>Scoring version foundation</h2>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Version</th>
+              <th>Status</th>
+              <th>Default pillar model</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{defaultScoringVersion.code}</td>
+              <td>Draft, not active until governance approval</td>
+              <td>Labor, environment, governance, and community start equal</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section className="section">
         <h2>SDG inspection list</h2>
         <div className="card-grid">
           {sdgNames.map((name, index) => (
@@ -40,4 +60,3 @@ export default function MethodologyPage() {
     </>
   );
 }
-
