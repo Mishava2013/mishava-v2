@@ -119,7 +119,6 @@ textarea {
   width: 34px;
   height: 46px;
   object-fit: contain;
-  filter: grayscale(1) saturate(0) brightness(0.55);
 }
 
 .brand-word {

@@ -7,7 +7,7 @@ export function MishavaMark({ className = "brand-mark" }: { className?: string }
       aria-hidden
       className={className}
       height={575}
-      src="/mishava-logo-source.png"
+      src="/mishava-logo-transparent.png"
       width={420}
     />
   );
