@@ -72,6 +72,29 @@ export type YourValuesScoreState =
   | "your_values_score_pending"
   | "evidence_score_only";
 
+export type ShoppingScoreExplanation = {
+  label:
+    | "Evidence Score"
+    | "Draft trust context"
+    | "Score pending"
+    | "Your Values Score unavailable"
+    | "Your Values Score pending"
+    | "More evidence needed";
+  score: number | null;
+  coverage: "Low" | "Medium" | "High" | "Pending";
+  recency: "Fresh" | "Recent" | "Stale" | "Pending";
+  verification: string;
+  confidence: "low" | "medium" | "high" | "pending";
+  snapshotStatus: string;
+  sourceStatus: string;
+  sourceName: string;
+  sourceUrl: string | null;
+  checked: string[];
+  missing: string[];
+  why: string;
+  valuesMessage: string;
+};
+
 export const shoppingPriorityVersionCode = "Shopping_Priorities_V2.01_2026.05.24";
 export const shoppingPriorityConsentVersion = "Shopping_Priorities_Privacy_V1_2026.05.24";
 
@@ -186,6 +209,70 @@ export function getProductTrustLabel(product: ShoppingProduct) {
   }
 
   return "Score pending";
+}
+
+export function buildShoppingScoreExplanation({
+  product,
+  valuesState = "complete_priorities",
+}: {
+  product: ShoppingProduct;
+  valuesState?: YourValuesScoreState;
+}): ShoppingScoreExplanation {
+  const hasEvidenceScore = hasPublishedEvidenceScore(product);
+  const hasDraftContext = Boolean(product.score_snapshot_id && !hasEvidenceScore);
+  const valuesMessage = getYourValuesScoreMessage(valuesState);
+  const missing = [];
+
+  if (!product.evidence_coverage) missing.push("reviewed evidence coverage");
+  if (!product.evidence_recency) missing.push("published evidence recency");
+  if (!product.verification_confidence) missing.push("verification confidence");
+  if (!product.score_snapshot_id) missing.push("published score snapshot");
+  if (!product.score_published_at) missing.push("snapshot publication date");
+
+  return {
+    label: hasEvidenceScore
+      ? "Evidence Score"
+      : hasDraftContext
+        ? "Draft trust context"
+        : valuesState === "more_evidence_needed"
+          ? "More evidence needed"
+          : valuesState === "your_values_score_pending"
+            ? "Your Values Score pending"
+            : valuesState === "complete_priorities"
+              ? "Your Values Score unavailable"
+              : "Score pending",
+    score: hasEvidenceScore ? Number(product.evidence_score) : null,
+    coverage: product.evidence_coverage ?? "Pending",
+    recency: product.evidence_recency ?? "Pending",
+    verification: product.score_snapshot_id
+      ? "Snapshot linked"
+      : "No public score snapshot",
+    confidence: product.verification_confidence ?? "pending",
+    snapshotStatus: hasEvidenceScore
+      ? `Published ${formatFreshness(product.score_published_at)}`
+      : hasDraftContext
+        ? "Draft or provisional; not public scoring"
+        : "No public score snapshot",
+    sourceStatus: `${product.source_review_status} source`,
+    sourceName: product.source_name ?? "Source not listed",
+    sourceUrl: product.source_url,
+    checked: [
+      product.source_name ? `Source recorded: ${product.source_name}` : null,
+      product.source_captured_at
+        ? formatFreshness(product.source_captured_at)
+        : null,
+      product.source_review_status
+        ? `Source review status: ${product.source_review_status}`
+        : null,
+    ].filter((item): item is string => Boolean(item)),
+    missing,
+    why: hasEvidenceScore
+      ? "This Evidence Score is backed by a published score snapshot."
+      : hasDraftContext
+        ? "Mishava has draft trust context, but it is not a public score."
+        : "A public score needs reviewed evidence, accepted scoring facts, a scoring version, and a published score snapshot.",
+    valuesMessage,
+  };
 }
 
 export function getYourValuesScoreState({

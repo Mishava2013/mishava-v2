@@ -80,15 +80,49 @@ test("shopping display shows pending trust context instead of invented scores", 
   const page = read("src/app/shopping/page.tsx");
   const detail = read("src/app/shopping/products/[slug]/page.tsx");
   const shopping = read("src/lib/shopping.ts");
+  const explainer = read("src/components/ShoppingScoreExplainer.tsx");
 
   assert.match(page, /getProductTrustLabel/);
   assert.match(detail, /Evidence profile pending/);
   assert.match(detail, /No public score appears/);
   assert.match(shopping, /return "Score pending"/);
   assert.match(shopping, /return "Draft trust context"/);
+  assert.match(shopping, /More evidence needed/);
+  assert.match(explainer, /No public score value is shown/);
   assert.match(page, /Complete Shopping Priorities to see Your Values Score/);
   assert.doesNotMatch(page, /<option value="values">/);
   assert.doesNotMatch(detail, /Evidence Score 90|Evidence Score 92|Score 88/);
+});
+
+test("shopping score explanation popup is accessible and policy-forward", () => {
+  const page = read("src/app/shopping/page.tsx");
+  const detail = read("src/app/shopping/products/[slug]/page.tsx");
+  const explainer = read("src/components/ShoppingScoreExplainer.tsx");
+
+  assert.match(page, /ShoppingScoreExplainer/);
+  assert.match(detail, /ShoppingScoreExplainer/);
+  assert.match(explainer, /role="dialog"/);
+  assert.match(explainer, /aria-modal="true"/);
+  assert.match(explainer, /aria-labelledby/);
+  assert.match(explainer, /aria-describedby/);
+  assert.match(explainer, /Escape/);
+  assert.match(explainer, /Close score explanation/);
+  assert.match(explainer, /Payment does not affect this score, ranking, or verification/);
+  assert.match(explainer, /does not earn shopping commissions from outbound links/);
+  assert.match(explainer, /do not change the base\s+Evidence Score/);
+  assert.match(explainer, /Off means no red-line filtering/);
+  assert.match(explainer, /visible hidden count/);
+});
+
+test("shopping score explanation helper uses real product state only", () => {
+  const shopping = read("src/lib/shopping.ts");
+
+  assert.match(shopping, /buildShoppingScoreExplanation/);
+  assert.match(shopping, /hasPublishedEvidenceScore\(product\)/);
+  assert.match(shopping, /score: hasEvidenceScore \? Number\(product\.evidence_score\) : null/);
+  assert.match(shopping, /sourceReviewStatus|source_review_status|sourceStatus/);
+  assert.match(shopping, /published score snapshot/);
+  assert.doesNotMatch(shopping, /Evidence Score 90|Evidence Score 92|Score 88/);
 });
 
 test("shopping priorities page can save, update, and retake red-line settings", () => {

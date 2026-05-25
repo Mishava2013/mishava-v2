@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
-import { getProductTrustLabel, getShoppingProducts } from "@/lib/shopping";
+import { ShoppingScoreExplainer } from "@/components/ShoppingScoreExplainer";
+import {
+  buildShoppingScoreExplanation,
+  getProductTrustLabel,
+  getShoppingProducts,
+} from "@/lib/shopping";
 
 const departmentLinks = [
   "Baby products",
@@ -158,38 +163,51 @@ export default async function ShoppingPage({
           </EmptyState>
         ) : (
           <div className="product-grid">
-            {products.map((product) => (
-              <Link className="product-card" href={`/shopping/products/${product.slug}`} key={product.id}>
-                <div className="product-media">
-                  {product.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img alt="" src={product.image_url} />
-                  ) : (
-                    <span>{product.category}</span>
-                  )}
-                </div>
-                <div className="product-body">
-                  <p className="product-meta">
-                    {product.brand_name ?? "Brand not listed"}
-                  </p>
-                  <h3>{product.name}</h3>
-                  <span className="score-chip">{getProductTrustLabel(product)}</span>
-                  <div className="status-row">
-                    <span className="tag">
-                      {product.evidence_coverage ?? "Evidence profile pending"}
-                    </span>
-                    <span className="tag">
-                      {product.source_review_status} source
-                    </span>
-                    <span className="tag">
-                      {product.score_snapshot_id
-                        ? "Snapshot linked"
-                        : "Score pending"}
-                    </span>
+            {products.map((product) => {
+              const explanation = buildShoppingScoreExplanation({ product });
+
+              return (
+                <article className="product-card" key={product.id}>
+                  <Link href={`/shopping/products/${product.slug}`}>
+                    <div className="product-media">
+                      {product.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img alt="" src={product.image_url} />
+                      ) : (
+                        <span>{product.category}</span>
+                      )}
+                    </div>
+                  </Link>
+                  <div className="product-body">
+                    <p className="product-meta">
+                      {product.brand_name ?? "Brand not listed"}
+                    </p>
+                    <h3>
+                      <Link href={`/shopping/products/${product.slug}`}>
+                        {product.name}
+                      </Link>
+                    </h3>
+                    <ShoppingScoreExplainer
+                      explanation={explanation}
+                      triggerLabel={getProductTrustLabel(product)}
+                    />
+                    <div className="status-row">
+                      <span className="tag">
+                        {product.evidence_coverage ?? "Evidence profile pending"}
+                      </span>
+                      <span className="tag">
+                        {product.source_review_status} source
+                      </span>
+                      <span className="tag">
+                        {product.score_snapshot_id
+                          ? "Snapshot linked"
+                          : "Score pending"}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </article>
+              );
+            })}
           </div>
         )}
         </section>

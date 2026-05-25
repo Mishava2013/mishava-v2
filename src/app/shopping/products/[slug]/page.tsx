@@ -2,7 +2,9 @@ import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { ScoreExplainer } from "@/components/ScoreExplainer";
+import { ShoppingScoreExplainer } from "@/components/ShoppingScoreExplainer";
 import {
+  buildShoppingScoreExplanation,
   formatFreshness,
   formatPrice,
   getProductTrustLabel,
@@ -17,6 +19,7 @@ export default async function ProductPage({
 }) {
   const { slug } = await params;
   const { product, placesToBuy, configured } = await getShoppingProductBySlug(slug);
+  const explanation = product ? buildShoppingScoreExplanation({ product }) : null;
 
   return (
     <>
@@ -57,6 +60,15 @@ export default async function ProductPage({
                 <strong>{product.source_review_status}</strong>
               </div>
             </div>
+            {explanation ? (
+              <div className="score-explainer-inline">
+                <ShoppingScoreExplainer explanation={explanation} mode="inline" />
+                <ShoppingScoreExplainer
+                  explanation={explanation}
+                  triggerLabel="Why this score?"
+                />
+              </div>
+            ) : null}
           </div>
         ) : (
           <ScoreExplainer />
