@@ -15,6 +15,25 @@ type EvidenceRow = InsertedRow & {
   visibility: string;
   created_at: string;
   created_by: string | null;
+  document_path: string | null;
+  lifecycle_status: "draft" | "submitted" | "reviewed" | "accepted" | "rejected" | "archived";
+  archived_at: string | null;
+};
+
+type EvidenceFileRow = InsertedRow & {
+  organization_id: string;
+  evidence_item_id: string;
+  storage_bucket: string;
+  storage_path: string;
+  original_filename: string;
+  safe_filename: string;
+  mime_type: string;
+  file_size_bytes: number;
+  version_number: number;
+  status: string;
+  visibility: string;
+  uploaded_by: string | null;
+  uploaded_at: string;
 };
 
 type NgoEvidenceSubmissionRow = InsertedRow & {
@@ -81,6 +100,9 @@ type NgoShareGrantRow = InsertedRow & {
 
 export type NgoEvidenceLibraryItem = EvidenceRow & {
   submissionStatus: string | null;
+  activeFileCount: number;
+  fileAttachmentLabel: string;
+  fileSummaries: EvidenceFileRow[];
   linkedStructuredClaimsCount: number;
   linkedAcceptedClaimsCount: number;
   linkedReportCount: number;
@@ -92,6 +114,7 @@ export type NgoEvidenceLibraryItem = EvidenceRow & {
     | "Evidence accepted for trust context";
   reportAttachmentLabel: string;
   nextStepLabel: string;
+  canUseInNewReports: boolean;
 };
 
 export type NgoReportDraftInput = {
@@ -150,7 +173,13 @@ export async function getNgoEvidenceLibrary({
   const evidence = await client.selectMany<EvidenceRow>(
     "evidence_items",
     { organization_id: organizationId },
-    "id,organization_id,title,source_name,source_type,url,notes,verification_status,visibility,created_at,created_by",
+    "id,organization_id,title,source_name,source_type,url,notes,verification_status,visibility,created_at,created_by,document_path,lifecycle_status,archived_at",
+  );
+
+  const evidenceFiles = await client.selectMany<EvidenceFileRow>(
+    "evidence_files",
+    { organization_id: organizationId },
+    "id,organization_id,evidence_item_id,storage_bucket,storage_path,original_filename,safe_filename,mime_type,file_size_bytes,version_number,status,visibility,uploaded_by,uploaded_at",
   );
 
   const submissions = ngoProfile
@@ -189,6 +218,10 @@ export async function getNgoEvidenceLibrary({
       const linkedReports = reports.filter((report) =>
         report.evidence_item_ids.includes(item.id),
       );
+      const files = evidenceFiles
+        .filter((file) => file.evidence_item_id === item.id)
+        .sort((left, right) => right.version_number - left.version_number);
+      const activeFileCount = files.filter((file) => file.status === "active").length;
       const submission = submissions.find(
         (entry) => entry.evidence_item_id === item.id,
       );
@@ -200,6 +233,12 @@ export async function getNgoEvidenceLibrary({
       return {
         ...item,
         submissionStatus: submission?.approval_status ?? null,
+        activeFileCount,
+        fileAttachmentLabel:
+          activeFileCount > 0
+            ? `${activeFileCount} private file${activeFileCount === 1 ? "" : "s"}`
+            : "No private files attached",
+        fileSummaries: files,
         linkedStructuredClaimsCount: linkedClaims.length,
         linkedAcceptedClaimsCount: linkedClaims.filter(
           (claim) => claim.status === "accepted",
@@ -207,16 +246,20 @@ export async function getNgoEvidenceLibrary({
         linkedReportCount: linkedReports.length,
         hasAuditTrail,
         draftLabel:
-          item.verification_status === "unverified"
+          item.lifecycle_status === "archived"
             ? "Draft evidence"
-            : "Review-ready evidence",
+            : item.verification_status === "unverified"
+              ? "Draft evidence"
+              : "Review-ready evidence",
         reviewLabel:
-          item.verification_status === "unverified"
+          item.lifecycle_status === "archived"
             ? "Evidence entered but not reviewed"
-            : item.verification_status === "verified" ||
-                item.verification_status === "audit_reviewed"
-              ? "Evidence accepted for trust context"
-              : "Evidence reviewed",
+            : item.verification_status === "unverified"
+              ? "Evidence entered but not reviewed"
+              : item.verification_status === "verified" ||
+                  item.verification_status === "audit_reviewed"
+                ? "Evidence accepted for trust context"
+                : "Evidence reviewed",
         reportAttachmentLabel:
           linkedReports.length > 0
             ? `Attached to ${linkedReports.length} draft report${
@@ -224,11 +267,14 @@ export async function getNgoEvidenceLibrary({
               }`
             : "Not attached to any report yet",
         nextStepLabel:
-          linkedClaims.some((claim) => claim.status === "accepted")
-            ? "Available now: use accepted claims in draft reports"
-            : linkedClaims.length > 0
-              ? "Needs review: draft claims cannot support report trust summaries yet"
-              : "Available now: create a structured claim draft",
+          item.lifecycle_status === "archived"
+            ? "Archived: remains traceable but excluded from new reports by default"
+            : linkedClaims.some((claim) => claim.status === "accepted")
+              ? "Available now: use accepted claims in draft reports"
+              : linkedClaims.length > 0
+                ? "Needs review: draft claims cannot support report trust summaries yet"
+                : "Available now: create a structured claim draft",
+        canUseInNewReports: item.lifecycle_status !== "archived",
       };
     })
     .sort(
@@ -264,11 +310,17 @@ export async function getNgoReportWorkspace({
       )
     : [];
 
-  const evidence = await getNgoEvidenceLibrary({ client, organizationId });
-  const acceptedClaims = await client.selectMany<StructuredClaimRow>(
+  const evidence = (await getNgoEvidenceLibrary({ client, organizationId })).filter(
+    (item) => item.canUseInNewReports,
+  );
+  const acceptedClaimsRaw = await client.selectMany<StructuredClaimRow>(
     "structured_claims",
     { organization_id: organizationId, status: "accepted" },
     "id,organization_id,statement,pillar_id,fact_type,evidence_item_ids,status,confidence,recency",
+  );
+  const usableEvidenceIds = new Set(evidence.map((item) => item.id));
+  const acceptedClaims = acceptedClaimsRaw.filter((claim) =>
+    claim.evidence_item_ids.every((evidenceId) => usableEvidenceIds.has(evidenceId)),
   );
   const draftSnapshots = await client.selectMany<InsertedRow>(
     "score_snapshots",
@@ -299,6 +351,7 @@ export async function getNgoReportDetail({
   reportId: string;
 }) {
   const workspace = await getNgoReportWorkspace({ client, organizationId });
+  const fullEvidenceLibrary = await getNgoEvidenceLibrary({ client, organizationId });
   const report = await client.selectOne<NgoReportRow>(
     "ngo_reports",
     { id: reportId, organization_id: organizationId },
@@ -328,7 +381,7 @@ export async function getNgoReportDetail({
     "id,organization_id,ngo_profile_id,report_id,granted_to_email,granted_to_name,viewer_type,visibility,purpose,starts_at,expires_at,granted_by,revoked_at,revoked_by,status,created_at",
   );
 
-  const selectedEvidence = workspace.evidence.filter((item) =>
+  const selectedEvidence = fullEvidenceLibrary.filter((item) =>
     report.evidence_item_ids.includes(item.id),
   );
   const selectedAcceptedClaims = allClaims.filter(
@@ -379,13 +432,20 @@ export async function createStructuredClaimDraft({
   const evidence = await client.selectOne<EvidenceRow>(
     "evidence_items",
     { id: input.evidenceItemId, organization_id: input.organizationId },
-    "id,organization_id,title,source_name,source_type,url,notes,verification_status,visibility,created_at,created_by",
+    "id,organization_id,title,source_name,source_type,url,notes,verification_status,visibility,created_at,created_by,document_path,lifecycle_status,archived_at",
   );
 
   if (!evidence) {
     return {
       ok: false,
       message: "Evidence item was not found for this organization.",
+    };
+  }
+
+  if (evidence.lifecycle_status === "archived") {
+    return {
+      ok: false,
+      message: "Archived evidence cannot support new structured claim drafts.",
     };
   }
 
@@ -473,10 +533,31 @@ export async function createNgoReportDraft({
 
   const evidence = await client.selectMany<EvidenceRow>(
     "evidence_items",
-    { organization_id: input.organizationId },
-    "id,organization_id,title,source_name,source_type,url,notes,verification_status,visibility,created_at,created_by",
+    { organization_id: input.organizationId, lifecycle_status: "draft" },
+    "id,organization_id,title,source_name,source_type,url,notes,verification_status,visibility,created_at,created_by,document_path,lifecycle_status,archived_at",
   );
-  const allowedEvidenceIds = new Set(evidence.map((item) => item.id));
+  const submittedEvidence = await client.selectMany<EvidenceRow>(
+    "evidence_items",
+    { organization_id: input.organizationId, lifecycle_status: "submitted" },
+    "id,organization_id,title,source_name,source_type,url,notes,verification_status,visibility,created_at,created_by,document_path,lifecycle_status,archived_at",
+  );
+  const reviewedEvidence = await client.selectMany<EvidenceRow>(
+    "evidence_items",
+    { organization_id: input.organizationId, lifecycle_status: "reviewed" },
+    "id,organization_id,title,source_name,source_type,url,notes,verification_status,visibility,created_at,created_by,document_path,lifecycle_status,archived_at",
+  );
+  const acceptedEvidence = await client.selectMany<EvidenceRow>(
+    "evidence_items",
+    { organization_id: input.organizationId, lifecycle_status: "accepted" },
+    "id,organization_id,title,source_name,source_type,url,notes,verification_status,visibility,created_at,created_by,document_path,lifecycle_status,archived_at",
+  );
+  const allowedEvidence = [
+    ...evidence,
+    ...submittedEvidence,
+    ...reviewedEvidence,
+    ...acceptedEvidence,
+  ];
+  const allowedEvidenceIds = new Set(allowedEvidence.map((item) => item.id));
   const selectedEvidenceIds = unique(input.evidenceItemIds).filter((id) =>
     allowedEvidenceIds.has(id),
   );
@@ -990,9 +1071,13 @@ async function validateReportSelections({
   const evidence = await client.selectMany<EvidenceRow>(
     "evidence_items",
     { organization_id: organizationId },
-    "id,organization_id,title,source_name,source_type,url,notes,verification_status,visibility,created_at,created_by",
+    "id,organization_id,title,source_name,source_type,url,notes,verification_status,visibility,created_at,created_by,document_path,lifecycle_status,archived_at",
   );
-  const allowedEvidenceIds = new Set(evidence.map((item) => item.id));
+  const allowedEvidenceIds = new Set(
+    evidence
+      .filter((item) => item.lifecycle_status !== "archived")
+      .map((item) => item.id),
+  );
   const selectedEvidenceIds = unique(evidenceItemIds).filter((id) =>
     allowedEvidenceIds.has(id),
   );

@@ -66,7 +66,7 @@ test("shared grant view exposes only report summary and allowed evidence summari
   assert.match(page, /Raw evidence not exposed/);
   assert.match(page, /Allowed evidence summaries/);
   assert.match(page, /Raw notes, source files, internal URLs, and workspace details/);
-  assert.match(helper, /selectedEvidence = evidence/);
+  assert.match(helper, /selectedEvidence = fullEvidenceLibrary/);
   assert.doesNotMatch(helper, /notes: item\.notes/);
   assert.doesNotMatch(page, /org\/reports/);
   assert.doesNotMatch(page, /org\/evidence/);

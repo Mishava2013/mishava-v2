@@ -86,5 +86,5 @@ test("evidence page clarifies review state, report attachment, and available act
   assert.match(page, /No evidence yet/);
   assert.match(page, /Evidence entered but not reviewed/);
   assert.match(page, /Only accepted claims can support report trust summaries/);
-  assert.match(page, /File uploads, full review, exports, sharing, AI writing/);
+  assert.match(page, /Raw files are private to your organization/);
 });

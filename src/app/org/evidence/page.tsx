@@ -1,11 +1,15 @@
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { canManageNgoEvidence } from "@/lib/auth";
 import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
 import { getNgoEvidenceLibrary } from "@/lib/ngo-evidence-reports";
 import { evidenceIntakeTypes } from "@/lib/ngo";
 import {
+  archiveEvidenceAction,
   createEvidenceAction,
   createStructuredClaimDraftAction,
+  updateEvidenceMetadataAction,
+  uploadEvidenceFileAction,
 } from "./actions";
 import {
   createSupabaseAuthenticatedServerClient,
@@ -15,10 +19,11 @@ import {
 export default async function OrgEvidencePage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string; error?: string }>;
+  searchParams: Promise<{ created?: string; error?: string; updated?: string }>;
 }) {
   const params = await searchParams;
   const { session, organizationId } = await requireCurrentOrganizationMembership();
+  const canManageEvidence = canManageNgoEvidence(session, organizationId);
   const evidenceLibrary = isSupabaseServerConfigured()
     ? await getNgoEvidenceLibrary({
         client: createSupabaseAuthenticatedServerClient(session.accessToken),
@@ -38,6 +43,11 @@ export default async function OrgEvidencePage({
           Evidence saved and audit event recorded.
         </div>
       ) : null}
+      {params.updated ? (
+        <div className="notice" role="status">
+          Evidence update saved and audit event recorded.
+        </div>
+      ) : null}
 
       {params.error ? (
         <div className="notice" role="status">
@@ -51,6 +61,8 @@ export default async function OrgEvidencePage({
           Draft evidence appears here with its visibility, review status, linked
           structured claims, and audit trail indicator. This is still a beta
           workflow: evidence can support reports only after claims are reviewed.
+          Raw files are private to your organization and are not shared by
+          default.
         </p>
 
         {evidenceLibrary.length === 0 ? (
@@ -66,6 +78,9 @@ export default async function OrgEvidencePage({
                 <div className="record-header">
                   <div>
                     <span className="tag">{item.draftLabel}</span>
+                    {item.lifecycle_status === "archived" ? (
+                      <span className="tag">Archived</span>
+                    ) : null}
                     <h3>{item.title}</h3>
                     <p>
                       {item.source_type} from {item.source_name}
@@ -86,6 +101,14 @@ export default async function OrgEvidencePage({
                   <div className="metric">
                     <span>Review state</span>
                     <strong>{item.reviewLabel}</strong>
+                  </div>
+                  <div className="metric">
+                    <span>Lifecycle</span>
+                    <strong>{item.lifecycle_status}</strong>
+                  </div>
+                  <div className="metric">
+                    <span>Files</span>
+                    <strong>{item.fileAttachmentLabel}</strong>
                   </div>
                   <div className="metric">
                     <span>Structured claims</span>
@@ -114,8 +137,8 @@ export default async function OrgEvidencePage({
                     <strong>{item.nextStepLabel}</strong>
                   </div>
                   <div className="metric">
-                    <span>Later</span>
-                    <strong>File uploads, full review, exports, sharing, AI writing</strong>
+                    <span>File privacy</span>
+                    <strong>Raw files are not shared by default</strong>
                   </div>
                 </div>
 
@@ -125,51 +148,156 @@ export default async function OrgEvidencePage({
                   </p>
                 ) : null}
                 {item.notes ? <p className="record-note">{item.notes}</p> : null}
+                {item.fileSummaries.length > 0 ? (
+                  <div className="inline-workflow">
+                    <strong>Attached private files</strong>
+                    <ul>
+                      {item.fileSummaries.map((file) => (
+                        <li key={file.id}>
+                          {file.original_filename} · v{file.version_number} ·{" "}
+                          {file.status} · {Math.round(file.file_size_bytes / 1024)} KB
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
 
-                <details className="inline-workflow">
-                  <summary>Create structured claim draft</summary>
-                  <p className="muted-copy">
-                    Evidence entered but not reviewed can become a draft claim.
-                    Only accepted claims can support report trust summaries.
-                  </p>
-                  <form action={createStructuredClaimDraftAction} className="form-grid compact-form">
+                {canManageEvidence && item.lifecycle_status !== "archived" ? (
+                  <details className="inline-workflow">
+                    <summary>Edit evidence metadata</summary>
+                    <form action={updateEvidenceMetadataAction} className="form-grid compact-form">
+                      <input name="evidenceItemId" type="hidden" value={item.id} />
+                      <div className="field">
+                        <label htmlFor={`edit-title-${item.id}`}>Title</label>
+                        <input id={`edit-title-${item.id}`} name="title" defaultValue={item.title} required />
+                      </div>
+                      <div className="field">
+                        <label htmlFor={`edit-source-${item.id}`}>Source name</label>
+                        <input id={`edit-source-${item.id}`} name="sourceName" defaultValue={item.source_name} required />
+                      </div>
+                      <div className="field">
+                        <label htmlFor={`edit-type-${item.id}`}>Source type</label>
+                        <input id={`edit-type-${item.id}`} name="sourceType" defaultValue={item.source_type} required />
+                      </div>
+                      <div className="field">
+                        <label htmlFor={`edit-lifecycle-${item.id}`}>Lifecycle</label>
+                        <select id={`edit-lifecycle-${item.id}`} name="lifecycleStatus" defaultValue={item.lifecycle_status}>
+                          <option value="draft">Draft</option>
+                          <option value="submitted">Submitted</option>
+                          <option value="reviewed">Reviewed</option>
+                          <option value="accepted">Accepted</option>
+                          <option value="rejected">Rejected</option>
+                        </select>
+                      </div>
+                      <div className="field">
+                        <label htmlFor={`edit-visibility-${item.id}`}>Visibility</label>
+                        <select id={`edit-visibility-${item.id}`} name="visibility" defaultValue={item.visibility}>
+                          <option value="private">Private</option>
+                          <option value="organization_shared">Organization shared</option>
+                          <option value="approved_viewer">Approved viewer</option>
+                          <option value="public_summary">Public summary</option>
+                        </select>
+                      </div>
+                      <div className="field">
+                        <label htmlFor={`edit-url-${item.id}`}>Source URL</label>
+                        <input id={`edit-url-${item.id}`} name="url" defaultValue={item.url ?? ""} />
+                      </div>
+                      <div className="field full">
+                        <label htmlFor={`edit-notes-${item.id}`}>Notes</label>
+                        <textarea id={`edit-notes-${item.id}`} name="notes" defaultValue={item.notes ?? ""} />
+                      </div>
+                      <div className="field full">
+                        <button className="button" type="submit">
+                          Save evidence updates
+                        </button>
+                      </div>
+                    </form>
+                  </details>
+                ) : null}
+
+                {canManageEvidence && item.lifecycle_status !== "archived" ? (
+                  <details className="inline-workflow">
+                    <summary>Attach or replace private file</summary>
+                    <p className="muted-copy">
+                      Files are stored privately under this organization. PDF,
+                      PNG, JPG, WebP, TXT, CSV, or DOCX only, up to 10 MB.
+                    </p>
+                    <form action={uploadEvidenceFileAction} className="form-grid compact-form">
+                      <input name="evidenceItemId" type="hidden" value={item.id} />
+                      <div className="field full">
+                        <label htmlFor={`file-${item.id}`}>Evidence file</label>
+                        <input
+                          id={`file-${item.id}`}
+                          name="evidenceFile"
+                          type="file"
+                          accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.csv,.docx,application/pdf,image/png,image/jpeg,image/webp,text/plain,text/csv,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                          required
+                        />
+                      </div>
+                      <div className="field full">
+                        <button className="button" type="submit">
+                          Attach private file
+                        </button>
+                      </div>
+                    </form>
+                  </details>
+                ) : null}
+
+                {canManageEvidence && item.lifecycle_status !== "archived" ? (
+                  <form action={archiveEvidenceAction} className="toolbar">
                     <input name="evidenceItemId" type="hidden" value={item.id} />
-                    <div className="field">
-                      <label htmlFor={`pillar-${item.id}`}>Pillar</label>
-                      <select id={`pillar-${item.id}`} name="pillarId" defaultValue="governance">
-                        <option value="labor">Labor</option>
-                        <option value="environment">Environment</option>
-                        <option value="governance">Governance</option>
-                        <option value="community">Community</option>
-                      </select>
-                    </div>
-                    <div className="field">
-                      <label htmlFor={`fact-${item.id}`}>Claim type</label>
-                      <select id={`fact-${item.id}`} name="factType" defaultValue="neutral">
-                        <option value="positive">Positive</option>
-                        <option value="negative">Negative</option>
-                        <option value="neutral">Neutral</option>
-                        <option value="corrective_action">Corrective action</option>
-                        <option value="unknown">Unknown</option>
-                        <option value="gap">Gap</option>
-                      </select>
-                    </div>
-                    <div className="field full">
-                      <label htmlFor={`statement-${item.id}`}>Claim statement</label>
-                      <textarea
-                        id={`statement-${item.id}`}
-                        name="statement"
-                        placeholder="State only what this evidence supports."
-                        required
-                      />
-                    </div>
-                    <div className="field full">
-                      <button className="button" type="submit">
-                        Save claim draft
-                      </button>
-                    </div>
+                    <button className="button" type="submit">
+                      Archive evidence
+                    </button>
                   </form>
-                </details>
+                ) : null}
+
+                {canManageEvidence && item.lifecycle_status !== "archived" ? (
+                  <details className="inline-workflow">
+                    <summary>Create structured claim draft</summary>
+                    <p className="muted-copy">
+                      Evidence entered but not reviewed can become a draft claim.
+                      Only accepted claims can support report trust summaries.
+                    </p>
+                    <form action={createStructuredClaimDraftAction} className="form-grid compact-form">
+                      <input name="evidenceItemId" type="hidden" value={item.id} />
+                      <div className="field">
+                        <label htmlFor={`pillar-${item.id}`}>Pillar</label>
+                        <select id={`pillar-${item.id}`} name="pillarId" defaultValue="governance">
+                          <option value="labor">Labor</option>
+                          <option value="environment">Environment</option>
+                          <option value="governance">Governance</option>
+                          <option value="community">Community</option>
+                        </select>
+                      </div>
+                      <div className="field">
+                        <label htmlFor={`fact-${item.id}`}>Claim type</label>
+                        <select id={`fact-${item.id}`} name="factType" defaultValue="neutral">
+                          <option value="positive">Positive</option>
+                          <option value="negative">Negative</option>
+                          <option value="neutral">Neutral</option>
+                          <option value="corrective_action">Corrective action</option>
+                          <option value="unknown">Unknown</option>
+                          <option value="gap">Gap</option>
+                        </select>
+                      </div>
+                      <div className="field full">
+                        <label htmlFor={`statement-${item.id}`}>Claim statement</label>
+                        <textarea
+                          id={`statement-${item.id}`}
+                          name="statement"
+                          placeholder="State only what this evidence supports."
+                          required
+                        />
+                      </div>
+                      <div className="field full">
+                        <button className="button" type="submit">
+                          Save claim draft
+                        </button>
+                      </div>
+                    </form>
+                  </details>
+                ) : null}
               </article>
             ))}
           </div>
@@ -178,6 +306,7 @@ export default async function OrgEvidencePage({
 
       <section className="section">
         <h2>Manual evidence entry</h2>
+        {canManageEvidence ? (
         <form action={createEvidenceAction} className="form-grid">
           <div className="field">
             <label htmlFor="title">Evidence title</label>
@@ -217,8 +346,29 @@ export default async function OrgEvidencePage({
             </select>
           </div>
           <div className="field">
+            <label htmlFor="lifecycle-status">Lifecycle status</label>
+            <select id="lifecycle-status" name="lifecycleStatus" defaultValue="draft">
+              <option value="draft">Draft</option>
+              <option value="submitted">Submitted</option>
+            </select>
+          </div>
+          <div className="field">
             <label htmlFor="url">Source URL</label>
             <input id="url" name="url" placeholder="https://example.org/source" />
+          </div>
+          <div className="field full">
+            <label htmlFor="evidence-file">Private file attachment</label>
+            <input
+              id="evidence-file"
+              name="evidenceFile"
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.csv,.docx,application/pdf,image/png,image/jpeg,image/webp,text/plain,text/csv,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            />
+            <p className="muted-copy">
+              Optional. Raw files are private to your organization and are not
+              shared by default. PDF, PNG, JPG, WebP, TXT, CSV, or DOCX only,
+              up to 10 MB.
+            </p>
           </div>
           <div className="field full">
             <label htmlFor="notes">Notes</label>
@@ -230,6 +380,12 @@ export default async function OrgEvidencePage({
             </button>
           </div>
         </form>
+        ) : (
+          <EmptyState title="Evidence editing requires member access">
+            Your role can view evidence allowed for this workspace, but cannot
+            create, edit, upload, or archive evidence.
+          </EmptyState>
+        )}
       </section>
 
       <div className="card-grid">

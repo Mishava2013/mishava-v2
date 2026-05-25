@@ -3,6 +3,12 @@
 import { redirect } from "next/navigation";
 import { canManageNgoEvidence } from "@/lib/auth";
 import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
+import {
+  archiveEvidenceItem,
+  normalizeEvidenceLifecycleStatus,
+  updateEvidenceMetadata,
+  uploadEvidenceFileForItem,
+} from "@/lib/evidence-files";
 import { createStructuredClaimDraft } from "@/lib/ngo-evidence-reports";
 import { createEvidenceRecord } from "@/lib/release-2-5-workflows";
 import { createSupabaseAuthenticatedServerClient } from "@/lib/supabase/server";
@@ -39,11 +45,25 @@ export async function createEvidenceAction(formData: FormData) {
             : formData.get("verificationStatus") === "self_attested"
               ? "self_attested"
               : "unverified",
+      lifecycleStatus:
+        formData.get("lifecycleStatus") === "submitted" ? "submitted" : "draft",
     },
   });
 
   if (!result.ok) {
     redirect(`/org/evidence?error=${encodeURIComponent(result.message)}`);
+  }
+
+  const fileResult = await uploadEvidenceFileForItem({
+    client: createSupabaseAuthenticatedServerClient(session.accessToken),
+    evidenceItemId: result.evidenceId as string,
+    file: formData.get("evidenceFile") as File | null,
+    organizationId,
+    session,
+  });
+
+  if (!fileResult.ok) {
+    redirect(`/org/evidence?error=${encodeURIComponent(fileResult.message)}`);
   }
 
   redirect(`/org/evidence?created=evidence&id=${result.evidenceId}`);
@@ -83,4 +103,83 @@ export async function createStructuredClaimDraftAction(formData: FormData) {
   }
 
   redirect(`/org/evidence?created=claim&id=${result.claimId}`);
+}
+
+export async function updateEvidenceMetadataAction(formData: FormData) {
+  const { session, organizationId } = await requireCurrentOrganizationMembership();
+  if (!canManageNgoEvidence(session, organizationId)) {
+    redirect("/org/evidence?error=Evidence%20editing%20requires%20member%20access.");
+  }
+
+  const result = await updateEvidenceMetadata({
+    client: createSupabaseAuthenticatedServerClient(session.accessToken),
+    session,
+    input: {
+      organizationId,
+      evidenceItemId: String(formData.get("evidenceItemId") ?? ""),
+      title: String(formData.get("title") ?? ""),
+      sourceName: String(formData.get("sourceName") ?? ""),
+      sourceType: String(formData.get("sourceType") ?? ""),
+      url: String(formData.get("url") ?? ""),
+      notes: String(formData.get("notes") ?? ""),
+      visibility:
+        formData.get("visibility") === "public_summary"
+          ? "public_summary"
+          : formData.get("visibility") === "approved_viewer"
+            ? "approved_viewer"
+            : formData.get("visibility") === "organization_shared"
+              ? "organization_shared"
+              : "private",
+      lifecycleStatus: normalizeEvidenceLifecycleStatus(
+        formData.get("lifecycleStatus"),
+      ),
+    },
+  });
+
+  if (!result.ok) {
+    redirect(`/org/evidence?error=${encodeURIComponent(result.message)}`);
+  }
+
+  redirect("/org/evidence?updated=evidence");
+}
+
+export async function uploadEvidenceFileAction(formData: FormData) {
+  const { session, organizationId } = await requireCurrentOrganizationMembership();
+  if (!canManageNgoEvidence(session, organizationId)) {
+    redirect("/org/evidence?error=Evidence%20upload%20requires%20member%20access.");
+  }
+
+  const result = await uploadEvidenceFileForItem({
+    client: createSupabaseAuthenticatedServerClient(session.accessToken),
+    evidenceItemId: String(formData.get("evidenceItemId") ?? ""),
+    file: formData.get("evidenceFile") as File | null,
+    organizationId,
+    session,
+  });
+
+  if (!result.ok) {
+    redirect(`/org/evidence?error=${encodeURIComponent(result.message)}`);
+  }
+
+  redirect("/org/evidence?updated=file");
+}
+
+export async function archiveEvidenceAction(formData: FormData) {
+  const { session, organizationId } = await requireCurrentOrganizationMembership();
+  if (!canManageNgoEvidence(session, organizationId)) {
+    redirect("/org/evidence?error=Evidence%20archive%20requires%20member%20access.");
+  }
+
+  const result = await archiveEvidenceItem({
+    client: createSupabaseAuthenticatedServerClient(session.accessToken),
+    evidenceItemId: String(formData.get("evidenceItemId") ?? ""),
+    organizationId,
+    session,
+  });
+
+  if (!result.ok) {
+    redirect(`/org/evidence?error=${encodeURIComponent(result.message)}`);
+  }
+
+  redirect("/org/evidence?updated=archived");
 }

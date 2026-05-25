@@ -33,6 +33,7 @@ export type EvidenceInput = {
     | "self_attested"
     | "public_record_checked"
     | "document_checked";
+  lifecycleStatus?: "draft" | "submitted";
 };
 
 type InsertedRow = Record<string, unknown> & { id: string };
@@ -159,6 +160,7 @@ export async function createEvidenceRecord({
     notes: input.notes?.trim() || null,
     visibility: input.visibility,
     verification_status: input.verificationStatus,
+    lifecycle_status: input.lifecycleStatus ?? "draft",
     confidence: "low",
     provenance: {
       intake: "manual",
@@ -200,6 +202,7 @@ export async function createEvidenceRecord({
         source_type: input.sourceType.trim(),
         visibility: input.visibility,
         verification_status: input.verificationStatus,
+        lifecycle_status: input.lifecycleStatus ?? "draft",
       },
     }),
   );
