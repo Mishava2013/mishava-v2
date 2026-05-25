@@ -50,11 +50,30 @@ export type PlaceToBuy = {
 };
 
 export type ShoppingPriorityProfile = {
+  id: string;
   user_id: string;
-  answers: Record<string, unknown>;
+  answers: Record<string, number>;
+  automatic_zero_rules: Record<string, RedLineMode>;
   answered_count: number;
   personalization_enabled: boolean;
+  version_code: string;
+  consent_version: string | null;
+  consented_at: string | null;
+  privacy_acknowledged_at: string | null;
+  last_reviewed_at: string | null;
+  updated_at: string;
 };
+
+export type RedLineMode = "off" | "warn" | "hide";
+
+export type YourValuesScoreState =
+  | "complete_priorities"
+  | "more_evidence_needed"
+  | "your_values_score_pending"
+  | "evidence_score_only";
+
+export const shoppingPriorityVersionCode = "Shopping_Priorities_V2.01_2026.05.24";
+export const shoppingPriorityConsentVersion = "Shopping_Priorities_Privacy_V1_2026.05.24";
 
 export async function getShoppingProducts({
   query,
@@ -134,6 +153,21 @@ export async function getShoppingProductBySlug(slug: string) {
   };
 }
 
+export async function getShoppingPriorityProfile(userId: string) {
+  if (!isSupabaseServerConfigured()) return null;
+
+  const client = createSupabaseServerClient();
+
+  return client.selectOne<ShoppingPriorityProfile>(
+    "shopping_priority_profiles",
+    {
+      user_id: userId,
+      version_code: shoppingPriorityVersionCode,
+    },
+    "id,user_id,answers,automatic_zero_rules,answered_count,personalization_enabled,version_code,consent_version,consented_at,privacy_acknowledged_at,last_reviewed_at,updated_at",
+  );
+}
+
 export function hasPublishedEvidenceScore(product: ShoppingProduct) {
   return Boolean(
     product.evidence_score !== null &&
@@ -152,6 +186,41 @@ export function getProductTrustLabel(product: ShoppingProduct) {
   }
 
   return "Score pending";
+}
+
+export function getYourValuesScoreState({
+  product,
+  priorityProfile,
+}: {
+  product: ShoppingProduct;
+  priorityProfile: ShoppingPriorityProfile | null;
+}): YourValuesScoreState {
+  if (!priorityProfile?.personalization_enabled || priorityProfile.answered_count < 12) {
+    return "complete_priorities";
+  }
+
+  if (!hasPublishedEvidenceScore(product)) {
+    return "more_evidence_needed";
+  }
+
+  return "your_values_score_pending";
+}
+
+export function getYourValuesScoreMessage(state: YourValuesScoreState) {
+  switch (state) {
+    case "complete_priorities":
+      return "Complete Shopping Priorities to see Your Values Score when enough evidence exists.";
+    case "more_evidence_needed":
+      return "More evidence needed before Your Values Score can be shown.";
+    case "your_values_score_pending":
+      return "Your Values Score pending until the personal fit calculation is enabled.";
+    case "evidence_score_only":
+      return "Evidence Score only.";
+  }
+}
+
+export function sanitizeRedLineMode(value: FormDataEntryValue | null): RedLineMode {
+  return value === "hide" || value === "warn" ? value : "off";
 }
 
 export function sortShoppingProducts(products: ShoppingProduct[], sort: string) {

@@ -4,13 +4,21 @@ import { redirect } from "next/navigation";
 import { requireAuthenticatedSession } from "@/lib/auth-server";
 import {
   automaticZeroQuestions,
+  sanitizeRedLineMode,
   shoppingPriorityQuestions,
+  shoppingPriorityConsentVersion,
+  shoppingPriorityVersionCode,
 } from "@/lib/shopping";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function saveShoppingPrioritiesAction(formData: FormData) {
   const session = await requireAuthenticatedSession();
   const client = createSupabaseServerClient();
+  const privacyAcknowledged = formData.get("privacyAcknowledged") === "on";
+
+  if (!privacyAcknowledged) {
+    redirect("/app/shopping-priorities?error=privacy_required");
+  }
 
   const answers: Record<string, number> = {};
 
@@ -25,9 +33,7 @@ export async function saveShoppingPrioritiesAction(formData: FormData) {
 
   automaticZeroQuestions.forEach((_, index) => {
     const key = `zero_rule_${index + 1}`;
-    const value = String(formData.get(key) ?? "off");
-    automaticZeroRules[key] =
-      value === "hide" || value === "warn" ? value : "off";
+    automaticZeroRules[key] = sanitizeRedLineMode(formData.get(key));
   });
 
   const answeredCount = Object.keys(answers).length;
@@ -38,19 +44,24 @@ export async function saveShoppingPrioritiesAction(formData: FormData) {
     "shopping_priority_profiles",
     {
       user_id: session.user.id,
-      version_code: "Shopping_Priorities_V2.01_2026.05.24",
+      version_code: shoppingPriorityVersionCode,
     },
     "id",
   );
 
+  const now = new Date().toISOString();
   const payload = {
     user_id: session.user.id,
     answers,
     automatic_zero_rules: automaticZeroRules,
     answered_count: answeredCount,
     personalization_enabled: personalizationEnabled,
-    version_code: "Shopping_Priorities_V2.01_2026.05.24",
-    updated_at: new Date().toISOString(),
+    version_code: shoppingPriorityVersionCode,
+    consent_version: shoppingPriorityConsentVersion,
+    consented_at: now,
+    privacy_acknowledged_at: now,
+    last_reviewed_at: now,
+    updated_at: now,
   };
 
   if (existing) {
@@ -63,4 +74,3 @@ export async function saveShoppingPrioritiesAction(formData: FormData) {
     `/app/shopping-priorities?saved=1&personalized=${personalizationEnabled ? "1" : "0"}`,
   );
 }
-

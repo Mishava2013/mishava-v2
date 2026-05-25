@@ -137,8 +137,12 @@ export default async function ShoppingPage({
               Shoppers can click through for trust details. If there is no real
               published score snapshot, Mishava shows score pending or draft
               trust context instead of a made-up number. Personal values
-              sorting stays off until Shopping Priorities are complete.
+              sorting stays off until Shopping Priorities are complete and
+              enough evidence-backed scoring data exists.
             </p>
+            <Link href="/app/shopping-priorities">
+              Complete Shopping Priorities to see Your Values Score when it is valid.
+            </Link>
           </div>
 
         {!configured ? (

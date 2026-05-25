@@ -70,6 +70,10 @@ export default async function ProductPage({
                 real source records. Ranking is not commission-based and payment
                 cannot create placement advantage.
               </p>
+              <p>
+                Shopping Priorities can personalize explanations later, but they
+                do not change this product&apos;s base Evidence Score.
+              </p>
               <div className="status-row">
                 <span className="tag">No commission ranking</span>
                 <span className="tag">No paid placement</span>

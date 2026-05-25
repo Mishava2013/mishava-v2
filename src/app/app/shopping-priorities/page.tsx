@@ -1,6 +1,8 @@
 import { PageHeader } from "@/components/PageHeader";
+import { requireAuthenticatedSession } from "@/lib/auth-server";
 import {
   automaticZeroQuestions,
+  getShoppingPriorityProfile,
   shoppingPriorityQuestions,
 } from "@/lib/shopping";
 import { saveShoppingPrioritiesAction } from "./actions";
@@ -16,9 +18,13 @@ const priorityGroups = [
 export default async function ShoppingPrioritiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string; personalized?: string }>;
+  searchParams: Promise<{ saved?: string; personalized?: string; error?: string }>;
 }) {
+  const session = await requireAuthenticatedSession();
   const params = await searchParams;
+  const priorityProfile = await getShoppingPriorityProfile(session.user.id);
+  const answers = priorityProfile?.answers ?? {};
+  const zeroRules = priorityProfile?.automatic_zero_rules ?? {};
 
   return (
     <>
@@ -36,6 +42,11 @@ export default async function ShoppingPrioritiesPage({
             : "Answer all 12 starter questions and enable personalization to use Your Values Score."}
         </div>
       ) : null}
+      {params.error === "privacy_required" ? (
+        <div className="notice warning" role="alert">
+          Please acknowledge the Shopping Priorities privacy note before saving.
+        </div>
+      ) : null}
 
       <div className="card-grid">
         {priorityGroups.map((group) => (
@@ -49,6 +60,34 @@ export default async function ShoppingPrioritiesPage({
         ))}
       </div>
 
+      <section className="section compact-section">
+        <h2>How this works</h2>
+        <div className="card-grid">
+          <div className="card">
+            <h3>Evidence Score</h3>
+            <p>
+              Evidence Score is the base trust score supported by reviewed
+              evidence. Your answers do not change it.
+            </p>
+          </div>
+          <div className="card">
+            <h3>Your Values Score</h3>
+            <p>
+              Your Values Score is a personal fit overlay. It can appear only
+              after priorities are saved and enough evidence-backed scoring data
+              exists.
+            </p>
+          </div>
+          <div className="card">
+            <h3>Privacy</h3>
+            <p>
+              Mishava does not sell personal priority profiles. Payment does not
+              affect score, ranking, or trust treatment.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className="section">
         <h2>Starter questions</h2>
         <p className="section-intro">
@@ -59,7 +98,11 @@ export default async function ShoppingPrioritiesPage({
           {shoppingPriorityQuestions.map((question) => (
             <div className="field" key={question.id}>
               <label htmlFor={question.id}>{question.label}</label>
-              <select id={question.id} name={question.id} defaultValue="">
+              <select
+                id={question.id}
+                name={question.id}
+                defaultValue={answers[question.id]?.toString() ?? ""}
+              >
                 <option value="" disabled>
                   Choose importance
                 </option>
@@ -76,7 +119,11 @@ export default async function ShoppingPrioritiesPage({
             <label htmlFor="personalizationEnabled">
               Enable Your Values Score after 12 answers
             </label>
-            <select id="personalizationEnabled" name="personalizationEnabled" defaultValue="on">
+            <select
+              id="personalizationEnabled"
+              name="personalizationEnabled"
+              defaultValue={priorityProfile?.personalization_enabled === false ? "off" : "on"}
+            >
               <option value="on">On when complete</option>
               <option value="off">Keep off for now</option>
             </select>
@@ -96,7 +143,7 @@ export default async function ShoppingPrioritiesPage({
               <select
                 id={`zero-rule-${index + 1}`}
                 name={`zero_rule_${index + 1}`}
-                defaultValue="off"
+                defaultValue={zeroRules[`zero_rule_${index + 1}`] ?? "off"}
               >
                 <option value="off">Off</option>
                 <option value="warn">Warn me</option>
@@ -106,8 +153,25 @@ export default async function ShoppingPrioritiesPage({
           ))}
 
           <div className="field full">
+            <label className="check-row" htmlFor="privacyAcknowledged">
+              <input
+                id="privacyAcknowledged"
+                name="privacyAcknowledged"
+                type="checkbox"
+                defaultChecked={Boolean(priorityProfile?.privacy_acknowledged_at)}
+                required
+              />
+              <span>
+                I understand that Shopping Priorities personalize my experience,
+                do not change any company or product Evidence Score, and are not
+                sold as a personal profile.
+              </span>
+            </label>
+          </div>
+
+          <div className="field full">
             <button className="button primary" type="submit">
-              Save priorities
+              {priorityProfile ? "Update priorities" : "Save priorities"}
             </button>
           </div>
         </form>
