@@ -87,6 +87,7 @@ export async function createNgoOnboardingRecord({
     slug: slugify(input.publicName),
     country_code: input.country.trim(),
     public_summary: input.summary?.trim() || null,
+    created_by: session.user.id,
   });
 
   const organization = organizationRows.data[0];
@@ -222,4 +223,3 @@ function slugify(value: string) {
 function isSafeUrl(value: string) {
   return value.startsWith("https://") || value.startsWith("http://");
 }
-
