@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
-import { signInAction } from "../actions";
 
 export default async function SignInPage({
   searchParams,
@@ -16,7 +15,7 @@ export default async function SignInPage({
         saved priorities. Payment never changes trust outcomes.
       </PageHeader>
       <section className="auth-grid">
-        <form action={signInAction} className="auth-card">
+        <form action="/auth/sign-in/submit" className="auth-card" method="post">
           <StatusMessage error={params.error} notice={params.notice} />
           <label>
             Email

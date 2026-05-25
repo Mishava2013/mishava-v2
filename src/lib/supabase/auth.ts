@@ -135,7 +135,7 @@ export async function getAuthUser(accessToken: string) {
     accessToken,
   );
 
-  return response.user ?? null;
+  return response.user ?? (isSupabaseAuthUser(response) ? response : null);
 }
 
 export async function getAuthSessionFromAccessToken(
@@ -256,6 +256,15 @@ function normalizeAuthResponse(
     user: response.user,
     needsEmailConfirmation: Boolean(response.user && !response.access_token),
   };
+}
+
+function isSupabaseAuthUser(value: unknown): value is SupabaseAuthUser {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "id" in value &&
+    typeof (value as { id?: unknown }).id === "string"
+  );
 }
 
 function isKnownRole(value: string): value is AuthSession["user"]["roles"][number] {

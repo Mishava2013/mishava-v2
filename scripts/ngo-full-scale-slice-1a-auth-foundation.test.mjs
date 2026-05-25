@@ -27,7 +27,12 @@ test("auth pages and actions cover sign-up, sign-in, sign-out, reset, update, an
   const actions = read("src/app/auth/actions.ts");
 
   assert.match(read("src/app/auth/sign-up/page.tsx"), /signUpAction/);
-  assert.match(read("src/app/auth/sign-in/page.tsx"), /signInAction/);
+  assert.match(read("src/app/auth/sign-in/page.tsx"), /\/auth\/sign-in\/submit/);
+  assert.match(read("src/app/auth/sign-in/submit/route.ts"), /signInWithPassword/);
+  assert.match(
+    read("src/app/auth/sign-in/submit/route.ts"),
+    /supabaseAccessTokenCookieName/,
+  );
   assert.match(read("src/app/auth/sign-out/page.tsx"), /signOutAction/);
   assert.match(read("src/app/auth/reset-password/page.tsx"), /requestPasswordResetAction/);
   assert.match(read("src/app/auth/update-password/page.tsx"), /updatePasswordAction/);
@@ -44,7 +49,7 @@ test("route protection bridges Supabase Auth tokens before falling back to tempo
   assert.match(middleware, /readMiddlewareSupabaseSession/);
   assert.match(middleware, /parseSessionCookieValue/);
   assert.match(middleware, /isAdminSession\(session\)/);
-  assert.match(middleware, /hasOrganizationMembership\(session, organizationId\)/);
+  assert.match(middleware, /currentOrganizationCookieName/);
   assert.match(authServer, /getAuthSessionFromAccessToken/);
   assert.match(authServer, /parseSessionCookieValue/);
 });

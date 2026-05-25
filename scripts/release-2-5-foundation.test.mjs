@@ -13,7 +13,8 @@ test("/app, /org, and /admin are protected by middleware", () => {
 
   assert.match(middleware, /matcher: \["\/app\/:path\*", "\/org\/:path\*", "\/admin\/:path\*"\]/);
   assert.match(middleware, /isAdminSession\(session\)/);
-  assert.match(middleware, /hasOrganizationMembership\(session, organizationId\)/);
+  assert.match(middleware, /currentOrganizationCookieName/);
+  assert.match(read("src/app/org/layout.tsx"), /requireCurrentOrganizationMembership/);
 });
 
 test("server layouts enforce auth, admin, and org membership", () => {
@@ -54,4 +55,3 @@ test("score snapshots require publication and public visibility for public read"
   assert.match(migration, /published_at is not null/);
   assert.match(migration, /visibility in \('public_summary', 'public_full_record'\)/);
 });
-
