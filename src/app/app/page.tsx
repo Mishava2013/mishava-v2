@@ -8,7 +8,14 @@ const workspaceLinks = [
   { href: "/app/billing", label: "Billing" },
 ];
 
-export default function AppWorkspacePage() {
+export default async function AppWorkspacePage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = (await searchParams) ?? {};
+  const orgNotice = Array.isArray(params.org) ? params.org[0] : params.org;
+
   return (
     <>
       <PageHeader eyebrow="Signed-in workspace" title="Personal trust controls.">
@@ -16,6 +23,18 @@ export default function AppWorkspacePage() {
         priorities, saved products, watchlists, and Plus features without
         changing public ranking rules.
       </PageHeader>
+      {orgNotice === "invalid" ? (
+        <div className="notice" role="status">
+          Your previous organization selection is no longer available for this
+          account. Choose an active organization from the workspace selector.
+        </div>
+      ) : null}
+      {orgNotice === "select" ? (
+        <div className="notice" role="status">
+          Choose an active organization before opening private organization
+          records.
+        </div>
+      ) : null}
       <div className="card-grid">
         {workspaceLinks.map((link) => (
           <Link className="card" href={link.href} key={link.href}>
@@ -27,4 +46,3 @@ export default function AppWorkspacePage() {
     </>
   );
 }
-

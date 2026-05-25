@@ -13,7 +13,6 @@ test("/app, /org, and /admin are protected by middleware", () => {
 
   assert.match(middleware, /matcher: \["\/app\/:path\*", "\/org\/:path\*", "\/admin\/:path\*"\]/);
   assert.match(middleware, /isAdminSession\(session\)/);
-  assert.match(middleware, /currentOrganizationCookieName/);
   assert.match(read("src/app/org/layout.tsx"), /requireCurrentOrganizationMembership/);
 });
 

@@ -79,6 +79,11 @@ export async function setCurrentOrganizationId(organizationId: string) {
   });
 }
 
+export async function clearCurrentOrganizationId() {
+  const cookieStore = await cookies();
+  cookieStore.delete(currentOrganizationCookieName);
+}
+
 export async function requireAuthenticatedSession() {
   const session = await getCurrentSession();
 
@@ -102,14 +107,18 @@ export async function requireAdminSession() {
 export async function requireCurrentOrganizationMembership() {
   const session = await requireAuthenticatedSession();
   const selectedOrganizationId = await getCurrentOrganizationId();
+  const hasSelectedOrganization = hasOrganizationMembership(
+    session,
+    selectedOrganizationId,
+  );
   const organizationId =
-    selectedOrganizationId ??
+    (hasSelectedOrganization ? selectedOrganizationId : null) ??
     (session.memberships.length === 1
       ? session.memberships[0]?.organizationId
       : null);
 
   if (!hasOrganizationMembership(session, organizationId)) {
-    redirect("/?auth=organization_required");
+    redirect(selectedOrganizationId ? "/app?org=invalid" : "/app?org=select");
   }
 
   return {

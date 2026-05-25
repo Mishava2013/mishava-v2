@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
-  currentOrganizationCookieName,
   isAdminSession,
   parseSupabaseAccessTokenValue,
   parseSessionCookieValue,
@@ -28,12 +27,6 @@ export async function middleware(request: NextRequest) {
 
   if (pathname.startsWith("/admin") && !isAdminSession(session)) {
     return redirectWithReason(request, "admin_required");
-  }
-
-  if (pathname.startsWith("/org")) {
-    if (!request.cookies.get(currentOrganizationCookieName)?.value) {
-      return redirectWithReason(request, "organization_required");
-    }
   }
 
   return NextResponse.next();

@@ -253,6 +253,69 @@ textarea {
   color: #8f3329;
 }
 
+.org-switcher {
+  background: var(--white);
+  border: 1px solid var(--light-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-subtle);
+  display: grid;
+  gap: 14px;
+  margin-bottom: 28px;
+  padding: 18px;
+}
+
+.org-switcher-header {
+  align-items: start;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+.org-switcher-header h2 {
+  color: var(--brand-navy);
+  font-size: 22px;
+  line-height: 1.2;
+  margin-top: 4px;
+}
+
+.org-switcher-header p,
+.org-switcher-note {
+  color: var(--secondary-text);
+  line-height: 1.5;
+}
+
+.org-switcher-form {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.org-switcher-form label {
+  color: var(--secondary-text);
+  font-size: 13px;
+  font-weight: 750;
+  grid-column: 1 / -1;
+}
+
+.org-switcher-form select {
+  background: var(--white);
+  border: 1px solid var(--medium-border);
+  border-radius: 8px;
+  color: var(--mishava-ink);
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.org-switcher-warning {
+  background: #fff9ed;
+  border: 1px solid #eed69a;
+  border-radius: 8px;
+  color: #624812;
+  line-height: 1.5;
+  padding: 12px;
+}
+
 .eyebrow {
   color: var(--brand-blue);
   font-size: 13px;
@@ -1088,7 +1151,9 @@ textarea {
   }
 
   .storefront-search,
+  .org-switcher-header,
   .trust-callout {
+    display: grid;
     grid-template-columns: 1fr;
   }
 

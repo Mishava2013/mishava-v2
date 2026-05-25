@@ -49,9 +49,9 @@ test("route protection bridges Supabase Auth tokens before falling back to tempo
   assert.match(middleware, /readMiddlewareSupabaseSession/);
   assert.match(middleware, /parseSessionCookieValue/);
   assert.match(middleware, /isAdminSession\(session\)/);
-  assert.match(middleware, /currentOrganizationCookieName/);
   assert.match(authServer, /getAuthSessionFromAccessToken/);
   assert.match(authServer, /parseSessionCookieValue/);
+  assert.match(authServer, /currentOrganizationCookieName/);
 });
 
 test("NGO onboarding maps real Supabase auth user to memberships and current org", () => {
