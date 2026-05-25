@@ -63,9 +63,10 @@ test("shared grant view exposes only report summary and allowed evidence summari
   assert.match(page, /requireAuthenticatedSession/);
   assert.match(page, /getSharedNgoReportByGrant/);
   assert.match(page, /Shared by the NGO/);
-  assert.match(page, /Raw evidence not exposed/);
+  assert.match(page, /Raw files not included/);
+  assert.match(page, /No full workspace access/);
   assert.match(page, /Allowed evidence summaries/);
-  assert.match(page, /Raw notes, source files, internal URLs, and workspace details/);
+  assert.match(page, /Raw notes, source files, internal URLs, private file links/);
   assert.match(helper, /selectedEvidence = fullEvidenceLibrary/);
   assert.doesNotMatch(helper, /notes: item\.notes/);
   assert.doesNotMatch(page, /org\/reports/);
@@ -82,7 +83,7 @@ test("private reports remain private unless grant exists and no public report li
   assert.match(orgPage, /Shared/);
   assert.match(orgPage, /Revoked/);
   assert.match(orgPage, /Expires/);
-  assert.match(orgPage, /Raw evidence is not shared by default/);
+  assert.match(orgPage, /Raw files are private by default/);
   assert.throws(() => read("src/app/reports/page.tsx"));
   assert.throws(() => read("src/app/shared/ngo-reports/page.tsx"));
 });

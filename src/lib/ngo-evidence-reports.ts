@@ -80,6 +80,24 @@ type NgoReportTemplateRow = InsertedRow & {
   active: boolean;
 };
 
+type OrganizationRow = InsertedRow & {
+  name: string;
+  country_code: string | null;
+  public_summary: string | null;
+};
+
+type NgoProfileRow = InsertedRow & {
+  organization_id: string;
+  tier: string;
+  public_name: string;
+  legal_name: string | null;
+  mission_area: string | null;
+  website_url: string | null;
+  registration_identifier: string | null;
+  default_visibility: string;
+  profile_status: string;
+};
+
 type NgoShareGrantRow = InsertedRow & {
   organization_id: string;
   ngo_profile_id: string;
@@ -290,10 +308,10 @@ export async function getNgoReportWorkspace({
   client: SupabaseServerClient;
   organizationId: string;
 }) {
-  const ngoProfile = await client.selectOne<InsertedRow>(
+  const ngoProfile = await client.selectOne<NgoProfileRow>(
     "ngo_profiles",
     { organization_id: organizationId },
-    "id,organization_id",
+    "id,organization_id,tier,public_name,legal_name,mission_area,website_url,registration_identifier,default_visibility,profile_status",
   );
 
   const templates = await client.selectMany<NgoReportTemplateRow>(
@@ -352,6 +370,11 @@ export async function getNgoReportDetail({
 }) {
   const workspace = await getNgoReportWorkspace({ client, organizationId });
   const fullEvidenceLibrary = await getNgoEvidenceLibrary({ client, organizationId });
+  const organization = await client.selectOne<OrganizationRow>(
+    "organizations",
+    { id: organizationId },
+    "id,name,country_code,public_summary",
+  );
   const report = await client.selectOne<NgoReportRow>(
     "ngo_reports",
     { id: reportId, organization_id: organizationId },
@@ -395,6 +418,7 @@ export async function getNgoReportDetail({
 
   return {
     ...workspace,
+    organization,
     report,
     template,
     selectedEvidence,
@@ -998,10 +1022,21 @@ export async function getSharedNgoReportByGrant({
       )
     : null;
 
+  const organization = await client.selectOne<OrganizationRow>(
+    "organizations",
+    { id: grant.organization_id },
+    "id,name,country_code,public_summary",
+  );
+  const ngoProfile = await client.selectOne<NgoProfileRow>(
+    "ngo_profiles",
+    { id: grant.ngo_profile_id },
+    "id,organization_id,tier,public_name,legal_name,mission_area,website_url,registration_identifier,default_visibility,profile_status",
+  );
+
   const evidence = await client.selectMany<EvidenceRow>(
     "evidence_items",
     { organization_id: grant.organization_id },
-    "id,organization_id,title,source_name,source_type,url,notes,verification_status,visibility,created_at,created_by",
+    "id,organization_id,title,source_name,source_type,url,notes,verification_status,visibility,created_at,created_by,document_path,lifecycle_status,archived_at",
   );
   const selectedEvidence = evidence
     .filter((item) => report.evidence_item_ids.includes(item.id))
@@ -1013,6 +1048,8 @@ export async function getSharedNgoReportByGrant({
       verification_status: item.verification_status,
       visibility: item.visibility,
       created_at: item.created_at,
+      lifecycle_status: item.lifecycle_status,
+      archived_at: item.archived_at,
     }));
 
   const claims = await client.selectMany<StructuredClaimRow>(
@@ -1043,6 +1080,8 @@ export async function getSharedNgoReportByGrant({
 
   return {
     grant,
+    organization,
+    ngoProfile,
     report,
     template,
     selectedEvidence,

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
+import { PrintReportButton } from "@/components/PrintReportButton";
 import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
 import { getNgoReportDetail } from "@/lib/ngo-evidence-reports";
 import {
@@ -50,12 +51,20 @@ export default async function OrgReportDetailPage({
   const selectedEvidenceIds = new Set(detail.report.evidence_item_ids);
   const selectedClaimIds = new Set(detail.report.structured_claim_ids);
   const hasActiveGrant = detail.activeShareGrantCount > 0;
+  const generatedAt = new Date().toLocaleDateString();
+  const organizationName =
+    detail.ngoProfile?.public_name ?? detail.organization?.name ?? "NGO organization";
+  const reportStatusLabel =
+    hasActiveGrant && detail.report.approval_status === "draft"
+      ? "Shared draft"
+      : detail.report.approval_status;
 
   return (
     <>
       <PageHeader eyebrow="Draft report" title={detail.report.title}>
-        This report is private to your organization. Exports and sharing are not
-        enabled yet, and no public score has been created from this draft.
+        This report preview is private to your organization. It can be printed
+        for internal use, but no public score has been created from this draft
+        and raw files remain private by default.
       </PageHeader>
 
       {query.created ? (
@@ -89,24 +98,33 @@ export default async function OrgReportDetailPage({
         </div>
       ) : null}
 
-      <section className="section">
-        <div className="record-header">
+      <section className="section report-preview" aria-labelledby="report-preview-title">
+        <div className="record-header report-preview-header">
           <div>
-            <span className="tag">Draft report</span>
-            <h2>{detail.report.title}</h2>
+            <span className="tag">Draft</span>
+            <h2 id="report-preview-title">{detail.report.title}</h2>
             <p>
               {detail.template?.name ?? "Template not listed"} ·{" "}
-              {detail.report.approval_status} · {detail.report.visibility}
+              {reportStatusLabel} · {detail.report.visibility}
             </p>
           </div>
-          <div className="status-row">
+          <div className="status-row report-controls">
+            <PrintReportButton />
             <span className="tag">Private to your organization</span>
             <span className="tag">{hasActiveGrant ? "Shared" : "Not shared"}</span>
-            <span className="tag">Raw evidence is not shared by default</span>
+            <span className="tag">Raw files are private by default</span>
           </div>
         </div>
 
         <div className="metric-grid">
+          <div className="metric">
+            <span>Organization</span>
+            <strong>{organizationName}</strong>
+          </div>
+          <div className="metric">
+            <span>Mission area</span>
+            <strong>{detail.ngoProfile?.mission_area ?? "Not provided"}</strong>
+          </div>
           <div className="metric">
             <span>Created</span>
             <strong>{new Date(detail.report.created_at).toLocaleDateString()}</strong>
@@ -123,26 +141,78 @@ export default async function OrgReportDetailPage({
             <span>Accepted claims</span>
             <strong>{detail.selectedAcceptedClaims.length} attached</strong>
           </div>
+          <div className="metric">
+            <span>Generated</span>
+            <strong>{generatedAt}</strong>
+          </div>
+        </div>
+
+        <div className="report-summary">
+          <h3>Organization profile summary</h3>
+          <p>
+            {detail.organization?.public_summary ||
+              detail.ngoProfile?.mission_area ||
+              "This NGO has not added a public summary yet."}
+          </p>
+          <dl className="detail-list">
+            <div>
+              <dt>Public name</dt>
+              <dd>{organizationName}</dd>
+            </div>
+            <div>
+              <dt>Country</dt>
+              <dd>{detail.organization?.country_code ?? "Not provided"}</dd>
+            </div>
+            <div>
+              <dt>Website</dt>
+              <dd>
+                {detail.ngoProfile?.website_url ? (
+                  <a href={detail.ngoProfile.website_url}>
+                    {detail.ngoProfile.website_url}
+                  </a>
+                ) : (
+                  "Not provided"
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>Profile status</dt>
+              <dd>{detail.ngoProfile?.profile_status ?? "draft"}</dd>
+            </div>
+          </dl>
         </div>
 
         <div className="evidence-panel">
           <h3>Draft/provisional trust context</h3>
           <p>
-            Trust context is provisional until evidence-backed claims are reviewed
-            and accepted. No public score has been created from this report.
+            This report is evidence-based but may be incomplete. Trust context
+            is provisional until evidence-backed claims are reviewed and
+            accepted. No public score has been created unless a published
+            Mishava score snapshot is explicitly referenced.
           </p>
           <div className="status-row">
             <span className="tag">Trust context is provisional</span>
             <span className="tag">No public score has been created</span>
-            <span className="tag">Exports not enabled yet</span>
+            <span className="tag">Not publicly scored</span>
             <span className="tag">
-              {hasActiveGrant ? "Scoped sharing enabled" : "Sharing not enabled yet"}
+              {hasActiveGrant ? "Scoped sharing enabled" : "Not shared"}
             </span>
           </div>
         </div>
+
+        <div className="report-disclaimer">
+          <h3>Report limitations</h3>
+          <p>
+            This report is based on selected evidence and may not represent a
+            complete record. Evidence coverage and recency limits may apply. Raw
+            evidence files are not included unless explicitly shared in a future
+            approved workflow. Mishava does not guarantee outcomes or provide
+            legal, financial, or procurement advice.
+          </p>
+        </div>
       </section>
 
-      <section className="section">
+      <section className="section report-actions">
         <h2>Scoped sharing</h2>
         <p className="section-intro">
           Share grants are scoped to this report only. They do not expose the
@@ -219,8 +289,8 @@ export default async function OrgReportDetailPage({
                     </span>
                   </div>
                   <p className="record-note">
-                    Purpose: {grant.purpose}. Raw evidence is not shared by
-                    default.
+                    Purpose: {grant.purpose}. Raw files are private by default
+                    and this grant exposes only the selected report summary.
                   </p>
                   <div className="status-row">
                     <Link className="button" href={`/shared/ngo-reports/${grant.id}`}>
@@ -263,8 +333,30 @@ export default async function OrgReportDetailPage({
                   <span className="score-pill">{item.visibility}</span>
                 </div>
                 <p className="record-note">
-                  {item.reportAttachmentLabel}. {item.nextStepLabel}.
+                  {item.reportAttachmentLabel}. {item.nextStepLabel}.{" "}
+                  {item.lifecycle_status === "archived"
+                    ? "Archived evidence remains traceable but is labeled and excluded from new report selection by default."
+                    : "Raw files are private by default and are not included in print output."}
                 </p>
+                <dl className="detail-list">
+                  <div>
+                    <dt>Lifecycle</dt>
+                    <dd>
+                      {item.lifecycle_status}
+                      {item.archived_at
+                        ? ` · archived ${new Date(item.archived_at).toLocaleDateString()}`
+                        : ""}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Source</dt>
+                    <dd>{item.source_name}</dd>
+                  </div>
+                  <div>
+                    <dt>Created</dt>
+                    <dd>{new Date(item.created_at).toLocaleDateString()}</dd>
+                  </div>
+                </dl>
               </article>
             ))}
           </div>
@@ -321,7 +413,7 @@ export default async function OrgReportDetailPage({
         )}
       </section>
 
-      <section className="section">
+      <section className="section report-actions">
         <h2>Edit private draft</h2>
         <p className="section-intro">
           Updates keep this report private and write an audit event. Rejected or

@@ -21,8 +21,8 @@ test("NGO member can view own private report detail with honest draft labels", (
   assert.match(page, /Not shared/);
   assert.match(page, /Trust context is provisional/);
   assert.match(page, /No public score has been created/);
-  assert.match(page, /Exports not enabled yet/);
-  assert.match(page, /Sharing not enabled yet/);
+  assert.match(page, /Not publicly scored/);
+  assert.match(page, /Raw files are private by default/);
 });
 
 test("non-members cannot view private report detail because report fetch is org-scoped", () => {
