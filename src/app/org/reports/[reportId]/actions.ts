@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { canManageNgoReports, canManageNgoTeam } from "@/lib/auth";
 import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
 import {
   createNgoReportShareGrant,
@@ -14,6 +15,11 @@ export async function updateNgoReportDraftAction(
   formData: FormData,
 ) {
   const { session, organizationId } = await requireCurrentOrganizationMembership();
+  if (!canManageNgoReports(session, organizationId)) {
+    redirect(
+      `/org/reports/${reportId}?error=Report%20editing%20requires%20member%20access.`,
+    );
+  }
 
   const result = await updateNgoReportDraft({
     client: createSupabaseAuthenticatedServerClient(session.accessToken),
@@ -41,6 +47,11 @@ export async function createNgoReportShareGrantAction(
   formData: FormData,
 ) {
   const { session, organizationId } = await requireCurrentOrganizationMembership();
+  if (!canManageNgoTeam(session, organizationId)) {
+    redirect(
+      `/org/reports/${reportId}?error=Sharing%20requires%20admin%20access.`,
+    );
+  }
 
   const result = await createNgoReportShareGrant({
     client: createSupabaseAuthenticatedServerClient(session.accessToken),
@@ -69,6 +80,11 @@ export async function revokeNgoReportShareGrantAction(
   shareGrantId: string,
 ) {
   const { session, organizationId } = await requireCurrentOrganizationMembership();
+  if (!canManageNgoTeam(session, organizationId)) {
+    redirect(
+      `/org/reports/${reportId}?error=Sharing%20requires%20admin%20access.`,
+    );
+  }
 
   const result = await revokeNgoReportShareGrant({
     client: createSupabaseAuthenticatedServerClient(session.accessToken),

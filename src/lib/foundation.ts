@@ -1,7 +1,9 @@
 export type RoleCode =
   | "consumer"
   | "ngo_owner"
+  | "ngo_admin"
   | "ngo_member"
+  | "ngo_viewer"
   | "business_owner"
   | "business_member"
   | "auditor_field"

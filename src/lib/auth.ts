@@ -30,6 +30,7 @@ export const adminRoles: RoleCode[] = [
 
 export const organizationAdminRoles: RoleCode[] = [
   "ngo_owner",
+  "ngo_admin",
   "business_owner",
   "mishava_admin",
 ];
@@ -82,13 +83,54 @@ export function hasOrganizationRole(
   allowedRoles: RoleCode[],
 ) {
   if (!session || !organizationId) return false;
-  const membership = session.memberships.find(
-    (item) => item.organizationId === organizationId,
+  return session.memberships.some(
+    (membership) =>
+      membership.organizationId === organizationId &&
+      membership.roles.some((role) => allowedRoles.includes(role)),
   );
+}
 
-  if (!membership) return false;
+export function canManageNgoTeam(
+  session: AuthSession | null,
+  organizationId: string | null,
+) {
+  return hasOrganizationRole(session, organizationId, [
+    "ngo_owner",
+    "ngo_admin",
+    "mishava_admin",
+  ]);
+}
 
-  return membership.roles.some((role) => allowedRoles.includes(role));
+export function canManageNgoEvidence(
+  session: AuthSession | null,
+  organizationId: string | null,
+) {
+  return hasOrganizationRole(session, organizationId, [
+    "ngo_owner",
+    "ngo_admin",
+    "ngo_member",
+    "mishava_admin",
+  ]);
+}
+
+export function canManageNgoReports(
+  session: AuthSession | null,
+  organizationId: string | null,
+) {
+  return canManageNgoEvidence(session, organizationId);
+}
+
+export function canViewNgoWorkspace(
+  session: AuthSession | null,
+  organizationId: string | null,
+) {
+  return hasOrganizationRole(session, organizationId, [
+    "ngo_owner",
+    "ngo_admin",
+    "ngo_member",
+    "ngo_viewer",
+    "mishava_admin",
+  ]);
 }
 
 export function parseSessionCookieValue(value?: string | null): AuthSession | null {
@@ -163,7 +205,9 @@ function isRoleCode(value: unknown): value is RoleCode {
     [
       "consumer",
       "ngo_owner",
+      "ngo_admin",
       "ngo_member",
+      "ngo_viewer",
       "business_owner",
       "business_member",
       "auditor_field",

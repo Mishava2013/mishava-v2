@@ -21,6 +21,7 @@ type SupabaseAuthUser = {
 type MembershipRow = {
   organization_id: string;
   role: string;
+  status?: string;
 };
 
 export type SupabaseAuthResult = {
@@ -146,7 +147,9 @@ export async function getAuthSessionFromAccessToken(
   const user = await getAuthUser(accessToken);
   if (!user?.id || !user.email) return null;
 
-  const memberships = await readUserMemberships(accessToken);
+  const memberships = (await readUserMemberships(accessToken)).filter(
+    (membership) => (membership.status ?? "active") === "active",
+  );
   const membershipRoles = memberships.map((membership) => membership.role);
   const roles = new Set([
     ...parseRoleClaims({
@@ -179,7 +182,8 @@ export async function readUserMemberships(accessToken: string) {
   if (!url || !anonKey) return [];
 
   const params = new URLSearchParams();
-  params.set("select", "organization_id,role");
+  params.set("select", "organization_id,role,status");
+  params.set("status", "eq.active");
 
   const response = await fetch(
     `${url.replace(/\/$/, "")}/rest/v1/organization_memberships?${params}`,
@@ -271,7 +275,9 @@ function isKnownRole(value: string): value is AuthSession["user"]["roles"][numbe
   return [
     "consumer",
     "ngo_owner",
+    "ngo_admin",
     "ngo_member",
+    "ngo_viewer",
     "business_owner",
     "business_member",
     "auditor_field",

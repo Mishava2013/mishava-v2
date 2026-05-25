@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { canManageNgoEvidence } from "@/lib/auth";
 import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
 import { createStructuredClaimDraft } from "@/lib/ngo-evidence-reports";
 import { createEvidenceRecord } from "@/lib/release-2-5-workflows";
@@ -8,6 +9,9 @@ import { createSupabaseAuthenticatedServerClient } from "@/lib/supabase/server";
 
 export async function createEvidenceAction(formData: FormData) {
   const { session, organizationId } = await requireCurrentOrganizationMembership();
+  if (!canManageNgoEvidence(session, organizationId)) {
+    redirect("/org/evidence?error=Evidence%20editing%20requires%20member%20access.");
+  }
 
   const result = await createEvidenceRecord({
     client: createSupabaseAuthenticatedServerClient(session.accessToken),
@@ -47,6 +51,9 @@ export async function createEvidenceAction(formData: FormData) {
 
 export async function createStructuredClaimDraftAction(formData: FormData) {
   const { session, organizationId } = await requireCurrentOrganizationMembership();
+  if (!canManageNgoEvidence(session, organizationId)) {
+    redirect("/org/evidence?error=Evidence%20editing%20requires%20member%20access.");
+  }
 
   const result = await createStructuredClaimDraft({
     client: createSupabaseAuthenticatedServerClient(session.accessToken),

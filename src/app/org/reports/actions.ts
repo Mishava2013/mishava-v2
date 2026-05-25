@@ -1,12 +1,16 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { canManageNgoReports } from "@/lib/auth";
 import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
 import { createNgoReportDraft } from "@/lib/ngo-evidence-reports";
 import { createSupabaseAuthenticatedServerClient } from "@/lib/supabase/server";
 
 export async function createNgoReportDraftAction(formData: FormData) {
   const { session, organizationId } = await requireCurrentOrganizationMembership();
+  if (!canManageNgoReports(session, organizationId)) {
+    redirect("/org/reports?error=Report%20editing%20requires%20member%20access.");
+  }
 
   const result = await createNgoReportDraft({
     client: createSupabaseAuthenticatedServerClient(session.accessToken),

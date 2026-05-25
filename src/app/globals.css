@@ -419,6 +419,30 @@ textarea {
   margin-top: 4px;
 }
 
+.detail-list {
+  display: grid;
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.detail-list div {
+  border-bottom: 1px solid var(--light-border);
+  display: grid;
+  gap: 4px;
+  padding-bottom: 10px;
+}
+
+.detail-list dt {
+  color: var(--muted-text);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.detail-list dd {
+  color: var(--mishava-ink);
+  overflow-wrap: anywhere;
+}
+
 .section {
   padding: 44px 0;
 }

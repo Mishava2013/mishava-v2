@@ -1,43 +1,233 @@
 import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/EmptyState";
+import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
+import { getNgoTeamWorkspace, teamRoleLabel } from "@/lib/ngo-team";
+import {
+  createSupabaseAuthenticatedServerClient,
+  isSupabaseServerConfigured,
+} from "@/lib/supabase/server";
+import {
+  createTeamInviteAction,
+  removeTeamMemberAction,
+  revokeTeamInviteAction,
+} from "./actions";
 
-export default function OrgTeamPage() {
+function formatDate(value: string | null) {
+  if (!value) return "Not recorded";
+  return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(
+    new Date(value),
+  );
+}
+
+export default async function OrgTeamPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    accepted?: string;
+    created?: string;
+    error?: string;
+    id?: string;
+    updated?: string;
+  }>;
+}) {
+  const params = (await searchParams) ?? {};
+  const { session, organizationId } = await requireCurrentOrganizationMembership();
+  const workspace = isSupabaseServerConfigured()
+    ? await getNgoTeamWorkspace({
+        client: createSupabaseAuthenticatedServerClient(session.accessToken),
+        organizationId,
+        session,
+      })
+    : {
+        organizationName: "Current organization",
+        canManageTeam: false,
+        members: [],
+        invites: [],
+      };
+
   return (
     <>
-      <PageHeader eyebrow="Team" title="Roles, approvals, and visible paper trails.">
-        Mishava team access is built for scale: no role can overwrite trust outcomes
-        without an audit event, reason, reviewer, timestamp, and visible history.
+      <PageHeader eyebrow="Team" title="Team access and visible paper trails.">
+        {workspace.organizationName} team access is scoped to this organization.
+        Invites do not grant access until the invited email accepts.
       </PageHeader>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>Role</th>
-            <th>Purpose</th>
-            <th>Cannot do</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>NGO owner</td>
-            <td>Manage profile, team, billing, reports, and sharing</td>
-            <td>Silently alter approved evidence history</td>
-          </tr>
-          <tr>
-            <td>NGO member</td>
-            <td>Add evidence, draft reports, request reviews</td>
-            <td>Publish without approval</td>
-          </tr>
-          <tr>
-            <td>Approved viewer</td>
-            <td>View selected shared reports or evidence summaries</td>
-            <td>Access full workspace</td>
-          </tr>
-          <tr>
-            <td>Mishava reviewer</td>
-            <td>Review flagged evidence or AI extraction issues</td>
-            <td>Complete field audit and final review alone</td>
-          </tr>
-        </tbody>
-      </table>
+
+      {params.error ? (
+        <div className="notice" role="status">
+          {decodeURIComponent(params.error)}
+        </div>
+      ) : null}
+      {params.created === "invite" ? (
+        <div className="notice" role="status">
+          Invite created. Use the dev-safe invite link below until production
+          email delivery is wired.
+        </div>
+      ) : null}
+      {params.updated ? (
+        <div className="notice" role="status">
+          Team update saved and audit event recorded.
+        </div>
+      ) : null}
+      {params.accepted === "invite" ? (
+        <div className="notice" role="status">
+          Invite accepted. This organization is now available in your workspace.
+        </div>
+      ) : null}
+
+      <section className="section">
+        <h2>Members</h2>
+        <p className="section-intro">
+          Removed members lose access through server-side membership checks. The
+          current organization selector cannot restore access by itself.
+        </p>
+
+        {workspace.members.length === 0 ? (
+          <EmptyState title="No members found">
+            This organization does not have visible team members yet.
+          </EmptyState>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Email / name</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Dates</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {workspace.members.map((member) => (
+                <tr key={member.id}>
+                  <td>
+                    <strong>{member.displayEmail ?? member.userId}</strong>
+                    {member.displayName ? <p>{member.displayName}</p> : null}
+                  </td>
+                  <td>{teamRoleLabel(member.role)}</td>
+                  <td>
+                    <span className="tag">{member.status}</span>
+                  </td>
+                  <td>
+                    <p>Created: {formatDate(member.createdAt)}</p>
+                    <p>Accepted: {formatDate(member.acceptedAt)}</p>
+                    {member.removedAt ? (
+                      <p>Removed: {formatDate(member.removedAt)}</p>
+                    ) : null}
+                  </td>
+                  <td>
+                    {workspace.canManageTeam && member.status === "active" ? (
+                      <form action={removeTeamMemberAction}>
+                        <input name="membershipId" type="hidden" value={member.id} />
+                        <button className="button" type="submit">
+                          Remove
+                        </button>
+                      </form>
+                    ) : (
+                      <span className="muted-copy">No action available</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <section className="section">
+        <h2>Invite teammate</h2>
+        {workspace.canManageTeam ? (
+          <form action={createTeamInviteAction} className="form-grid">
+            <div className="field">
+              <label htmlFor="email">Email</label>
+              <input id="email" name="email" type="email" required />
+            </div>
+            <div className="field">
+              <label htmlFor="role">Role</label>
+              <select id="role" name="role" defaultValue="ngo_member">
+                <option value="ngo_owner">Owner</option>
+                <option value="ngo_admin">Admin</option>
+                <option value="ngo_member">Member</option>
+                <option value="ngo_viewer">Viewer</option>
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="expiresAt">Expires at</label>
+              <input id="expiresAt" name="expiresAt" type="datetime-local" />
+            </div>
+            <div className="field full">
+              <label htmlFor="note">Purpose / note</label>
+              <textarea
+                id="note"
+                name="note"
+                placeholder="Optional note for the team access record"
+              />
+            </div>
+            <div className="field full">
+              <button className="button primary" type="submit">
+                Create invite
+              </button>
+            </div>
+          </form>
+        ) : (
+          <EmptyState title="Team management requires owner or admin access">
+            Your current role can view allowed workspace information, but cannot
+            invite, revoke, or remove team members.
+          </EmptyState>
+        )}
+      </section>
+
+      <section className="section">
+        <h2>Invites</h2>
+        {workspace.invites.length === 0 ? (
+          <EmptyState title="No invites yet">
+            Pending invites will appear here. Real email delivery is not enabled
+            in this slice.
+          </EmptyState>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Dates</th>
+                <th>Dev-safe invite link</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {workspace.invites.map((invite) => (
+                <tr key={invite.id}>
+                  <td>{invite.email}</td>
+                  <td>{teamRoleLabel(invite.role)}</td>
+                  <td>
+                    <span className="tag">{invite.status}</span>
+                  </td>
+                  <td>
+                    <p>Invited: {formatDate(invite.invitedAt)}</p>
+                    <p>Expires: {formatDate(invite.expiresAt)}</p>
+                  </td>
+                  <td>
+                    <code>{`/app/team-invites/${invite.id}`}</code>
+                  </td>
+                  <td>
+                    {workspace.canManageTeam && invite.status === "pending" ? (
+                      <form action={revokeTeamInviteAction}>
+                        <input name="inviteId" type="hidden" value={invite.id} />
+                        <button className="button" type="submit">
+                          Revoke
+                        </button>
+                      </form>
+                    ) : (
+                      <span className="muted-copy">No action available</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
     </>
   );
 }
