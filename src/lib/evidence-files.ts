@@ -1,5 +1,9 @@
 import type { AuthSession } from "./auth";
 import { buildAuditEvent } from "./audit-log";
+import {
+  enforceNgoEntitlement,
+  enforceNgoStorageEntitlement,
+} from "./ngo-billing";
 import { evidenceFilesBucket, uploadPrivateEvidenceObject } from "./supabase/storage";
 import type { SupabaseServerClient } from "./supabase/server";
 
@@ -139,6 +143,32 @@ export async function uploadEvidenceFileForItem({
     { evidence_item_id: evidenceItemId, organization_id: organizationId },
     "id,organization_id,evidence_item_id,storage_bucket,storage_path,original_filename,safe_filename,mime_type,file_size_bytes,version_number,status,visibility,uploaded_by,uploaded_at",
   );
+
+  if (!existingFiles.some((item) => item.status === "active")) {
+    const fileCountEntitlement = await enforceNgoEntitlement({
+      check: "evidence_file_upload",
+      client,
+      incomingFileSizeBytes: file.size,
+      organizationId,
+      session,
+    });
+
+    if (!fileCountEntitlement.allowed) {
+      return { ok: false, message: fileCountEntitlement.message };
+    }
+  }
+
+  const storageEntitlement = await enforceNgoStorageEntitlement({
+    client,
+    incomingFileSizeBytes: file.size,
+    organizationId,
+    session,
+  });
+
+  if (!storageEntitlement.allowed) {
+    return { ok: false, message: storageEntitlement.message };
+  }
+
   const nextVersion =
     existingFiles.reduce(
       (highest, item) => Math.max(highest, Number(item.version_number) || 0),

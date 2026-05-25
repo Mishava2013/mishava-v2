@@ -1,5 +1,6 @@
 import type { AuthSession } from "./auth";
 import { buildAuditEvent } from "./audit-log";
+import { enforceNgoEntitlement } from "./ngo-billing";
 import type { SupabaseServerClient } from "./supabase/server";
 
 export type WorkflowResult = {
@@ -148,6 +149,17 @@ export async function createEvidenceRecord({
 
   if (validationErrors.length > 0) {
     return { ok: false, message: validationErrors.join(" ") };
+  }
+
+  const entitlement = await enforceNgoEntitlement({
+    check: "evidence_item_create",
+    client,
+    organizationId: input.organizationId,
+    session,
+  });
+
+  if (!entitlement.allowed) {
+    return { ok: false, message: entitlement.message };
   }
 
   const evidenceRows = await client.insert<InsertedRow>("evidence_items", {

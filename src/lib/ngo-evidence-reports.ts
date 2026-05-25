@@ -1,5 +1,6 @@
 import type { AuthSession } from "./auth";
 import { buildAuditEvent } from "./audit-log";
+import { enforceNgoEntitlement } from "./ngo-billing";
 import type { SupabaseServerClient } from "./supabase/server";
 
 type InsertedRow = Record<string, unknown> & { id: string };
@@ -545,6 +546,17 @@ export async function createNgoReportDraft({
     return { ok: false, message: "NGO profile is required before reports." };
   }
 
+  const entitlement = await enforceNgoEntitlement({
+    check: "report_create",
+    client,
+    organizationId: input.organizationId,
+    session,
+  });
+
+  if (!entitlement.allowed) {
+    return { ok: false, message: entitlement.message };
+  }
+
   const template = await client.selectOne<InsertedRow>(
     "ngo_report_templates",
     { id: input.templateId, active: true },
@@ -853,6 +865,17 @@ export async function createNgoReportShareGrant({
       ok: false,
       message: "Share grants can only be created for private reports owned by this organization.",
     };
+  }
+
+  const entitlement = await enforceNgoEntitlement({
+    check: "share_grant_create",
+    client,
+    organizationId: input.organizationId,
+    session,
+  });
+
+  if (!entitlement.allowed) {
+    return { ok: false, message: entitlement.message };
   }
 
   const expiresAt = parseOptionalFutureDate(input.expiresAt);

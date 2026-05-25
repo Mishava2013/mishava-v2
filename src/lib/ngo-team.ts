@@ -3,6 +3,7 @@ import {
   type AuthSession,
 } from "./auth";
 import { buildAuditEvent } from "./audit-log";
+import { enforceNgoEntitlement } from "./ngo-billing";
 import type { SupabaseServerClient } from "./supabase/server";
 
 export type TeamRole = "ngo_owner" | "ngo_admin" | "ngo_member" | "ngo_viewer";
@@ -193,6 +194,17 @@ export async function createTeamInvite({
   const email = input.email.trim().toLowerCase();
   if (!email.includes("@") || email.length < 5) {
     return { ok: false, message: "Invite email is required." };
+  }
+
+  const entitlement = await enforceNgoEntitlement({
+    check: "team_member_invite",
+    client,
+    organizationId: input.organizationId,
+    session,
+  });
+
+  if (!entitlement.allowed) {
+    return { ok: false, message: entitlement.message };
   }
 
   const rows = await client.insert<InviteRow>("organization_invites", {

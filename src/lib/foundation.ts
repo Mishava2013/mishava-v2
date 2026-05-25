@@ -43,6 +43,11 @@ export const forbiddenTrustInfluenceInputs = [
   "sales_commission",
   "affiliate_fee",
   "referral_fee",
+  "plan_key",
+  "billing_status",
+  "stripe_subscription_status",
+  "setup_service_purchase",
+  "sponsored_network_status",
 ] as const;
 
 export const billableInfrastructureSurfaces = [

@@ -12,6 +12,11 @@ const forbiddenRankingInputs = [
   "salesCommission",
   "affiliateFee",
   "referralFee",
+  "planKey",
+  "billingStatus",
+  "stripeSubscriptionStatus",
+  "setupServicePurchase",
+  "sponsoredNetworkStatus",
 ];
 
 function assertNoPaymentInputs(result) {
@@ -88,6 +93,11 @@ test("paid concepts do not change score when evidence inputs are equal", () => {
     hostedProfileEnabled: true,
     claimedProfileStatus: "claimed",
     sponsorshipStatus: "sponsored",
+    planKey: "trust_pro",
+    billingStatus: "active",
+    stripeSubscriptionStatus: "active",
+    setupServicePurchase: "full_buildout",
+    sponsoredNetworkStatus: "sponsored",
   };
 
   assert.equal(evidenceOnlyScore(paidProfile), evidenceOnlyScore(baseEvidence));

@@ -9,6 +9,10 @@ import {
   updateEvidenceMetadata,
   uploadEvidenceFileForItem,
 } from "@/lib/evidence-files";
+import {
+  enforceNgoEntitlement,
+  enforceNgoStorageEntitlement,
+} from "@/lib/ngo-billing";
 import { createStructuredClaimDraft } from "@/lib/ngo-evidence-reports";
 import { createEvidenceRecord } from "@/lib/release-2-5-workflows";
 import { createSupabaseAuthenticatedServerClient } from "@/lib/supabase/server";
@@ -17,6 +21,36 @@ export async function createEvidenceAction(formData: FormData) {
   const { session, organizationId } = await requireCurrentOrganizationMembership();
   if (!canManageNgoEvidence(session, organizationId)) {
     redirect("/org/evidence?error=Evidence%20editing%20requires%20member%20access.");
+  }
+  const evidenceFile = formData.get("evidenceFile") as File | null;
+
+  if (evidenceFile && evidenceFile.size > 0) {
+    const fileCountEntitlement = await enforceNgoEntitlement({
+      check: "evidence_file_upload",
+      client: createSupabaseAuthenticatedServerClient(session.accessToken),
+      incomingFileSizeBytes: evidenceFile.size,
+      organizationId,
+      session,
+    });
+
+    if (!fileCountEntitlement.allowed) {
+      redirect(
+        `/org/evidence?error=${encodeURIComponent(fileCountEntitlement.message)}`,
+      );
+    }
+
+    const storageEntitlement = await enforceNgoStorageEntitlement({
+      client: createSupabaseAuthenticatedServerClient(session.accessToken),
+      incomingFileSizeBytes: evidenceFile.size,
+      organizationId,
+      session,
+    });
+
+    if (!storageEntitlement.allowed) {
+      redirect(
+        `/org/evidence?error=${encodeURIComponent(storageEntitlement.message)}`,
+      );
+    }
   }
 
   const result = await createEvidenceRecord({
@@ -57,7 +91,7 @@ export async function createEvidenceAction(formData: FormData) {
   const fileResult = await uploadEvidenceFileForItem({
     client: createSupabaseAuthenticatedServerClient(session.accessToken),
     evidenceItemId: result.evidenceId as string,
-    file: formData.get("evidenceFile") as File | null,
+    file: evidenceFile,
     organizationId,
     session,
   });

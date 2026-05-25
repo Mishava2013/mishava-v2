@@ -1,3 +1,5 @@
+import { ngoPlanDefinitions } from "./ngo-billing";
+
 export type NgoTierCode =
   | "free_ngo"
   | "grassroots"
@@ -14,48 +16,31 @@ export const ngoTiers: Array<{
   aiAccess: AiAccessLevel;
   evidenceLimit: string;
   reportAccess: string;
-}> = [
-  {
-    code: "free_ngo",
-    name: "Free NGO Profile",
-    price: "$0",
-    aiAccess: "none",
-    evidenceLimit: "Limited uploads and manual entry",
-    reportAccess: "Premade public profile report only",
-  },
-  {
-    code: "grassroots",
-    name: "Grassroots",
-    price: "$19/mo or $190/yr",
-    aiAccess: "limited",
-    evidenceLimit: "More uploads and basic evidence organization",
-    reportAccess: "Premade reports and limited exports",
-  },
-  {
-    code: "growth",
-    name: "Growth",
-    price: "$59/mo or $590/yr",
-    aiAccess: "included",
-    evidenceLimit: "Expanded evidence intake and review queues",
-    reportAccess: "Custom reports, funder sharing, approval workflow",
-  },
-  {
-    code: "trust_pro",
-    name: "Trust Pro",
-    price: "$129/mo or $1,290/yr",
-    aiAccess: "included",
-    evidenceLimit: "Advanced evidence workflow and stronger reporting",
-    reportAccess: "Deeper reports, exports, reviewer notes",
-  },
-  {
-    code: "network",
-    name: "Network / Foundation / Association",
-    price: "Custom",
-    aiAccess: "custom",
-    evidenceLimit: "Portfolio evidence and sponsored participant workflows",
-    reportAccess: "Network dashboards and portfolio exports",
-  },
-];
+}> = ngoPlanDefinitions.map((plan) => ({
+  code: plan.databaseTier,
+  name: plan.name,
+  price: plan.priceLabel,
+  aiAccess:
+    plan.entitlements.aiReportAssist === "none"
+      ? "none"
+      : plan.entitlements.aiReportAssist === "custom"
+        ? "custom"
+        : plan.key === "grassroots"
+          ? "limited"
+          : "included",
+  evidenceLimit:
+    plan.entitlements.evidenceItems === null
+      ? "Custom portfolio evidence workflows"
+      : `${plan.entitlements.evidenceItems.toLocaleString()} active evidence items`,
+  reportAccess:
+    plan.entitlements.futureExports === "none"
+      ? "Print-friendly reports only"
+      : plan.entitlements.futureExports === "limited"
+        ? "Print-friendly reports and limited future exports"
+        : plan.entitlements.futureExports === "custom"
+          ? "Network dashboards and portfolio exports"
+          : "Reports, scoped sharing, and future exports",
+}));
 
 export const ngoOnboardingSteps = [
   {
@@ -97,4 +82,3 @@ export const evidenceIntakeTypes = [
   "Partner or beneficiary reference",
   "Published report or public link",
 ];
-
