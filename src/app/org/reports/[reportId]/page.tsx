@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
 import { getNgoReportDetail } from "@/lib/ngo-evidence-reports";
 import {
-  createSupabaseServerClient,
+  createSupabaseAuthenticatedServerClient,
   isSupabaseServerConfigured,
 } from "@/lib/supabase/server";
 import {
@@ -29,10 +29,10 @@ export default async function OrgReportDetailPage({
 }) {
   const { reportId } = await params;
   const query = await searchParams;
-  const { organizationId } = await requireCurrentOrganizationMembership();
+  const { session, organizationId } = await requireCurrentOrganizationMembership();
   const detail = isSupabaseServerConfigured()
     ? await getNgoReportDetail({
-        client: createSupabaseServerClient(),
+        client: createSupabaseAuthenticatedServerClient(session.accessToken),
         organizationId,
         reportId,
       })

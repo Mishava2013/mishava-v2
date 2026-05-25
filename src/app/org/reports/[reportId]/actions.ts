@@ -7,7 +7,7 @@ import {
   revokeNgoReportShareGrant,
   updateNgoReportDraft,
 } from "@/lib/ngo-evidence-reports";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAuthenticatedServerClient } from "@/lib/supabase/server";
 
 export async function updateNgoReportDraftAction(
   reportId: string,
@@ -16,7 +16,7 @@ export async function updateNgoReportDraftAction(
   const { session, organizationId } = await requireCurrentOrganizationMembership();
 
   const result = await updateNgoReportDraft({
-    client: createSupabaseServerClient(),
+    client: createSupabaseAuthenticatedServerClient(session.accessToken),
     session,
     input: {
       organizationId,
@@ -43,7 +43,7 @@ export async function createNgoReportShareGrantAction(
   const { session, organizationId } = await requireCurrentOrganizationMembership();
 
   const result = await createNgoReportShareGrant({
-    client: createSupabaseServerClient(),
+    client: createSupabaseAuthenticatedServerClient(session.accessToken),
     session,
     input: {
       organizationId,
@@ -71,7 +71,7 @@ export async function revokeNgoReportShareGrantAction(
   const { session, organizationId } = await requireCurrentOrganizationMembership();
 
   const result = await revokeNgoReportShareGrant({
-    client: createSupabaseServerClient(),
+    client: createSupabaseAuthenticatedServerClient(session.accessToken),
     session,
     input: {
       organizationId,

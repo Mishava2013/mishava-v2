@@ -1,9 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { getCurrentSession } from "@/lib/auth-server";
+import { getCurrentSession, setCurrentOrganizationId } from "@/lib/auth-server";
 import { createNgoOnboardingRecord } from "@/lib/release-2-5-workflows";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAuthenticatedServerClient } from "@/lib/supabase/server";
 
 export async function createNgoOnboardingAction(formData: FormData) {
   const session = await getCurrentSession();
@@ -13,7 +13,7 @@ export async function createNgoOnboardingAction(formData: FormData) {
   }
 
   const result = await createNgoOnboardingRecord({
-    client: createSupabaseServerClient(),
+    client: createSupabaseAuthenticatedServerClient(session.accessToken),
     session,
     input: {
       publicName: String(formData.get("publicName") ?? ""),
@@ -36,6 +36,6 @@ export async function createNgoOnboardingAction(formData: FormData) {
     redirect(`/ngo/onboarding?error=${encodeURIComponent(result.message)}`);
   }
 
+  await setCurrentOrganizationId(result.organizationId as string);
   redirect(`/org/profile?created=ngo&organization=${result.organizationId}`);
 }
-

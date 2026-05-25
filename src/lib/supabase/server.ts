@@ -47,17 +47,36 @@ export function createSupabaseServerClient(): SupabaseServerClient {
   return createSupabaseRestClient({ url, key });
 }
 
+export function createSupabaseAuthenticatedServerClient(
+  accessToken?: string | null,
+): SupabaseServerClient {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY;
+
+  if (!url || !anonKey || !accessToken) {
+    return createSupabaseServerClient();
+  }
+
+  return createSupabaseRestClient({
+    url,
+    key: anonKey,
+    authorizationKey: accessToken,
+  });
+}
+
 export function createSupabaseRestClient({
   url,
   key,
+  authorizationKey,
 }: {
   url: string;
   key: string;
+  authorizationKey?: string;
 }): SupabaseServerClient {
   const restUrl = `${url.replace(/\/$/, "")}/rest/v1`;
   const headers = {
     apikey: key,
-    authorization: `Bearer ${key}`,
+    authorization: `Bearer ${authorizationKey ?? key}`,
     "content-type": "application/json",
   };
 

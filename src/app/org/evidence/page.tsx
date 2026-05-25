@@ -8,7 +8,7 @@ import {
   createStructuredClaimDraftAction,
 } from "./actions";
 import {
-  createSupabaseServerClient,
+  createSupabaseAuthenticatedServerClient,
   isSupabaseServerConfigured,
 } from "@/lib/supabase/server";
 
@@ -18,10 +18,10 @@ export default async function OrgEvidencePage({
   searchParams: Promise<{ created?: string; error?: string }>;
 }) {
   const params = await searchParams;
-  const { organizationId } = await requireCurrentOrganizationMembership();
+  const { session, organizationId } = await requireCurrentOrganizationMembership();
   const evidenceLibrary = isSupabaseServerConfigured()
     ? await getNgoEvidenceLibrary({
-        client: createSupabaseServerClient(),
+        client: createSupabaseAuthenticatedServerClient(session.accessToken),
         organizationId,
       })
     : [];

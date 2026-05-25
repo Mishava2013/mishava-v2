@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { requireAuthenticatedSession } from "@/lib/auth-server";
 import { getSharedNgoReportByGrant } from "@/lib/ngo-evidence-reports";
 import {
-  createSupabaseServerClient,
+  createSupabaseAuthenticatedServerClient,
   isSupabaseServerConfigured,
 } from "@/lib/supabase/server";
 
@@ -18,7 +18,7 @@ export default async function SharedNgoReportPage({
   const session = await requireAuthenticatedSession();
   const shared = isSupabaseServerConfigured()
     ? await getSharedNgoReportByGrant({
-        client: createSupabaseServerClient(),
+        client: createSupabaseAuthenticatedServerClient(session.accessToken),
         session,
         shareGrantId: grantId,
       })

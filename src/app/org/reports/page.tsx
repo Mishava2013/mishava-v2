@@ -4,7 +4,7 @@ import Link from "next/link";
 import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
 import { getNgoReportWorkspace } from "@/lib/ngo-evidence-reports";
 import {
-  createSupabaseServerClient,
+  createSupabaseAuthenticatedServerClient,
   isSupabaseServerConfigured,
 } from "@/lib/supabase/server";
 import { createNgoReportDraftAction } from "./actions";
@@ -15,10 +15,10 @@ export default async function OrgReportsPage({
   searchParams: Promise<{ created?: string; error?: string }>;
 }) {
   const params = await searchParams;
-  const { organizationId } = await requireCurrentOrganizationMembership();
+  const { session, organizationId } = await requireCurrentOrganizationMembership();
   const workspace = isSupabaseServerConfigured()
     ? await getNgoReportWorkspace({
-        client: createSupabaseServerClient(),
+        client: createSupabaseAuthenticatedServerClient(session.accessToken),
         organizationId,
       })
     : {

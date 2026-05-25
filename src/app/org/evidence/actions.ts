@@ -4,13 +4,13 @@ import { redirect } from "next/navigation";
 import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
 import { createStructuredClaimDraft } from "@/lib/ngo-evidence-reports";
 import { createEvidenceRecord } from "@/lib/release-2-5-workflows";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAuthenticatedServerClient } from "@/lib/supabase/server";
 
 export async function createEvidenceAction(formData: FormData) {
   const { session, organizationId } = await requireCurrentOrganizationMembership();
 
   const result = await createEvidenceRecord({
-    client: createSupabaseServerClient(),
+    client: createSupabaseAuthenticatedServerClient(session.accessToken),
     session,
     input: {
       organizationId,
@@ -49,7 +49,7 @@ export async function createStructuredClaimDraftAction(formData: FormData) {
   const { session, organizationId } = await requireCurrentOrganizationMembership();
 
   const result = await createStructuredClaimDraft({
-    client: createSupabaseServerClient(),
+    client: createSupabaseAuthenticatedServerClient(session.accessToken),
     session,
     input: {
       organizationId,

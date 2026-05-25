@@ -14,10 +14,13 @@ export type OrganizationMembership = {
 export type AuthSession = {
   user: SessionUser;
   memberships: OrganizationMembership[];
+  accessToken?: string;
 };
 
 export const sessionCookieName = "mishava_session";
 export const currentOrganizationCookieName = "mishava_current_org_id";
+export const supabaseAccessTokenCookieName = "mishava_sb_access_token";
+export const supabaseRefreshTokenCookieName = "mishava_sb_refresh_token";
 
 export const adminRoles: RoleCode[] = [
   "mishava_admin",
@@ -107,6 +110,71 @@ export function parseSessionCookieValue(value?: string | null): AuthSession | nu
   } catch {
     return null;
   }
+}
+
+export type SupabaseJwtClaims = {
+  sub?: string;
+  email?: string;
+  app_metadata?: {
+    roles?: unknown;
+  };
+  user_metadata?: {
+    roles?: unknown;
+  };
+};
+
+export function parseSupabaseAccessTokenValue(
+  value?: string | null,
+): Pick<AuthSession, "user"> | null {
+  if (!value) return null;
+
+  try {
+    const [, payload] = value.split(".");
+    if (!payload) return null;
+
+    const claims = JSON.parse(decodeCookiePayload(payload)) as SupabaseJwtClaims;
+    if (!claims.sub || !claims.email) return null;
+
+    return {
+      user: {
+        id: claims.sub,
+        email: claims.email,
+        roles: parseRoleClaims(claims),
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function parseRoleClaims(claims: SupabaseJwtClaims): RoleCode[] {
+  const rawRoles = [
+    ...(Array.isArray(claims.app_metadata?.roles) ? claims.app_metadata.roles : []),
+    ...(Array.isArray(claims.user_metadata?.roles) ? claims.user_metadata.roles : []),
+  ];
+  const roles = rawRoles.filter(isRoleCode);
+
+  return roles.length > 0 ? roles : ["consumer"];
+}
+
+function isRoleCode(value: unknown): value is RoleCode {
+  return (
+    typeof value === "string" &&
+    [
+      "consumer",
+      "ngo_owner",
+      "ngo_member",
+      "business_owner",
+      "business_member",
+      "auditor_field",
+      "audit_reviewer",
+      "mishava_admin",
+      "methodology_owner",
+      "support",
+      "press_reviewer",
+      "sponsor_manager",
+    ].includes(value)
+  );
 }
 
 function decodeCookiePayload(value: string) {

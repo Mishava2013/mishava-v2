@@ -9,11 +9,11 @@ import {
   shoppingPriorityConsentVersion,
   shoppingPriorityVersionCode,
 } from "@/lib/shopping";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAuthenticatedServerClient } from "@/lib/supabase/server";
 
 export async function saveShoppingPrioritiesAction(formData: FormData) {
   const session = await requireAuthenticatedSession();
-  const client = createSupabaseServerClient();
+  const client = createSupabaseAuthenticatedServerClient(session.accessToken);
   const privacyAcknowledged = formData.get("privacyAcknowledged") === "on";
 
   if (!privacyAcknowledged) {

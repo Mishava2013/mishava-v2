@@ -3,13 +3,13 @@
 import { redirect } from "next/navigation";
 import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
 import { createNgoReportDraft } from "@/lib/ngo-evidence-reports";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAuthenticatedServerClient } from "@/lib/supabase/server";
 
 export async function createNgoReportDraftAction(formData: FormData) {
   const { session, organizationId } = await requireCurrentOrganizationMembership();
 
   const result = await createNgoReportDraft({
-    client: createSupabaseServerClient(),
+    client: createSupabaseAuthenticatedServerClient(session.accessToken),
     session,
     input: {
       organizationId,

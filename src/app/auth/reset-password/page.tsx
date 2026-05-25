@@ -1,0 +1,37 @@
+import Link from "next/link";
+import { PageHeader } from "@/components/PageHeader";
+import { requestPasswordResetAction } from "../actions";
+
+export default async function ResetPasswordPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const params = await searchParams;
+
+  return (
+    <>
+      <PageHeader eyebrow="Account recovery" title="Reset your password.">
+        Enter the email for your Mishava account. If the account exists,
+        Supabase Auth will send password reset instructions.
+      </PageHeader>
+      <section className="auth-grid">
+        <form action={requestPasswordResetAction} className="auth-card">
+          {params.error ? (
+            <p className="form-message error">{decodeURIComponent(params.error)}</p>
+          ) : null}
+          <label>
+            Email
+            <input autoComplete="email" name="email" required type="email" />
+          </label>
+          <button className="button primary" type="submit">
+            Send reset link
+          </button>
+          <div className="auth-links">
+            <Link href="/auth/sign-in">Back to sign in</Link>
+          </div>
+        </form>
+      </section>
+    </>
+  );
+}

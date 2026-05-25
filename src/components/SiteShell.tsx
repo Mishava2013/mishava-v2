@@ -29,7 +29,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
             ))}
           </nav>
           <div className="header-actions">
-            <Link className="button" href="/app">
+            <Link className="button" href="/auth/sign-in">
               Sign in
             </Link>
           </div>

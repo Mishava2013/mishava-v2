@@ -196,6 +196,63 @@ textarea {
   color: var(--white);
 }
 
+.auth-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 520px);
+  gap: 18px;
+}
+
+.auth-card {
+  background: var(--white);
+  border: 1px solid var(--light-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-subtle);
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+}
+
+.auth-card label {
+  color: var(--secondary-text);
+  display: grid;
+  font-size: 14px;
+  font-weight: 700;
+  gap: 8px;
+}
+
+.auth-card input {
+  background: var(--white);
+  border: 1px solid var(--medium-border);
+  border-radius: 8px;
+  color: var(--mishava-ink);
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.auth-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  color: var(--brand-blue);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.form-message {
+  background: var(--soft-mist);
+  border: 1px solid var(--light-border);
+  border-radius: 8px;
+  color: var(--secondary-text);
+  line-height: 1.5;
+  padding: 12px;
+}
+
+.form-message.error {
+  background: #fff4f2;
+  border-color: var(--soft-coral);
+  color: #8f3329;
+}
+
 .eyebrow {
   color: var(--brand-blue);
   font-size: 13px;
