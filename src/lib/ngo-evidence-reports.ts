@@ -61,6 +61,24 @@ type NgoReportTemplateRow = InsertedRow & {
   active: boolean;
 };
 
+type NgoShareGrantRow = InsertedRow & {
+  organization_id: string;
+  ngo_profile_id: string;
+  report_id: string;
+  granted_to_email: string;
+  granted_to_name: string | null;
+  viewer_type: string;
+  visibility: string;
+  purpose: string;
+  starts_at: string;
+  expires_at: string | null;
+  granted_by: string | null;
+  revoked_at: string | null;
+  revoked_by: string | null;
+  status: "active" | "revoked";
+  created_at: string;
+};
+
 export type NgoEvidenceLibraryItem = EvidenceRow & {
   submissionStatus: string | null;
   linkedStructuredClaimsCount: number;
@@ -91,6 +109,21 @@ export type NgoReportUpdateInput = {
   title: string;
   evidenceItemIds: string[];
   structuredClaimIds: string[];
+};
+
+export type NgoShareGrantInput = {
+  organizationId: string;
+  reportId: string;
+  recipientName?: string;
+  recipientEmail: string;
+  purpose: string;
+  expiresAt?: string | null;
+};
+
+export type NgoShareGrantRevokeInput = {
+  organizationId: string;
+  reportId: string;
+  shareGrantId: string;
 };
 
 export type StructuredClaimDraftInput = {
@@ -289,6 +322,11 @@ export async function getNgoReportDetail({
     { organization_id: organizationId },
     "id,organization_id,statement,pillar_id,fact_type,evidence_item_ids,status,confidence,recency",
   );
+  const shareGrants = await client.selectMany<NgoShareGrantRow>(
+    "ngo_share_grants",
+    { organization_id: organizationId, report_id: report.id },
+    "id,organization_id,ngo_profile_id,report_id,granted_to_email,granted_to_name,viewer_type,visibility,purpose,starts_at,expires_at,granted_by,revoked_at,revoked_by,status,created_at",
+  );
 
   const selectedEvidence = workspace.evidence.filter((item) =>
     report.evidence_item_ids.includes(item.id),
@@ -309,10 +347,22 @@ export async function getNgoReportDetail({
     selectedEvidence,
     selectedAcceptedClaims,
     excludedClaims,
+    shareGrants: shareGrants
+      .sort(
+        (left, right) =>
+          Date.parse(right.created_at) - Date.parse(left.created_at),
+      )
+      .map((grant) => ({
+        ...grant,
+        displayStatus: getShareGrantDisplayStatus(grant),
+        isRevocable: grant.status === "active" && !grant.revoked_at,
+      })),
+    activeShareGrantCount: shareGrants.filter(isShareGrantActive).length,
     missingItems: buildReportMissingItems({
       report,
       selectedEvidenceCount: selectedEvidence.length,
       selectedAcceptedClaimCount: selectedAcceptedClaims.length,
+      activeShareGrantCount: shareGrants.filter(isShareGrantActive).length,
     }),
   };
 }
@@ -662,6 +712,263 @@ export async function updateNgoReportDraft({
   };
 }
 
+export async function createNgoReportShareGrant({
+  client,
+  session,
+  input,
+}: {
+  client: SupabaseServerClient;
+  session: AuthSession;
+  input: NgoShareGrantInput;
+}) {
+  const recipientEmail = input.recipientEmail.trim().toLowerCase();
+  const recipientName = input.recipientName?.trim() || null;
+  const purpose = input.purpose.trim();
+
+  if (!recipientEmail.includes("@")) {
+    return { ok: false, message: "Recipient email is required." };
+  }
+
+  if (purpose.length < 3) {
+    return { ok: false, message: "Sharing purpose is required." };
+  }
+
+  const report = await client.selectOne<NgoReportRow>(
+    "ngo_reports",
+    {
+      id: input.reportId,
+      organization_id: input.organizationId,
+      visibility: "private",
+    },
+    "id,organization_id,ngo_profile_id,template_id,title,body,evidence_item_ids,structured_claim_ids,score_snapshot_id,scoring_version_id,visibility,approval_status,created_at,updated_at,created_by",
+  );
+
+  if (!report) {
+    return {
+      ok: false,
+      message: "Share grants can only be created for private reports owned by this organization.",
+    };
+  }
+
+  const expiresAt = parseOptionalFutureDate(input.expiresAt);
+
+  if (input.expiresAt && !expiresAt) {
+    return {
+      ok: false,
+      message: "Expiration date must be today or later.",
+    };
+  }
+
+  const rows = await client.insert<NgoShareGrantRow>("ngo_share_grants", {
+    organization_id: input.organizationId,
+    ngo_profile_id: report.ngo_profile_id,
+    report_id: report.id,
+    granted_to_email: recipientEmail,
+    granted_to_name: recipientName,
+    viewer_type: "approved_recipient",
+    visibility: "approved_viewer",
+    purpose,
+    expires_at: expiresAt,
+    granted_by: session.user.id,
+    status: "active",
+  });
+
+  const grant = rows.data[0];
+
+  await client.insert(
+    "audit_events",
+    buildAuditEvent({
+      actorUserId: session.user.id,
+      organizationId: input.organizationId,
+      action: "ngo_report.share_grant_created",
+      subjectTable: "ngo_share_grants",
+      subjectId: grant.id,
+      reason: "Scoped NGO report share grant created.",
+      afterData: {
+        report_id: report.id,
+        share_grant_id: grant.id,
+        recipient_email: recipientEmail,
+        recipient_name: recipientName,
+        viewer_type: "approved_recipient",
+        purpose,
+        expires_at: expiresAt,
+        raw_evidence_exposed: false,
+      },
+    }),
+  );
+
+  return {
+    ok: true,
+    message: "Share grant created.",
+    shareGrantId: grant.id,
+  };
+}
+
+export async function revokeNgoReportShareGrant({
+  client,
+  session,
+  input,
+}: {
+  client: SupabaseServerClient;
+  session: AuthSession;
+  input: NgoShareGrantRevokeInput;
+}) {
+  const grant = await client.selectOne<NgoShareGrantRow>(
+    "ngo_share_grants",
+    {
+      id: input.shareGrantId,
+      organization_id: input.organizationId,
+      report_id: input.reportId,
+    },
+    "id,organization_id,ngo_profile_id,report_id,granted_to_email,granted_to_name,viewer_type,visibility,purpose,starts_at,expires_at,granted_by,revoked_at,revoked_by,status,created_at",
+  );
+
+  if (!grant) {
+    return { ok: false, message: "Share grant was not found for this report." };
+  }
+
+  if (grant.status === "revoked" || grant.revoked_at) {
+    return { ok: false, message: "Share grant is already revoked." };
+  }
+
+  const revokedAt = new Date().toISOString();
+  await client.update<NgoShareGrantRow>(
+    "ngo_share_grants",
+    { id: grant.id, organization_id: input.organizationId },
+    {
+      status: "revoked",
+      revoked_at: revokedAt,
+      revoked_by: session.user.id,
+    },
+  );
+
+  await client.insert(
+    "audit_events",
+    buildAuditEvent({
+      actorUserId: session.user.id,
+      organizationId: input.organizationId,
+      action: "ngo_report.share_grant_revoked",
+      subjectTable: "ngo_share_grants",
+      subjectId: grant.id,
+      reason: "Scoped NGO report share grant revoked.",
+      beforeData: {
+        status: grant.status,
+        recipient_email: grant.granted_to_email,
+        purpose: grant.purpose,
+      },
+      afterData: {
+        report_id: grant.report_id,
+        share_grant_id: grant.id,
+        revoked_at: revokedAt,
+        status: "revoked",
+      },
+    }),
+  );
+
+  return {
+    ok: true,
+    message: "Share grant revoked.",
+    shareGrantId: grant.id,
+  };
+}
+
+export async function getSharedNgoReportByGrant({
+  client,
+  session,
+  shareGrantId,
+}: {
+  client: SupabaseServerClient;
+  session: AuthSession;
+  shareGrantId: string;
+}) {
+  const grant = await client.selectOne<NgoShareGrantRow>(
+    "ngo_share_grants",
+    { id: shareGrantId },
+    "id,organization_id,ngo_profile_id,report_id,granted_to_email,granted_to_name,viewer_type,visibility,purpose,starts_at,expires_at,granted_by,revoked_at,revoked_by,status,created_at",
+  );
+
+  if (!grant || !isShareGrantActive(grant)) {
+    return null;
+  }
+
+  if (grant.granted_to_email.toLowerCase() !== session.user.email.toLowerCase()) {
+    return null;
+  }
+
+  const report = await client.selectOne<NgoReportRow>(
+    "ngo_reports",
+    {
+      id: grant.report_id,
+      organization_id: grant.organization_id,
+      visibility: "private",
+    },
+    "id,organization_id,ngo_profile_id,template_id,title,body,evidence_item_ids,structured_claim_ids,score_snapshot_id,scoring_version_id,visibility,approval_status,created_at,updated_at,created_by",
+  );
+
+  if (!report) {
+    return null;
+  }
+
+  const template = report.template_id
+    ? await client.selectOne<NgoReportTemplateRow>(
+        "ngo_report_templates",
+        { id: report.template_id },
+        "id,code,name,description,minimum_tier,ai_assist_allowed,active",
+      )
+    : null;
+
+  const evidence = await client.selectMany<EvidenceRow>(
+    "evidence_items",
+    { organization_id: grant.organization_id },
+    "id,organization_id,title,source_name,source_type,url,notes,verification_status,visibility,created_at,created_by",
+  );
+  const selectedEvidence = evidence
+    .filter((item) => report.evidence_item_ids.includes(item.id))
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      source_type: item.source_type,
+      source_name: item.source_name,
+      verification_status: item.verification_status,
+      visibility: item.visibility,
+      created_at: item.created_at,
+    }));
+
+  const claims = await client.selectMany<StructuredClaimRow>(
+    "structured_claims",
+    { organization_id: grant.organization_id, status: "accepted" },
+    "id,organization_id,statement,pillar_id,fact_type,evidence_item_ids,status,confidence,recency",
+  );
+  const selectedAcceptedClaims = claims.filter((claim) =>
+    report.structured_claim_ids.includes(claim.id),
+  );
+
+  await client.insert(
+    "audit_events",
+    buildAuditEvent({
+      actorUserId: session.user.id,
+      organizationId: grant.organization_id,
+      action: "ngo_report.shared_viewed",
+      subjectTable: "ngo_share_grants",
+      subjectId: grant.id,
+      reason: "Scoped NGO shared report viewed by granted recipient.",
+      afterData: {
+        report_id: report.id,
+        recipient_email: session.user.email.toLowerCase(),
+        raw_evidence_exposed: false,
+      },
+    }),
+  );
+
+  return {
+    grant,
+    report,
+    template,
+    selectedEvidence,
+    selectedAcceptedClaims,
+  };
+}
+
 function unique(values: string[]) {
   return Array.from(new Set(values.filter(Boolean)));
 }
@@ -739,10 +1046,12 @@ function buildReportMissingItems({
   report,
   selectedEvidenceCount,
   selectedAcceptedClaimCount,
+  activeShareGrantCount,
 }: {
   report: NgoReportRow;
   selectedEvidenceCount: number;
   selectedAcceptedClaimCount: number;
+  activeShareGrantCount: number;
 }) {
   return [
     selectedEvidenceCount === 0 ? "No evidence selected yet." : null,
@@ -752,8 +1061,8 @@ function buildReportMissingItems({
     report.score_snapshot_id
       ? null
       : "No public score has been created from this report.",
+    activeShareGrantCount === 0 ? "Not shared." : null,
     "Exports not enabled yet.",
-    "Sharing not enabled yet.",
   ].filter(Boolean) as string[];
 }
 
@@ -768,4 +1077,32 @@ function arraysDiffer(left: string[], right: string[]) {
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function isShareGrantActive(grant: NgoShareGrantRow) {
+  const now = Date.now();
+  return (
+    grant.status === "active" &&
+    !grant.revoked_at &&
+    Date.parse(grant.starts_at) <= now &&
+    (!grant.expires_at || Date.parse(grant.expires_at) > now)
+  );
+}
+
+function getShareGrantDisplayStatus(grant: NgoShareGrantRow) {
+  if (grant.status === "revoked" || grant.revoked_at) return "Revoked";
+  if (grant.expires_at && Date.parse(grant.expires_at) <= Date.now()) {
+    return "Expired";
+  }
+  return "Shared";
+}
+
+function parseOptionalFutureDate(value?: string | null) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  const endOfDay = new Date(parsed);
+  endOfDay.setHours(23, 59, 59, 999);
+  if (endOfDay.getTime() < Date.now()) return null;
+  return endOfDay.toISOString();
 }

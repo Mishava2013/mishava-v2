@@ -8,14 +8,24 @@ import {
   createSupabaseServerClient,
   isSupabaseServerConfigured,
 } from "@/lib/supabase/server";
-import { updateNgoReportDraftAction } from "./actions";
+import {
+  createNgoReportShareGrantAction,
+  revokeNgoReportShareGrantAction,
+  updateNgoReportDraftAction,
+} from "./actions";
 
 export default async function OrgReportDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ reportId: string }>;
-  searchParams: Promise<{ created?: string; error?: string; updated?: string }>;
+  searchParams: Promise<{
+    created?: string;
+    error?: string;
+    revoked?: string;
+    shared?: string;
+    updated?: string;
+  }>;
 }) {
   const { reportId } = await params;
   const query = await searchParams;
@@ -33,8 +43,13 @@ export default async function OrgReportDetailPage({
   }
 
   const updateAction = updateNgoReportDraftAction.bind(null, detail.report.id);
+  const createShareGrantAction = createNgoReportShareGrantAction.bind(
+    null,
+    detail.report.id,
+  );
   const selectedEvidenceIds = new Set(detail.report.evidence_item_ids);
   const selectedClaimIds = new Set(detail.report.structured_claim_ids);
+  const hasActiveGrant = detail.activeShareGrantCount > 0;
 
   return (
     <>
@@ -52,6 +67,19 @@ export default async function OrgReportDetailPage({
       {query.updated ? (
         <div className="notice" role="status">
           Report draft updated and audit event recorded.
+        </div>
+      ) : null}
+
+      {query.shared ? (
+        <div className="notice" role="status">
+          Share grant created. The report remains private by default and raw
+          evidence is not shared.
+        </div>
+      ) : null}
+
+      {query.revoked ? (
+        <div className="notice" role="status">
+          Share grant revoked and access blocked.
         </div>
       ) : null}
 
@@ -73,7 +101,8 @@ export default async function OrgReportDetailPage({
           </div>
           <div className="status-row">
             <span className="tag">Private to your organization</span>
-            <span className="tag">Not shared</span>
+            <span className="tag">{hasActiveGrant ? "Shared" : "Not shared"}</span>
+            <span className="tag">Raw evidence is not shared by default</span>
           </div>
         </div>
 
@@ -106,9 +135,110 @@ export default async function OrgReportDetailPage({
             <span className="tag">Trust context is provisional</span>
             <span className="tag">No public score has been created</span>
             <span className="tag">Exports not enabled yet</span>
-            <span className="tag">Sharing not enabled yet</span>
+            <span className="tag">
+              {hasActiveGrant ? "Scoped sharing enabled" : "Sharing not enabled yet"}
+            </span>
           </div>
         </div>
+      </section>
+
+      <section className="section">
+        <h2>Scoped sharing</h2>
+        <p className="section-intro">
+          Share grants are scoped to this report only. They do not expose the
+          full organization workspace, unrelated reports, or raw evidence by
+          default. Shared, Revoked, and Expires labels show the current access
+          state for each grant.
+        </p>
+
+        <form action={createShareGrantAction} className="form-grid">
+          <div className="field">
+            <label htmlFor="recipientName">Recipient name</label>
+            <input
+              id="recipientName"
+              name="recipientName"
+              placeholder="Funder, donor, reviewer, or partner"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="recipientEmail">Recipient email</label>
+            <input
+              id="recipientEmail"
+              name="recipientEmail"
+              placeholder="reviewer@example.org"
+              required
+              type="email"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="expiresAt">Expires</label>
+            <input id="expiresAt" name="expiresAt" type="date" />
+          </div>
+          <div className="field full">
+            <label htmlFor="purpose">Purpose / note</label>
+            <textarea
+              id="purpose"
+              name="purpose"
+              placeholder="Why this recipient is being granted report-summary access"
+              required
+            />
+          </div>
+          <div className="field full">
+            <button className="button primary" type="submit">
+              Create scoped share grant
+            </button>
+          </div>
+        </form>
+
+        {detail.shareGrants.length === 0 ? (
+          <EmptyState title="Not shared">
+            This report has no share grants. Private reports remain private
+            unless a valid active grant exists.
+          </EmptyState>
+        ) : (
+          <div className="evidence-library">
+            {detail.shareGrants.map((grant) => {
+              const revokeAction = revokeNgoReportShareGrantAction.bind(
+                null,
+                detail.report.id,
+                grant.id,
+              );
+
+              return (
+                <article className="evidence-record" key={grant.id}>
+                  <div className="record-header">
+                    <div>
+                      <span className="tag">{grant.displayStatus}</span>
+                      <h3>{grant.granted_to_name || grant.granted_to_email}</h3>
+                      <p>{grant.granted_to_email}</p>
+                    </div>
+                    <span className="score-pill">
+                      {grant.expires_at
+                        ? `Expires ${new Date(grant.expires_at).toLocaleDateString()}`
+                        : "No expiration"}
+                    </span>
+                  </div>
+                  <p className="record-note">
+                    Purpose: {grant.purpose}. Raw evidence is not shared by
+                    default.
+                  </p>
+                  <div className="status-row">
+                    <Link className="button" href={`/shared/ngo-reports/${grant.id}`}>
+                      Preview shared summary
+                    </Link>
+                    {grant.isRevocable ? (
+                      <form action={revokeAction}>
+                        <button className="button danger" type="submit">
+                          Revoke
+                        </button>
+                      </form>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <section className="section">
