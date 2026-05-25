@@ -58,6 +58,11 @@ a {
   text-decoration: none;
 }
 
+a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 button,
 input,
 select,
@@ -68,6 +73,21 @@ textarea {
 :focus-visible {
   outline: 2px solid var(--civic-blue);
   outline-offset: 2px;
+}
+
+.skip-link {
+  background: var(--brand-navy);
+  color: var(--white);
+  left: 16px;
+  padding: 10px 14px;
+  position: fixed;
+  top: 12px;
+  transform: translateY(-150%);
+  z-index: 100;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
 }
 
 .site-shell {
@@ -167,6 +187,23 @@ textarea {
   padding: 24px 0;
   color: var(--secondary-text);
   font-size: 14px;
+}
+
+.footer-inner p {
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  justify-content: flex-end;
+}
+
+.footer-links a {
+  color: var(--brand-navy);
+  font-weight: 700;
 }
 
 .button {
@@ -374,7 +411,8 @@ textarea {
 }
 
 .report-summary,
-.report-disclaimer {
+.report-disclaimer,
+.legal-section {
   background: var(--white);
   border: 1px solid var(--light-border);
   border-radius: var(--radius);
@@ -390,9 +428,24 @@ textarea {
 }
 
 .report-summary p,
-.report-disclaimer p {
+.report-disclaimer p,
+.legal-section p {
   color: var(--secondary-text);
   line-height: 1.6;
+}
+
+.legal-page {
+  padding-top: 0;
+}
+
+.legal-section-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.legal-section h2 {
+  font-size: 22px;
 }
 
 .report-controls {

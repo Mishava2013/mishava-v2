@@ -207,7 +207,9 @@ export default async function OrgReportDetailPage({
             complete record. Evidence coverage and recency limits may apply. Raw
             evidence files are not included unless explicitly shared in a future
             approved workflow. Mishava does not guarantee outcomes or provide
-            legal, financial, or procurement advice.
+            legal, financial, or procurement advice. Mishava also does not
+            guarantee funding, donations, ratings, certifications, procurement
+            decisions, or other outcomes from this draft report.
           </p>
         </div>
       </section>
@@ -218,7 +220,8 @@ export default async function OrgReportDetailPage({
           Share grants are scoped to this report only. They do not expose the
           full organization workspace, unrelated reports, or raw evidence by
           default. Shared, Revoked, and Expires labels show the current access
-          state for each grant.
+          state for each grant. Shared reports expose selected summaries unless
+          explicitly expanded by a future approved sharing control.
         </p>
 
         <form action={createShareGrantAction} className="form-grid">

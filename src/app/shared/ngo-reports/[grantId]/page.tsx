@@ -137,7 +137,9 @@ export default async function SharedNgoReportPage({
             This shared content is limited to this report. It does not provide
             full workspace access, raw private files, unrelated evidence,
             unrelated reports, legal advice, financial advice, or a guaranteed
-            outcome.
+            outcome. Mishava does not guarantee funding, donations, ratings,
+            certifications, procurement decisions, or other outcomes from shared
+            report access.
           </p>
         </div>
       </section>

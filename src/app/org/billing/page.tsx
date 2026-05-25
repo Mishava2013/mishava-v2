@@ -69,7 +69,9 @@ export default async function OrgBillingPage() {
 
       <div className="notice" role="status">
         Billing is not live yet. Stripe production charging is disabled in this
-        slice; the Free NGO self-serve path works without Stripe.
+        slice; the Free NGO self-serve path works without Stripe. Payment and
+        plan tier do not change trust outcomes, evidence truth, verification,
+        credibility labels, score, or ranking.
       </div>
 
       <section className="section">

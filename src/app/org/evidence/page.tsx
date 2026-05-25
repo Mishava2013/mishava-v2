@@ -306,6 +306,12 @@ export default async function OrgEvidencePage({
 
       <section className="section">
         <h2>Manual evidence entry</h2>
+        <div className="notice" role="note">
+          Submit only evidence your organization is legally allowed to provide
+          and store. Evidence may be incomplete or require review. Mishava does
+          not guarantee funding, donations, ratings, certifications,
+          procurement decisions, or other outcomes from submitted evidence.
+        </div>
         {canManageEvidence ? (
         <form action={createEvidenceAction} className="form-grid">
           <div className="field">
@@ -367,7 +373,8 @@ export default async function OrgEvidencePage({
             <p className="muted-copy">
               Optional. Raw files are private to your organization and are not
               shared by default. PDF, PNG, JPG, WebP, TXT, CSV, or DOCX only,
-              up to 10 MB.
+              up to 10 MB. Shared reports expose selected summaries unless a
+              future explicit raw-file sharing control is added and used.
             </p>
           </div>
           <div className="field full">
