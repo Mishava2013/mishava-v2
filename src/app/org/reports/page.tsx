@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import Link from "next/link";
 import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
 import { getNgoReportWorkspace } from "@/lib/ngo-evidence-reports";
 import {
@@ -195,9 +196,11 @@ export default async function OrgReportsPage({
                   </div>
                 </div>
                 <p className="record-note">
-                  Raw evidence remains private unless future scoped sharing
-                  explicitly allows it.
+                  Private to your organization. Not shared. Raw evidence remains private unless future scoped sharing explicitly allows it.
                 </p>
+                <Link className="button" href={`/org/reports/${report.id}`}>
+                  Open draft detail
+                </Link>
               </article>
             ))}
           </div>

@@ -54,10 +54,10 @@ export default async function OrgEvidencePage({
         </p>
 
         {evidenceLibrary.length === 0 ? (
-          <EmptyState title="No evidence uploaded">
-            Evidence records will appear here after real manual entries or
-            public-record lookups. Free tiers rely mostly on manual entry and
-            limited uploads.
+          <EmptyState title="No evidence yet">
+            Add manual evidence first. Evidence records will appear here after
+            real entries or public-record lookups, and they remain private to
+            your organization unless future sharing explicitly allows access.
           </EmptyState>
         ) : (
           <div className="evidence-library">
@@ -77,11 +77,15 @@ export default async function OrgEvidencePage({
                 <div className="metric-grid">
                   <div className="metric">
                     <span>Visibility</span>
-                    <strong>{item.visibility}</strong>
+                    <strong>
+                      {item.visibility === "private"
+                        ? "Private to your organization"
+                        : item.visibility}
+                    </strong>
                   </div>
                   <div className="metric">
-                    <span>Created</span>
-                    <strong>{new Date(item.created_at).toLocaleDateString()}</strong>
+                    <span>Review state</span>
+                    <strong>{item.reviewLabel}</strong>
                   </div>
                   <div className="metric">
                     <span>Structured claims</span>
@@ -91,8 +95,27 @@ export default async function OrgEvidencePage({
                     </strong>
                   </div>
                   <div className="metric">
+                    <span>Reports</span>
+                    <strong>{item.reportAttachmentLabel}</strong>
+                  </div>
+                </div>
+
+                <div className="metric-grid">
+                  <div className="metric">
+                    <span>Created</span>
+                    <strong>{new Date(item.created_at).toLocaleDateString()}</strong>
+                  </div>
+                  <div className="metric">
                     <span>Audit trail</span>
                     <strong>{item.hasAuditTrail ? "Recorded" : "Pending"}</strong>
+                  </div>
+                  <div className="metric">
+                    <span>Available now</span>
+                    <strong>{item.nextStepLabel}</strong>
+                  </div>
+                  <div className="metric">
+                    <span>Later</span>
+                    <strong>File uploads, full review, exports, sharing, AI writing</strong>
                   </div>
                 </div>
 
@@ -105,6 +128,10 @@ export default async function OrgEvidencePage({
 
                 <details className="inline-workflow">
                   <summary>Create structured claim draft</summary>
+                  <p className="muted-copy">
+                    Evidence entered but not reviewed can become a draft claim.
+                    Only accepted claims can support report trust summaries.
+                  </p>
                   <form action={createStructuredClaimDraftAction} className="form-grid compact-form">
                     <input name="evidenceItemId" type="hidden" value={item.id} />
                     <div className="field">

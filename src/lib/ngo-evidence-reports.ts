@@ -48,6 +48,17 @@ type NgoReportRow = InsertedRow & {
   visibility: string;
   approval_status: string;
   created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+type NgoReportTemplateRow = InsertedRow & {
+  code: string;
+  name: string;
+  description: string;
+  minimum_tier: string;
+  ai_assist_allowed: boolean;
+  active: boolean;
 };
 
 export type NgoEvidenceLibraryItem = EvidenceRow & {
@@ -57,6 +68,12 @@ export type NgoEvidenceLibraryItem = EvidenceRow & {
   linkedReportCount: number;
   hasAuditTrail: boolean;
   draftLabel: "Draft evidence" | "Review-ready evidence";
+  reviewLabel:
+    | "Evidence entered but not reviewed"
+    | "Evidence reviewed"
+    | "Evidence accepted for trust context";
+  reportAttachmentLabel: string;
+  nextStepLabel: string;
 };
 
 export type NgoReportDraftInput = {
@@ -66,6 +83,14 @@ export type NgoReportDraftInput = {
   evidenceItemIds: string[];
   structuredClaimIds: string[];
   scoreSnapshotId?: string | null;
+};
+
+export type NgoReportUpdateInput = {
+  organizationId: string;
+  reportId: string;
+  title: string;
+  evidenceItemIds: string[];
+  structuredClaimIds: string[];
 };
 
 export type StructuredClaimDraftInput = {
@@ -113,7 +138,7 @@ export async function getNgoEvidenceLibrary({
     ? await client.selectMany<NgoReportRow>(
         "ngo_reports",
         { organization_id: organizationId },
-        "id,organization_id,ngo_profile_id,template_id,title,body,evidence_item_ids,structured_claim_ids,score_snapshot_id,scoring_version_id,visibility,approval_status,created_at",
+        "id,organization_id,ngo_profile_id,template_id,title,body,evidence_item_ids,structured_claim_ids,score_snapshot_id,scoring_version_id,visibility,approval_status,created_at,updated_at,created_by",
       )
     : [];
 
@@ -152,6 +177,25 @@ export async function getNgoEvidenceLibrary({
           item.verification_status === "unverified"
             ? "Draft evidence"
             : "Review-ready evidence",
+        reviewLabel:
+          item.verification_status === "unverified"
+            ? "Evidence entered but not reviewed"
+            : item.verification_status === "verified" ||
+                item.verification_status === "audit_reviewed"
+              ? "Evidence accepted for trust context"
+              : "Evidence reviewed",
+        reportAttachmentLabel:
+          linkedReports.length > 0
+            ? `Attached to ${linkedReports.length} draft report${
+                linkedReports.length === 1 ? "" : "s"
+              }`
+            : "Not attached to any report yet",
+        nextStepLabel:
+          linkedClaims.some((claim) => claim.status === "accepted")
+            ? "Available now: use accepted claims in draft reports"
+            : linkedClaims.length > 0
+              ? "Needs review: draft claims cannot support report trust summaries yet"
+              : "Available now: create a structured claim draft",
       };
     })
     .sort(
@@ -173,7 +217,7 @@ export async function getNgoReportWorkspace({
     "id,organization_id",
   );
 
-  const templates = await client.selectMany<InsertedRow>(
+  const templates = await client.selectMany<NgoReportTemplateRow>(
     "ngo_report_templates",
     { active: true },
     "id,code,name,description,minimum_tier,ai_assist_allowed,active",
@@ -183,7 +227,7 @@ export async function getNgoReportWorkspace({
     ? await client.selectMany<NgoReportRow>(
         "ngo_reports",
         { organization_id: organizationId },
-        "id,organization_id,ngo_profile_id,template_id,title,body,evidence_item_ids,structured_claim_ids,score_snapshot_id,scoring_version_id,visibility,approval_status,created_at",
+        "id,organization_id,ngo_profile_id,template_id,title,body,evidence_item_ids,structured_claim_ids,score_snapshot_id,scoring_version_id,visibility,approval_status,created_at,updated_at,created_by",
       )
     : [];
 
@@ -209,6 +253,67 @@ export async function getNgoReportWorkspace({
     evidence,
     acceptedClaims,
     draftSnapshots,
+  };
+}
+
+export async function getNgoReportDetail({
+  client,
+  organizationId,
+  reportId,
+}: {
+  client: SupabaseServerClient;
+  organizationId: string;
+  reportId: string;
+}) {
+  const workspace = await getNgoReportWorkspace({ client, organizationId });
+  const report = await client.selectOne<NgoReportRow>(
+    "ngo_reports",
+    { id: reportId, organization_id: organizationId },
+    "id,organization_id,ngo_profile_id,template_id,title,body,evidence_item_ids,structured_claim_ids,score_snapshot_id,scoring_version_id,visibility,approval_status,created_at,updated_at,created_by",
+  );
+
+  if (!report) {
+    return null;
+  }
+
+  const template = report.template_id
+    ? await client.selectOne<NgoReportTemplateRow>(
+        "ngo_report_templates",
+        { id: report.template_id },
+        "id,code,name,description,minimum_tier,ai_assist_allowed,active",
+      )
+    : null;
+
+  const allClaims = await client.selectMany<StructuredClaimRow>(
+    "structured_claims",
+    { organization_id: organizationId },
+    "id,organization_id,statement,pillar_id,fact_type,evidence_item_ids,status,confidence,recency",
+  );
+
+  const selectedEvidence = workspace.evidence.filter((item) =>
+    report.evidence_item_ids.includes(item.id),
+  );
+  const selectedAcceptedClaims = allClaims.filter(
+    (claim) =>
+      report.structured_claim_ids.includes(claim.id) && claim.status === "accepted",
+  );
+  const excludedClaims = allClaims.filter(
+    (claim) =>
+      report.structured_claim_ids.includes(claim.id) && claim.status !== "accepted",
+  );
+
+  return {
+    ...workspace,
+    report,
+    template,
+    selectedEvidence,
+    selectedAcceptedClaims,
+    excludedClaims,
+    missingItems: buildReportMissingItems({
+      report,
+      selectedEvidenceCount: selectedEvidence.length,
+      selectedAcceptedClaimCount: selectedAcceptedClaims.length,
+    }),
   };
 }
 
@@ -439,6 +544,228 @@ export async function createNgoReportDraft({
   };
 }
 
+export async function updateNgoReportDraft({
+  client,
+  session,
+  input,
+}: {
+  client: SupabaseServerClient;
+  session: AuthSession;
+  input: NgoReportUpdateInput;
+}) {
+  const title = input.title.trim();
+
+  if (title.length < 2) {
+    return { ok: false, message: "Report title is required." };
+  }
+
+  const report = await client.selectOne<NgoReportRow>(
+    "ngo_reports",
+    { id: input.reportId, organization_id: input.organizationId },
+    "id,organization_id,ngo_profile_id,template_id,title,body,evidence_item_ids,structured_claim_ids,score_snapshot_id,scoring_version_id,visibility,approval_status,created_at,updated_at,created_by",
+  );
+
+  if (!report) {
+    return {
+      ok: false,
+      message: "Report was not found for this organization.",
+    };
+  }
+
+  if (report.approval_status !== "draft") {
+    return {
+      ok: false,
+      message: "Only draft reports can be updated in this workflow.",
+    };
+  }
+
+  const validation = await validateReportSelections({
+    client,
+    organizationId: input.organizationId,
+    evidenceItemIds: input.evidenceItemIds,
+    structuredClaimIds: input.structuredClaimIds,
+  });
+
+  if (!validation.ok) {
+    return validation;
+  }
+
+  const changedFields = [
+    report.title !== title ? "title" : null,
+    arraysDiffer(report.evidence_item_ids, validation.selectedEvidenceIds)
+      ? "evidence_item_ids"
+      : null,
+    arraysDiffer(report.structured_claim_ids, validation.selectedClaimIds)
+      ? "structured_claim_ids"
+      : null,
+  ].filter(Boolean);
+
+  const updatedAt = new Date().toISOString();
+  const updateRows = await client.update<NgoReportRow>(
+    "ngo_reports",
+    { id: report.id, organization_id: input.organizationId },
+    {
+      title,
+      evidence_item_ids: validation.selectedEvidenceIds,
+      structured_claim_ids: validation.selectedClaimIds,
+      visibility: "private",
+      approval_status: "draft",
+      updated_at: updatedAt,
+      body: {
+        ...(isPlainRecord(report.body) ? report.body : {}),
+        status: "draft",
+        trust_context: report.score_snapshot_id
+          ? "draft_snapshot_attached"
+          : validation.selectedClaimIds.length > 0
+            ? "accepted_claims_attached"
+            : validation.selectedEvidenceIds.length > 0
+              ? "evidence_only"
+              : "incomplete_no_evidence",
+        note: "Draft NGO report. No final score, export, or sharing link has been generated.",
+      },
+    },
+  );
+
+  const updatedReport = updateRows.data[0];
+
+  await client.insert(
+    "audit_events",
+    buildAuditEvent({
+      actorUserId: session.user.id,
+      organizationId: input.organizationId,
+      action: "ngo_report.draft_updated",
+      subjectTable: "ngo_reports",
+      subjectId: report.id,
+      reason: "NGO report draft updated by organization member.",
+      beforeData: {
+        title: report.title,
+        evidence_item_ids: report.evidence_item_ids,
+        structured_claim_ids: report.structured_claim_ids,
+        visibility: report.visibility,
+      },
+      afterData: {
+        title: updatedReport.title,
+        evidence_item_ids: validation.selectedEvidenceIds,
+        structured_claim_ids: validation.selectedClaimIds,
+        visibility: "private",
+        changed_fields: changedFields,
+        selected_evidence_count: validation.selectedEvidenceIds.length,
+        accepted_claim_count: validation.selectedClaimIds.length,
+      },
+    }),
+  );
+
+  return {
+    ok: true,
+    message: "Report draft updated.",
+    reportId: report.id,
+  };
+}
+
 function unique(values: string[]) {
   return Array.from(new Set(values.filter(Boolean)));
+}
+
+async function validateReportSelections({
+  client,
+  organizationId,
+  evidenceItemIds,
+  structuredClaimIds,
+}: {
+  client: SupabaseServerClient;
+  organizationId: string;
+  evidenceItemIds: string[];
+  structuredClaimIds: string[];
+}): Promise<
+  | { ok: true; selectedEvidenceIds: string[]; selectedClaimIds: string[] }
+  | { ok: false; message: string }
+> {
+  const evidence = await client.selectMany<EvidenceRow>(
+    "evidence_items",
+    { organization_id: organizationId },
+    "id,organization_id,title,source_name,source_type,url,notes,verification_status,visibility,created_at,created_by",
+  );
+  const allowedEvidenceIds = new Set(evidence.map((item) => item.id));
+  const selectedEvidenceIds = unique(evidenceItemIds).filter((id) =>
+    allowedEvidenceIds.has(id),
+  );
+
+  if (selectedEvidenceIds.length !== unique(evidenceItemIds).length) {
+    return {
+      ok: false,
+      message: "Reports can only include evidence owned by this organization.",
+    };
+  }
+
+  const acceptedClaims = await client.selectMany<StructuredClaimRow>(
+    "structured_claims",
+    { organization_id: organizationId, status: "accepted" },
+    "id,organization_id,statement,pillar_id,fact_type,evidence_item_ids,status,confidence,recency",
+  );
+  const allowedAcceptedClaimIds = new Set(acceptedClaims.map((claim) => claim.id));
+  const selectedClaimIds = unique(structuredClaimIds).filter((id) =>
+    allowedAcceptedClaimIds.has(id),
+  );
+
+  if (selectedClaimIds.length !== unique(structuredClaimIds).length) {
+    return {
+      ok: false,
+      message:
+        "Report trust summaries can only include accepted claims owned by this organization. Draft and rejected claims are excluded.",
+    };
+  }
+
+  const claimEvidenceIds = new Set(
+    acceptedClaims
+      .filter((claim) => selectedClaimIds.includes(claim.id))
+      .flatMap((claim) => claim.evidence_item_ids),
+  );
+  const selectedEvidenceSet = new Set(selectedEvidenceIds);
+  const claimWithoutSelectedEvidence = [...claimEvidenceIds].some(
+    (evidenceId) => !selectedEvidenceSet.has(evidenceId),
+  );
+
+  if (claimWithoutSelectedEvidence) {
+    return {
+      ok: false,
+      message: "Accepted claims must be backed by evidence selected for the report.",
+    };
+  }
+
+  return { ok: true, selectedEvidenceIds, selectedClaimIds };
+}
+
+function buildReportMissingItems({
+  report,
+  selectedEvidenceCount,
+  selectedAcceptedClaimCount,
+}: {
+  report: NgoReportRow;
+  selectedEvidenceCount: number;
+  selectedAcceptedClaimCount: number;
+}) {
+  return [
+    selectedEvidenceCount === 0 ? "No evidence selected yet." : null,
+    selectedAcceptedClaimCount === 0
+      ? "No accepted claims selected yet; trust context remains provisional."
+      : null,
+    report.score_snapshot_id
+      ? null
+      : "No public score has been created from this report.",
+    "Exports not enabled yet.",
+    "Sharing not enabled yet.",
+  ].filter(Boolean) as string[];
+}
+
+function arraysDiffer(left: string[], right: string[]) {
+  const sortedLeft = [...left].sort();
+  const sortedRight = [...right].sort();
+  return (
+    sortedLeft.length !== sortedRight.length ||
+    sortedLeft.some((value, index) => value !== sortedRight[index])
+  );
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
