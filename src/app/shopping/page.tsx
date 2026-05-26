@@ -3,6 +3,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ShoppingScoreExplainer } from "@/components/ShoppingScoreExplainer";
 import {
   buildShoppingScoreExplanation,
+  formatFreshness,
   getProductTrustLabel,
   getShoppingProducts,
 } from "@/lib/shopping";
@@ -126,7 +127,7 @@ export default async function ShoppingPage({
           <div className="results-heading">
             <div>
               <p className="storefront-kicker">Real data only</p>
-              <h2 id="shopping-results-title">Baby products POC</h2>
+              <h2 id="shopping-results-title">Baby diapers and wipes POC</h2>
             </div>
             <form className="compact-controls" id="shopping-controls">
               <input name="q" type="hidden" value={params.q ?? ""} />
@@ -157,9 +158,9 @@ export default async function ShoppingPage({
           </EmptyState>
         ) : products.length === 0 ? (
           <EmptyState title="No real baby product records found">
-            No active real product records matched this proof-of-concept view.
-            Mishava will not show placeholder diapers, wipes, stores, prices, or
-            scores as shopping results.
+            Mishava is adding reviewed baby diapers and wipes records here.
+            Products stay hidden until real source metadata is approved, and
+            scores stay pending until evidence supports them.
           </EmptyState>
         ) : (
           <div className="product-grid">
@@ -187,6 +188,10 @@ export default async function ShoppingPage({
                         {product.name}
                       </Link>
                     </h3>
+                    {product.package_details ? (
+                      <p className="product-meta">{product.package_details}</p>
+                    ) : null}
+                    {product.product_summary ? <p>{product.product_summary}</p> : null}
                     <ShoppingScoreExplainer
                       explanation={explanation}
                       triggerLabel={getProductTrustLabel(product)}
@@ -196,12 +201,16 @@ export default async function ShoppingPage({
                         {product.evidence_coverage ?? "Evidence profile pending"}
                       </span>
                       <span className="tag">
+                        {product.product_subcategory ?? product.category}
+                      </span>
+                      <span className="tag">
                         {product.source_review_status} source
                       </span>
                       <span className="tag">
-                        {product.score_snapshot_id
-                          ? "Snapshot linked"
-                          : "Score pending"}
+                        {formatFreshness(product.source_captured_at)}
+                      </span>
+                      <span className="tag">
+                        {product.score_snapshot_id ? "Snapshot linked" : "Score pending"}
                       </span>
                     </div>
                   </div>

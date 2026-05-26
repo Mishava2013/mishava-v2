@@ -9,6 +9,9 @@ export type ShoppingProduct = {
   name: string;
   brand_name: string | null;
   category: string;
+  product_subcategory: string | null;
+  product_summary: string | null;
+  package_details: string | null;
   product_url: string | null;
   image_url: string | null;
   evidence_score: number | null;
@@ -118,12 +121,12 @@ export async function getShoppingProducts({
   const rows = await client.selectMany<ShoppingProduct>(
     "shopping_products",
     { active: true },
-    "id,slug,name,brand_name,category,product_url,image_url,evidence_score,score_label,evidence_coverage,evidence_recency,verification_confidence,score_snapshot_id,score_published_at,source_name,source_url,source_captured_at,source_review_status,data_origin,active",
+    "id,slug,name,brand_name,category,product_subcategory,product_summary,package_details,product_url,image_url,evidence_score,score_label,evidence_coverage,evidence_recency,verification_confidence,score_snapshot_id,score_published_at,source_name,source_url,source_captured_at,source_review_status,data_origin,active",
   );
 
   const normalizedQuery = query?.trim().toLowerCase();
   const categoryProducts = category
-    ? rows.filter((product) => normalizeCategory(product.category) === category)
+    ? rows.filter((product) => isProductInCategory(product, category))
     : rows;
   const products = normalizedQuery
     ? categoryProducts.filter((product) =>
@@ -152,7 +155,7 @@ export async function getShoppingProductBySlug(slug: string) {
   const product = await client.selectOne<ShoppingProduct>(
     "shopping_products",
     { slug, active: true },
-    "id,slug,name,brand_name,category,product_url,image_url,evidence_score,score_label,evidence_coverage,evidence_recency,verification_confidence,score_snapshot_id,score_published_at,source_name,source_url,source_captured_at,source_review_status,data_origin,active",
+    "id,slug,name,brand_name,category,product_subcategory,product_summary,package_details,product_url,image_url,evidence_score,score_label,evidence_coverage,evidence_recency,verification_confidence,score_snapshot_id,score_published_at,source_name,source_url,source_captured_at,source_review_status,data_origin,active",
   );
 
   if (!product) {
@@ -208,6 +211,10 @@ export function getProductTrustLabel(product: ShoppingProduct) {
     return "Draft trust context";
   }
 
+  if (!product.evidence_coverage && !product.score_snapshot_id) {
+    return "Evidence profile pending";
+  }
+
   return "Score pending";
 }
 
@@ -228,6 +235,7 @@ export function buildShoppingScoreExplanation({
   if (!product.verification_confidence) missing.push("verification confidence");
   if (!product.score_snapshot_id) missing.push("published score snapshot");
   if (!product.score_published_at) missing.push("snapshot publication date");
+  if (product.evidence_score === null) missing.push("evidence-backed score value");
 
   return {
     label: hasEvidenceScore
@@ -258,8 +266,10 @@ export function buildShoppingScoreExplanation({
     sourceUrl: product.source_url,
     checked: [
       product.source_name ? `Source recorded: ${product.source_name}` : null,
+      product.product_summary ? "Product summary recorded from source" : null,
+      product.package_details ? `Package details: ${product.package_details}` : null,
       product.source_captured_at
-        ? formatFreshness(product.source_captured_at)
+        ? `Source freshness: ${formatFreshness(product.source_captured_at)}`
         : null,
       product.source_review_status
         ? `Source review status: ${product.source_review_status}`
@@ -375,6 +385,23 @@ function normalizeCategory(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+}
+
+function isProductInCategory(product: ShoppingProduct, category: string) {
+  const normalizedCategory = normalizeCategory(product.category);
+  const normalizedSubcategory = product.product_subcategory
+    ? normalizeCategory(product.product_subcategory)
+    : null;
+
+  if (category === "baby-products") {
+    return (
+      normalizedCategory === "baby-products" ||
+      normalizedSubcategory === "diapers" ||
+      normalizedSubcategory === "wipes"
+    );
+  }
+
+  return normalizedCategory === category || normalizedSubcategory === category;
 }
 
 export const shoppingPriorityQuestions = [

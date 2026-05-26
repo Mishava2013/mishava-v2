@@ -13,7 +13,7 @@ test("shopping results read from database and do not use placeholder product dat
   const sampleData = read("src/lib/sample-data.ts");
 
   assert.match(page, /getShoppingProducts/);
-  assert.match(page, /Baby products POC/);
+  assert.match(page, /Baby diapers and wipes POC/);
   assert.doesNotMatch(page, /products from "@\/lib\/sample-data"/);
   assert.doesNotMatch(sampleData, /diaper-review-placeholder/);
   assert.match(page, /No real baby product records found/);
@@ -76,6 +76,27 @@ test("shopping real-data readiness requires source metadata before active record
   assert.match(migration, /shopping_places_to_buy_active_requires_real_source/);
 });
 
+test("Slice 4 seeds a narrow reviewed baby diapers and wipes data set only", () => {
+  const migration = read("supabase/migrations/202605260004_release_4_slice_4_shopping_real_product_depth.sql");
+
+  assert.match(migration, /baby diapers\/wipes/);
+  assert.match(migration, /product_subcategory/);
+  assert.match(migration, /'diapers'/);
+  assert.match(migration, /'wipes'/);
+  assert.match(migration, /source_review_status/);
+  assert.match(migration, /'approved'/);
+  assert.match(migration, /https:\/\/www\.target\.com\/p\/-\/A-81041950/);
+  assert.match(migration, /https:\/\/www\.target\.com\/p\/-\/A-92559390/);
+
+  const productRows = migration.match(/4f37f4fa-ec28-4390-a48a-7bd9ee4b6e0[1-8]/g) ?? [];
+  const uniqueProducts = new Set(productRows);
+  assert.equal(uniqueProducts.size, 8);
+
+  assert.doesNotMatch(migration, /placeholder|demo|sample|fake/i);
+  assert.doesNotMatch(migration, /affiliate|commission|paid placement|sponsored ranking/i);
+  assert.doesNotMatch(migration, /Evidence Score 90|Evidence Score 92|Score 88/);
+});
+
 test("shopping display shows pending trust context instead of invented scores", () => {
   const page = read("src/app/shopping/page.tsx");
   const detail = read("src/app/shopping/products/[slug]/page.tsx");
@@ -83,10 +104,13 @@ test("shopping display shows pending trust context instead of invented scores", 
   const explainer = read("src/components/ShoppingScoreExplainer.tsx");
 
   assert.match(page, /getProductTrustLabel/);
+  assert.match(page, /formatFreshness/);
+  assert.match(page, /Evidence profile pending/);
   assert.match(detail, /Evidence profile pending/);
   assert.match(detail, /No public score appears/);
   assert.match(shopping, /return "Score pending"/);
   assert.match(shopping, /return "Draft trust context"/);
+  assert.match(shopping, /return "Evidence profile pending"/);
   assert.match(shopping, /More evidence needed/);
   assert.match(explainer, /No public score value is shown/);
   assert.match(page, /Complete Shopping Priorities to see Your Values Score/);
@@ -121,8 +145,24 @@ test("shopping score explanation helper uses real product state only", () => {
   assert.match(shopping, /hasPublishedEvidenceScore\(product\)/);
   assert.match(shopping, /score: hasEvidenceScore \? Number\(product\.evidence_score\) : null/);
   assert.match(shopping, /sourceReviewStatus|source_review_status|sourceStatus/);
+  assert.match(shopping, /Product summary recorded from source/);
+  assert.match(shopping, /Source freshness/);
   assert.match(shopping, /published score snapshot/);
   assert.doesNotMatch(shopping, /Evidence Score 90|Evidence Score 92|Score 88/);
+});
+
+test("shopping category pages render real product records for baby, diaper, and wipe shelves", () => {
+  const categoryPage = read("src/app/shopping/categories/[slug]/page.tsx");
+  const shopping = read("src/lib/shopping.ts");
+
+  assert.match(categoryPage, /getShoppingProducts/);
+  assert.match(categoryPage, /ShoppingScoreExplainer/);
+  assert.match(categoryPage, /formatFreshness/);
+  assert.match(categoryPage, /Reviewed products remain hidden/);
+  assert.match(shopping, /isProductInCategory/);
+  assert.match(shopping, /category === "baby-products"/);
+  assert.match(shopping, /normalizedSubcategory === "diapers"/);
+  assert.match(shopping, /normalizedSubcategory === "wipes"/);
 });
 
 test("shopping priorities page can save, update, and retake red-line settings", () => {

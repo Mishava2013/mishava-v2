@@ -56,8 +56,8 @@ export default async function ProductPage({
                 <strong>{product.source_name ?? "Not listed"}</strong>
               </div>
               <div className="metric">
-                <span>Review</span>
-                <strong>{product.source_review_status}</strong>
+                <span>Freshness</span>
+                <strong>{formatFreshness(product.source_captured_at)}</strong>
               </div>
             </div>
             {explanation ? (
@@ -77,22 +77,35 @@ export default async function ProductPage({
           <h3>{product?.brand_name ?? "Brand or seller context"}</h3>
           {product ? (
             <>
+              {product.product_summary ? <p>{product.product_summary}</p> : null}
               <p>
-                Category: {product.category}. Places to buy are shown only from
-                real source records. Ranking is not commission-based and payment
-                cannot create placement advantage.
+                Category: {product.category}
+                {product.product_subcategory ? ` / ${product.product_subcategory}` : ""}.
+                {product.package_details ? ` Package: ${product.package_details}.` : ""}
+                Places to buy are shown only from real source records. Ranking is
+                not commission-based and payment cannot create placement
+                advantage.
               </p>
               <p>
                 Shopping Priorities can personalize explanations later, but they
                 do not change this product&apos;s base Evidence Score.
               </p>
+              <p>
+                What is missing: reviewed evidence coverage, accepted scoring
+                facts, and a published score snapshot. Until those exist, this
+                page withholds score values.
+              </p>
               <div className="status-row">
                 <span className="tag">No commission ranking</span>
                 <span className="tag">No paid placement</span>
+                <span className="tag">Mishava is not the store</span>
                 <span className="tag">
                   {product.source_url ? "Source URL recorded" : "Source URL pending"}
                 </span>
               </div>
+              {product.product_url ? (
+                <Link href={product.product_url}>Open product source</Link>
+              ) : null}
             </>
           ) : (
             <p>
@@ -123,46 +136,57 @@ export default async function ProductPage({
             records are attached yet.
           </EmptyState>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Seller</th>
-                <th>Type</th>
-                <th>Price</th>
-                <th>Availability</th>
-                <th>Fulfillment</th>
-                <th>Source freshness</th>
-              </tr>
-            </thead>
-            <tbody>
-              {placesToBuy.map((place) => (
-                <tr key={place.id}>
-                  <td>{place.seller_name}</td>
-                  <td>{place.seller_type}</td>
-                  <td>{formatPrice(place)}</td>
-                  <td>{place.availability_status ?? "Not listed"}</td>
-                  <td>
-                    {[
-                      place.local_pickup ? "Local pickup" : null,
-                      place.local_delivery ? "Local delivery" : null,
-                      place.fulfillment_notes,
-                    ]
-                      .filter(Boolean)
-                      .join(", ") || "Not listed"}
-                  </td>
-                  <td>
-                    <div className="status-row">
-                      <span className="tag">{place.source_review_status}</span>
-                      <span className="tag">
-                        {formatFreshness(place.source_captured_at ?? place.last_checked_at)}
-                      </span>
-                    </div>
-                    {place.url ? <Link href={place.url}>External seller page</Link> : "No public URL"}
-                  </td>
+          <>
+            <p>
+              Mishava is not the store. These outbound links are source records
+              only; Mishava does not earn shopping commissions and does not
+              provide checkout.
+            </p>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Seller</th>
+                  <th>Type</th>
+                  <th>Price</th>
+                  <th>Availability</th>
+                  <th>Fulfillment</th>
+                  <th>Source freshness</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {placesToBuy.map((place) => (
+                  <tr key={place.id}>
+                    <td>{place.seller_name}</td>
+                    <td>{place.seller_type}</td>
+                    <td>{formatPrice(place)}</td>
+                    <td>{place.availability_status ?? "Not listed"}</td>
+                    <td>
+                      {[
+                        place.local_pickup ? "Local pickup" : null,
+                        place.local_delivery ? "Local delivery" : null,
+                        place.fulfillment_notes,
+                      ]
+                        .filter(Boolean)
+                        .join(", ") || "Not listed"}
+                    </td>
+                    <td>
+                      <div className="status-row">
+                        <span className="tag">{place.source_review_status}</span>
+                        <span className="tag">
+                          {formatFreshness(place.source_captured_at ?? place.last_checked_at)}
+                        </span>
+                      </div>
+                      {place.url ? (
+                        <Link href={place.url}>External seller page</Link>
+                      ) : (
+                        "No public URL"
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         )}
       </section>
     </>
