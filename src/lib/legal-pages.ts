@@ -174,6 +174,7 @@ export const legalPages = {
         body: [
           "Mishava aims for semantic HTML, keyboard navigation, visible focus states, readable forms, screen-reader friendly labels, adequate contrast, mobile readability, and status labels that do not rely on color alone.",
           "Reports and shared report views should remain readable in normal and print-friendly contexts.",
+          "Internal accessibility readiness documentation tracks WCAG, Section 508, and future VPAT/ACR preparation, but it is not a completed external review.",
         ],
       },
       {
@@ -198,6 +199,7 @@ export const legalPages = {
         body: [
           "Mishava V2 uses a clean Supabase V2 project, Supabase Auth foundation, organization-scoped access, RLS where implemented, role permissions, private evidence storage by default, and audit events for sensitive workflows.",
           "Service-role operations are intended to remain server-side only. Secrets must not be committed to the repo, and local secret files remain git-ignored.",
+          "Internal compliance readiness documentation tracks SOC 2, ISO 27001, accessibility, privacy, vendor, and audit-evidence preparation without claiming external certification.",
         ],
       },
       {
