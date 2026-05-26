@@ -13,10 +13,10 @@ test("shopping results read from database and do not use placeholder product dat
   const sampleData = read("src/lib/sample-data.ts");
 
   assert.match(page, /getShoppingProducts/);
-  assert.match(page, /Baby diapers and wipes POC/);
+  assert.match(page, /Baby diapers, wipes, and toilet paper POC/);
   assert.doesNotMatch(page, /products from "@\/lib\/sample-data"/);
   assert.doesNotMatch(sampleData, /diaper-review-placeholder/);
-  assert.match(page, /No real baby product records found/);
+  assert.match(page, /No real Shopping POC product records found/);
 });
 
 test("product detail reads places to buy from database", () => {
@@ -97,6 +97,35 @@ test("Slice 4 seeds a narrow reviewed baby diapers and wipes data set only", () 
   assert.doesNotMatch(migration, /Evidence Score 90|Evidence Score 92|Score 88/);
 });
 
+test("Slice 6 seeds a narrow reviewed toilet paper data set with score guardrails", () => {
+  const migration = read("supabase/migrations/202605260007_release_4_slice_6_toilet_paper_evidence_readiness.sql");
+
+  assert.match(migration, /toilet paper POC/);
+  assert.match(migration, /'toilet-paper'/);
+  assert.match(migration, /recycled_content_claim/);
+  assert.match(migration, /bamboo_fsc_claim/);
+  assert.match(migration, /virgin_fiber_claim/);
+  assert.match(migration, /external_evidence_reference_url/);
+  assert.match(migration, /mishava_evidence_review_status/);
+  assert.match(migration, /shopping_products_toilet_paper_score_requires_mishava_review/);
+  assert.match(migration, /mishava_evidence_review_status = 'score_ready'/);
+  assert.match(migration, /evidence_score is null/);
+  assert.match(migration, /score_snapshot_id is null/);
+  assert.match(migration, /https:\/\/www\.target\.com\/p\/-\/A-78603885/);
+  assert.match(migration, /https:\/\/www\.target\.com\/p\/-\/A-94731844/);
+  assert.match(migration, /https:\/\/www\.nrdc\.org\/resources\/issue-tissue/);
+  assert.match(migration, /External tissue sustainability scorecards may be used as evidence references only/);
+  assert.match(migration, /no external score is copied as a Mishava Score/);
+
+  const productRows = migration.match(/6c2f3b20-9e3a-4a81-8c6e-4ef8f3b9f00[1-9]/g) ?? [];
+  const uniqueProducts = new Set(productRows);
+  assert.equal(uniqueProducts.size, 9);
+
+  assert.doesNotMatch(migration, /placeholder|demo|sample|fake/i);
+  assert.doesNotMatch(migration, /affiliate|paid placement|sponsored ranking/i);
+  assert.doesNotMatch(migration, /Evidence Score 90|Evidence Score 92|Score 88/);
+});
+
 test("shopping display shows pending trust context instead of invented scores", () => {
   const page = read("src/app/shopping/page.tsx");
   const detail = read("src/app/shopping/products/[slug]/page.tsx");
@@ -108,6 +137,7 @@ test("shopping display shows pending trust context instead of invented scores", 
   assert.match(page, /Evidence profile pending/);
   assert.match(detail, /Evidence profile pending/);
   assert.match(detail, /No public score appears/);
+  assert.match(detail, /Outside scorecards may be\s+evidence references, but they are not Mishava Scores/);
   assert.match(shopping, /return "Score pending"/);
   assert.match(shopping, /return "Draft trust context"/);
   assert.match(shopping, /return "Evidence profile pending"/);
@@ -193,10 +223,14 @@ test("shopping score explanation helper uses real product state only", () => {
   assert.match(shopping, /Product summary recorded from source/);
   assert.match(shopping, /Source freshness/);
   assert.match(shopping, /published score snapshot/);
+  assert.match(shopping, /getEvidenceReadinessLabels/);
+  assert.match(shopping, /Outside scorecard\/reference recorded as evidence only, not a Mishava Score/);
+  assert.match(shopping, /toilet paper scoring version/);
+  assert.match(shopping, /Mishava-reviewed tissue sourcing claims/);
   assert.doesNotMatch(shopping, /Evidence Score 90|Evidence Score 92|Score 88/);
 });
 
-test("shopping category pages render real product records for baby, diaper, and wipe shelves", () => {
+test("shopping category pages render real product records for baby, diaper, wipe, and toilet paper shelves", () => {
   const categoryPage = read("src/app/shopping/categories/[slug]/page.tsx");
   const shopping = read("src/lib/shopping.ts");
 
@@ -208,6 +242,9 @@ test("shopping category pages render real product records for baby, diaper, and 
   assert.match(shopping, /category === "baby-products"/);
   assert.match(shopping, /normalizedSubcategory === "diapers"/);
   assert.match(shopping, /normalizedSubcategory === "wipes"/);
+  assert.match(categoryPage, /toilet-paper/);
+  assert.match(categoryPage, /Outside scorecards may be evidence references/);
+  assert.match(shopping, /normalizedSubcategory === category/);
 });
 
 test("shopping priorities page can save, update, and retake red-line settings", () => {

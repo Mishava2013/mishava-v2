@@ -8,6 +8,7 @@ import {
   buildShoppingScoreExplanation,
   formatFreshness,
   formatPrice,
+  getEvidenceReadinessLabels,
   getProductTrustLabel,
   getShoppingProductBySlug,
   hasPublishedEvidenceScore,
@@ -21,6 +22,8 @@ export default async function ProductPage({
   const { slug } = await params;
   const { product, placesToBuy, configured } = await getShoppingProductBySlug(slug);
   const explanation = product ? buildShoppingScoreExplanation({ product }) : null;
+  const evidenceReadiness = product ? getEvidenceReadinessLabels(product) : [];
+  const isToiletPaper = product?.product_subcategory === "toilet-paper";
 
   return (
     <>
@@ -52,6 +55,9 @@ export default async function ProductPage({
                   <span className="tag tag-source">
                     Source {product.source_review_status}
                   </span>
+                  {isToiletPaper ? (
+                    <span className="tag tag-source">External evidence available</span>
+                  ) : null}
                   <span className="tag tag-commerce">No paid ranking</span>
                 </div>
               </div>
@@ -109,6 +115,36 @@ export default async function ProductPage({
                 facts, and a published score snapshot. Until those exist, this
                 page withholds score values.
               </p>
+              {isToiletPaper ? (
+                <div className="surface-list compact">
+                  <div>
+                    <h4>Toilet paper evidence readiness</h4>
+                    <p>
+                      Recycled content, bamboo/FSC, virgin-fiber reliance,
+                      bleaching/process, packaging, and sourcing-policy claims
+                      are tracked as evidence context. Outside scorecards may be
+                      evidence references, but they are not Mishava Scores.
+                    </p>
+                    <div className="status-row">
+                      {evidenceReadiness.map((label) => (
+                        <span className="tag tag-source" key={label}>
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  {product.external_evidence_reference_url ? (
+                    <Link href={product.external_evidence_reference_url}>
+                      Open external evidence reference
+                    </Link>
+                  ) : null}
+                  {product.brand_sourcing_policy_url ? (
+                    <Link href={product.brand_sourcing_policy_url}>
+                      Open brand sourcing context
+                    </Link>
+                  ) : null}
+                </div>
+              ) : null}
               <div className="status-row">
                 <span className="tag tag-commerce">No commission ranking</span>
                 <span className="tag tag-commerce">No paid placement</span>

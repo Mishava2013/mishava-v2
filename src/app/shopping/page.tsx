@@ -5,18 +5,20 @@ import { ShoppingScoreExplainer } from "@/components/ShoppingScoreExplainer";
 import {
   buildShoppingScoreExplanation,
   formatFreshness,
+  getEvidenceReadinessLabels,
   getProductTrustLabel,
   getShoppingProducts,
 } from "@/lib/shopping";
 
 const departmentLinks = [
-  "Baby products",
-  "Diapers",
-  "Wipes",
-  "Household",
-  "Personal care",
-  "Toys",
-  "Local picks",
+  { label: "Baby products", href: "/shopping/categories/baby-products" },
+  { label: "Diapers", href: "/shopping/categories/diapers" },
+  { label: "Wipes", href: "/shopping/categories/wipes" },
+  { label: "Toilet paper", href: "/shopping/categories/toilet-paper" },
+  { label: "Household", href: "/shopping?q=Household" },
+  { label: "Personal care", href: "/shopping?q=Personal%20care" },
+  { label: "Toys", href: "/shopping?q=Toys" },
+  { label: "Local picks", href: "/shopping?q=Local%20picks" },
 ];
 
 const quickFilters = [
@@ -62,8 +64,8 @@ export default async function ShoppingPage({
 
       <nav aria-label="Shopping departments" className="department-rail">
         {departmentLinks.map((department) => (
-          <Link href={`/shopping?q=${encodeURIComponent(department)}`} key={department}>
-            {department}
+          <Link href={department.href} key={department.label}>
+            {department.label}
           </Link>
         ))}
       </nav>
@@ -73,9 +75,9 @@ export default async function ShoppingPage({
           <p className="storefront-kicker">Shopping</p>
           <h1>Everyday products, clearer proof.</h1>
           <p>
-            The first proof of concept is baby products: diapers, wipes, and
-            related basics from real source records only. Payment never changes
-            placement.
+            The proof of concept starts with baby diapers, wipes, and toilet
+            paper records from real reviewed source metadata only. Payment
+            never changes placement.
           </p>
         </div>
         <div className="storefront-promise">
@@ -128,7 +130,7 @@ export default async function ShoppingPage({
           <div className="results-heading">
             <div>
               <p className="storefront-kicker">Real data only</p>
-              <h2 id="shopping-results-title">Baby diapers and wipes POC</h2>
+              <h2 id="shopping-results-title">Baby diapers, wipes, and toilet paper POC</h2>
             </div>
             <form className="compact-controls" id="shopping-controls">
               <input name="q" type="hidden" value={params.q ?? ""} />
@@ -158,8 +160,8 @@ export default async function ShoppingPage({
             Mishava displays product results.
           </EmptyState>
         ) : products.length === 0 ? (
-          <EmptyState title="No real baby product records found">
-            Mishava is adding reviewed baby diapers and wipes records here.
+          <EmptyState title="No real Shopping POC product records found">
+            Mishava is adding reviewed baby diapers, wipes, and toilet paper records here.
             Products stay hidden until real source metadata is approved, and
             scores stay pending until evidence supports them.
           </EmptyState>
@@ -167,6 +169,7 @@ export default async function ShoppingPage({
           <div className="product-grid">
             {products.map((product) => {
               const explanation = buildShoppingScoreExplanation({ product });
+              const readinessLabels = getEvidenceReadinessLabels(product);
 
               return (
                 <article className="product-card" key={product.id}>
@@ -208,6 +211,11 @@ export default async function ShoppingPage({
                       <span className="tag tag-score">
                         {product.score_snapshot_id ? "Snapshot linked" : "Score pending"}
                       </span>
+                      {readinessLabels.slice(0, 2).map((label) => (
+                        <span className="tag tag-source" key={label}>
+                          {label}
+                        </span>
+                      ))}
                       <span className="tag tag-commerce">No commission</span>
                     </div>
                   </div>

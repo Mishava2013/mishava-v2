@@ -6,6 +6,7 @@ import { ShoppingScoreExplainer } from "@/components/ShoppingScoreExplainer";
 import {
   buildShoppingScoreExplanation,
   formatFreshness,
+  getEvidenceReadinessLabels,
   getProductTrustLabel,
   getShoppingProducts,
 } from "@/lib/shopping";
@@ -17,30 +18,33 @@ export default async function CategoryPage({
 }) {
   const { slug } = await params;
   const label = slug.replaceAll("-", " ");
-  const isBabyPoc = ["baby-products", "diapers", "wipes"].includes(slug);
-  const { products, configured } = isBabyPoc
+  const isShoppingPoc = ["baby-products", "diapers", "wipes", "toilet-paper"].includes(slug);
+  const { products, configured } = isShoppingPoc
     ? await getShoppingProducts({ category: slug })
     : { products: [], configured: true };
+  const isToiletPaper = slug === "toilet-paper";
 
   return (
     <>
       <PageHeader eyebrow="Shopping category" title={label}>
-        {isBabyPoc
-          ? "This is part of the baby products proof of concept. Products appear only after real source records are approved."
+        {isShoppingPoc
+          ? isToiletPaper
+            ? "This toilet paper proof of concept records real product sources and tissue-sourcing evidence context. Scores stay pending until Mishava-reviewed claims and a supported scoring version exist."
+            : "This is part of the baby products proof of concept. Products appear only after real source records are approved."
           : "Category pages will map product types to evidence needs, shopping filters, local availability, and score explanation. Scores remain unavailable until real evidence exists for each product or business."}
       </PageHeader>
-      {isBabyPoc && !configured ? (
+      {isShoppingPoc && !configured ? (
         <EmptyState title="Shopping database is not configured yet">
           Add Supabase environment variables and reviewed real product records
           before Mishava displays this shelf.
         </EmptyState>
-      ) : isBabyPoc && products.length === 0 ? (
-        <EmptyState title="Baby products POC uses real records only">
-          Mishava will not create placeholder diapers, wipes, places to buy, or
-          score values. Reviewed products remain hidden until real source
+      ) : isShoppingPoc && products.length === 0 ? (
+        <EmptyState title={`${isToiletPaper ? "Toilet paper" : "Baby products"} POC uses real records only`}>
+          Mishava will not create placeholder products, places to buy, or score
+          values. Reviewed products remain hidden until real source
           metadata is approved.
         </EmptyState>
-      ) : isBabyPoc ? (
+      ) : isShoppingPoc ? (
         <section className="shopping-results" aria-labelledby="category-products-title">
           <div className="results-heading">
             <div>
@@ -54,6 +58,7 @@ export default async function CategoryPage({
           <div className="product-grid">
             {products.map((product) => {
               const explanation = buildShoppingScoreExplanation({ product });
+              const readinessLabels = getEvidenceReadinessLabels(product);
 
               return (
                 <article className="product-card" key={product.id}>
@@ -88,6 +93,11 @@ export default async function CategoryPage({
                       <span className="tag">
                         {formatFreshness(product.source_captured_at)}
                       </span>
+                      {readinessLabels.slice(0, 2).map((status) => (
+                        <span className="tag tag-score" key={status}>
+                          {status}
+                        </span>
+                      ))}
                       <span className="tag tag-commerce">No paid ranking</span>
                     </div>
                   </div>
@@ -95,6 +105,13 @@ export default async function CategoryPage({
               );
             })}
           </div>
+          {isToiletPaper ? (
+            <p className="filter-note">
+              Outside scorecards may be evidence references, but they are not
+              Mishava Scores. Toilet paper records remain score-pending until
+              Mishava review and a supported scoring version are complete.
+            </p>
+          ) : null}
         </section>
       ) : null}
     </>

@@ -32,6 +32,21 @@ export type ShoppingProduct = {
     | null;
   image_last_reviewed_at: string | null;
   image_rights_notes: string | null;
+  recycled_content_claim: string | null;
+  post_consumer_recycled_content_claim: string | null;
+  bamboo_fsc_claim: string | null;
+  virgin_fiber_claim: string | null;
+  bleaching_process_claim: string | null;
+  packaging_claim: string | null;
+  brand_sourcing_policy_url: string | null;
+  external_evidence_reference_url: string | null;
+  external_evidence_reference_notes: string | null;
+  mishava_evidence_review_status:
+    | "not_started"
+    | "external_evidence_available"
+    | "draft_claims"
+    | "reviewed_claims"
+    | "score_ready";
   evidence_score: number | null;
   score_label: string | null;
   evidence_coverage: "Low" | "Medium" | "High" | null;
@@ -119,6 +134,9 @@ export type ShoppingScoreExplanation = {
 export const shoppingPriorityVersionCode = "Shopping_Priorities_V2.01_2026.05.24";
 export const shoppingPriorityConsentVersion = "Shopping_Priorities_Privacy_V1_2026.05.24";
 
+const shoppingProductColumns =
+  "id,slug,name,brand_name,category,product_subcategory,product_summary,package_details,product_url,image_url,image_alt_text,image_source_url,image_source_type,image_review_status,image_last_reviewed_at,image_rights_notes,recycled_content_claim,post_consumer_recycled_content_claim,bamboo_fsc_claim,virgin_fiber_claim,bleaching_process_claim,packaging_claim,brand_sourcing_policy_url,external_evidence_reference_url,external_evidence_reference_notes,mishava_evidence_review_status,evidence_score,score_label,evidence_coverage,evidence_recency,verification_confidence,score_snapshot_id,score_published_at,source_name,source_url,source_captured_at,source_review_status,data_origin,active";
+
 export async function getShoppingProducts({
   query,
   category,
@@ -139,7 +157,7 @@ export async function getShoppingProducts({
   const rows = await client.selectMany<ShoppingProduct>(
     "shopping_products",
     { active: true },
-    "id,slug,name,brand_name,category,product_subcategory,product_summary,package_details,product_url,image_url,image_alt_text,image_source_url,image_source_type,image_review_status,image_last_reviewed_at,image_rights_notes,evidence_score,score_label,evidence_coverage,evidence_recency,verification_confidence,score_snapshot_id,score_published_at,source_name,source_url,source_captured_at,source_review_status,data_origin,active",
+    shoppingProductColumns,
   );
 
   const normalizedQuery = query?.trim().toLowerCase();
@@ -148,7 +166,7 @@ export async function getShoppingProducts({
     : rows;
   const products = normalizedQuery
     ? categoryProducts.filter((product) =>
-        [product.name, product.brand_name, product.category]
+        [product.name, product.brand_name, product.category, product.product_subcategory]
           .filter(Boolean)
           .some((value) => value?.toLowerCase().includes(normalizedQuery)),
       )
@@ -173,7 +191,7 @@ export async function getShoppingProductBySlug(slug: string) {
   const product = await client.selectOne<ShoppingProduct>(
     "shopping_products",
     { slug, active: true },
-    "id,slug,name,brand_name,category,product_subcategory,product_summary,package_details,product_url,image_url,image_alt_text,image_source_url,image_source_type,image_review_status,image_last_reviewed_at,image_rights_notes,evidence_score,score_label,evidence_coverage,evidence_recency,verification_confidence,score_snapshot_id,score_published_at,source_name,source_url,source_captured_at,source_review_status,data_origin,active",
+    shoppingProductColumns,
   );
 
   if (!product) {
@@ -265,6 +283,8 @@ export function getProductImageFallback(product: ShoppingProduct) {
         ? "Baby wipes"
         : product.product_subcategory === "diapers"
           ? "Diaper product"
+          : product.product_subcategory === "toilet-paper"
+            ? "Toilet paper"
           : product.category,
     reason:
       product.image_review_status === "rejected"
@@ -288,6 +308,7 @@ export function buildShoppingScoreExplanation({
   const hasDraftContext = Boolean(product.score_snapshot_id && !hasEvidenceScore);
   const valuesMessage = getYourValuesScoreMessage(valuesState);
   const missing = [];
+  const evidenceReadiness = getEvidenceReadinessLabels(product);
 
   if (!product.evidence_coverage) missing.push("reviewed evidence coverage");
   if (!product.evidence_recency) missing.push("published evidence recency");
@@ -295,6 +316,13 @@ export function buildShoppingScoreExplanation({
   if (!product.score_snapshot_id) missing.push("published score snapshot");
   if (!product.score_published_at) missing.push("snapshot publication date");
   if (product.evidence_score === null) missing.push("evidence-backed score value");
+  if (
+    product.product_subcategory === "toilet-paper" &&
+    product.mishava_evidence_review_status !== "score_ready"
+  ) {
+    missing.push("toilet paper scoring version");
+    missing.push("Mishava-reviewed tissue sourcing claims");
+  }
 
   return {
     label: hasEvidenceScore
@@ -336,15 +364,49 @@ export function buildShoppingScoreExplanation({
       product.source_review_status
         ? `Source review status: ${product.source_review_status}`
         : null,
+      ...evidenceReadiness,
     ].filter((item): item is string => Boolean(item)),
     missing,
     why: hasEvidenceScore
       ? "This Evidence Score is backed by a published score snapshot."
       : hasDraftContext
         ? "Mishava has draft trust context, but it is not a public score."
+        : product.product_subcategory === "toilet-paper"
+          ? "Toilet paper evidence is recorded as source context only. A public Mishava score needs reviewed tissue claims, a supported scoring version, and a published score snapshot."
         : "A public score needs reviewed evidence, accepted scoring facts, a scoring version, and a published score snapshot.",
     valuesMessage,
   };
+}
+
+export function getEvidenceReadinessLabels(product: ShoppingProduct) {
+  return [
+    product.mishava_evidence_review_status === "external_evidence_available"
+      ? "External evidence available"
+      : null,
+    product.mishava_evidence_review_status === "draft_claims"
+      ? "Draft trust context"
+      : null,
+    product.recycled_content_claim
+      ? `Recycled content: ${product.recycled_content_claim}`
+      : null,
+    product.post_consumer_recycled_content_claim
+      ? `Post-consumer recycled content: ${product.post_consumer_recycled_content_claim}`
+      : null,
+    product.bamboo_fsc_claim ? `Bamboo/FSC claim: ${product.bamboo_fsc_claim}` : null,
+    product.virgin_fiber_claim
+      ? `Virgin fiber review: ${product.virgin_fiber_claim}`
+      : null,
+    product.bleaching_process_claim
+      ? `Bleaching/process review: ${product.bleaching_process_claim}`
+      : null,
+    product.packaging_claim ? `Packaging review: ${product.packaging_claim}` : null,
+    product.external_evidence_reference_url
+      ? "Outside scorecard/reference recorded as evidence only, not a Mishava Score"
+      : null,
+    product.mishava_evidence_review_status !== "score_ready"
+      ? "Mishava review not finalized"
+      : null,
+  ].filter((item): item is string => Boolean(item));
 }
 
 export function getYourValuesScoreState({
