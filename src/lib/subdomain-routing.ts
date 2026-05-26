@@ -33,7 +33,7 @@ const subdomainRootTargets: Record<MishavaSubdomain, string> = {
   api: "/api",
   gov: "/gov",
   research: "/research",
-  media: "/research",
+  media: "/media",
 };
 
 const subdomainPathPrefixes: Partial<Record<MishavaSubdomain, string>> = {
@@ -46,7 +46,7 @@ const subdomainPathPrefixes: Partial<Record<MishavaSubdomain, string>> = {
   api: "/api",
   gov: "/gov",
   research: "/research",
-  media: "/research",
+  media: "/media",
 };
 
 const globalPathPrefixes = [
@@ -57,6 +57,7 @@ const globalPathPrefixes = [
   "/auth",
   "/business",
   "/legal",
+  "/media",
   "/ngo",
   "/org",
   "/shared",

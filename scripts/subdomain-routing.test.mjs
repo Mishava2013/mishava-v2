@@ -25,7 +25,7 @@ test("subdomain routing maps requested Mishava hosts to existing surfaces", () =
     ["api: \"/api\"", "/api"],
     ["gov: \"/gov\"", "/gov"],
     ["research: \"/research\"", "/research"],
-    ["media: \"/research\"", "/research"],
+    ["media: \"/media\"", "/media"],
   ]) {
     assert.match(routing, new RegExp(host.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     assert.match(routing, new RegExp(target.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
@@ -37,17 +37,24 @@ test("subdomain routing maps requested Mishava hosts to existing surfaces", () =
 });
 
 test("reserved subdomain pages avoid premature readiness claims", () => {
+  const business = read("src/app/business/page.tsx");
   const corporate = read("src/app/corporate/page.tsx");
   const gov = read("src/app/gov/page.tsx");
   const research = read("src/app/research/page.tsx");
+  const media = read("src/app/media/page.tsx");
   const api = read("src/app/api/page.tsx");
+  const comingSoon = read("src/components/ComingSoonSurface.tsx");
 
-  assert.match(corporate, /Payment can unlock tools and capacity/);
+  assert.match(business, /Business\/local profiles/);
+  assert.match(corporate, /Corporate procurement/);
   assert.match(gov, /not live for government use yet/);
-  assert.match(research, /reserved for future evidence/);
-  assert.match(api, /Public API access is not live yet/);
+  assert.match(research, /Researcher access/);
+  assert.match(media, /Media inquiry workflows/);
+  assert.match(api, /Public API keys/);
+  assert.match(comingSoon, /Coming soon:/);
+  assert.match(comingSoon, /should not imply a live product\s+surface/);
 
-  for (const page of [corporate, gov, research, api]) {
+  for (const page of [business, corporate, gov, research, media, api, comingSoon]) {
     assert.doesNotMatch(page, /SOC 2 certified|FedRAMP authorized|VPAT complete|public API is live/i);
   }
 });
