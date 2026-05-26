@@ -24,6 +24,21 @@ export default async function AdminSupportPage() {
     (count, summary) => count + summary.activeShareGrantCount,
     0,
   );
+  const totalPendingOrUnscannedFiles = summaries.reduce(
+    (count, summary) =>
+      count +
+      (summary.scanStatusCounts.pending ?? 0) +
+      (summary.scanStatusCounts.not_scanned ?? 0),
+    0,
+  );
+  const totalBlockedFiles = summaries.reduce(
+    (count, summary) =>
+      count +
+      (summary.scanStatusCounts.suspicious ?? 0) +
+      (summary.scanStatusCounts.rejected ?? 0) +
+      (summary.scanStatusCounts.failed ?? 0),
+    0,
+  );
 
   return (
     <>
@@ -59,6 +74,14 @@ export default async function AdminSupportPage() {
           <div className="metric">
             <span>Active share grants</span>
             <strong>{totalActiveShares}</strong>
+          </div>
+          <div className="metric">
+            <span>Pending/not scanned files</span>
+            <strong>{totalPendingOrUnscannedFiles}</strong>
+          </div>
+          <div className="metric">
+            <span>Blocked file security states</span>
+            <strong>{totalBlockedFiles}</strong>
           </div>
         </div>
       </section>
@@ -114,6 +137,18 @@ export default async function AdminSupportPage() {
                   <div className="metric">
                     <span>Private files</span>
                     <strong>{summary.privateFileCount} metadata records</strong>
+                  </div>
+                  <div className="metric">
+                    <span>File security</span>
+                    <strong>
+                      {(summary.scanStatusCounts.pending ?? 0) +
+                        (summary.scanStatusCounts.not_scanned ?? 0)}{" "}
+                      pending/not scanned ·{" "}
+                      {(summary.scanStatusCounts.suspicious ?? 0) +
+                        (summary.scanStatusCounts.rejected ?? 0) +
+                        (summary.scanStatusCounts.failed ?? 0)}{" "}
+                      blocked
+                    </strong>
                   </div>
                   <div className="metric">
                     <span>Reports</span>

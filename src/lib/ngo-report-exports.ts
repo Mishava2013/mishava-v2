@@ -107,7 +107,10 @@ export function buildNgoReportEvidenceCsv({
     detail.ngoProfile?.public_name ??
     detail.organization?.name ??
     "NGO organization";
-  const rows = detail.selectedEvidence.map((item) => {
+  const exportableEvidence = detail.selectedEvidence.filter(
+    (item) => !item.hasBlockedFiles,
+  );
+  const rows = exportableEvidence.map((item) => {
     const linkedAcceptedClaimCount = detail.selectedAcceptedClaims.filter((claim) =>
       claim.evidence_item_ids.includes(item.id),
     ).length;
@@ -126,6 +129,7 @@ export function buildNgoReportEvidenceCsv({
       String(linkedAcceptedClaimCount),
       item.lifecycle_status === "archived" ? "Yes" : "No",
       item.archived_at ?? "",
+      item.fileScanStatusLabel,
       "Raw evidence files and private storage paths are excluded by default.",
     ];
   });
@@ -145,6 +149,7 @@ export function buildNgoReportEvidenceCsv({
       "Linked accepted claim count",
       "Archived",
       "Archived at",
+      "File scan status",
       "Export limitation",
     ],
     ...rows,
@@ -206,9 +211,10 @@ export function buildNgoReportPrintHtml({
     <section class="section">
       <h2>Evidence Summaries</h2>
       ${
-        detail.selectedEvidence.length === 0
+        detail.selectedEvidence.filter((item) => !item.hasBlockedFiles).length === 0
           ? "<p>No evidence has been selected for this report.</p>"
           : detail.selectedEvidence
+              .filter((item) => !item.hasBlockedFiles)
               .map(
                 (item) => `<article class="item">
         <h3>${escapeHtml(item.title)}</h3>
@@ -219,6 +225,7 @@ export function buildNgoReportPrintHtml({
           ${item.lifecycle_status === "archived" ? " · Archived" : ""}
         </p>
         <p>${escapeHtml(item.fileAttachmentLabel)}. Raw evidence files are not included by default.</p>
+        <p>File security: ${escapeHtml(item.fileScanStatusLabel)}.</p>
       </article>`,
               )
               .join("\n")

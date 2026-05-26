@@ -62,7 +62,9 @@ export default async function OrgEvidencePage({
           structured claims, and audit trail indicator. This is still a beta
           workflow: evidence can support reports only after claims are reviewed.
           Raw files are private to your organization and are not shared by
-          default.
+          default. New uploads are pending/not scanned until a scanner or
+          authorized review clears them; quarantined or rejected files are
+          blocked from new reports, exports, and sharing by default.
         </p>
 
         {evidenceLibrary.length === 0 ? (
@@ -111,6 +113,10 @@ export default async function OrgEvidencePage({
                     <strong>{item.fileAttachmentLabel}</strong>
                   </div>
                   <div className="metric">
+                    <span>File security</span>
+                    <strong>{item.fileScanStatusLabel}</strong>
+                  </div>
+                  <div className="metric">
                     <span>Structured claims</span>
                     <strong>
                       {item.linkedStructuredClaimsCount} linked ·{" "}
@@ -138,7 +144,7 @@ export default async function OrgEvidencePage({
                   </div>
                   <div className="metric">
                     <span>File privacy</span>
-                    <strong>Raw files are not shared by default</strong>
+                    <strong>Raw files are private and unavailable until cleared</strong>
                   </div>
                 </div>
 
@@ -155,7 +161,11 @@ export default async function OrgEvidencePage({
                       {item.fileSummaries.map((file) => (
                         <li key={file.id}>
                           {file.original_filename} · v{file.version_number} ·{" "}
-                          {file.status} · {Math.round(file.file_size_bytes / 1024)} KB
+                          {file.status} · {file.scan_status} ·{" "}
+                          {Math.round(file.file_size_bytes / 1024)} KB
+                          {file.quarantine_reason
+                            ? ` · ${file.quarantine_reason}`
+                            : ""}
                         </li>
                       ))}
                     </ul>
@@ -221,6 +231,8 @@ export default async function OrgEvidencePage({
                     <p className="muted-copy">
                       Files are stored privately under this organization. PDF,
                       PNG, JPG, WebP, TXT, CSV, or DOCX only, up to 10 MB.
+                      New uploads are not treated as clean until a scanner or
+                      authorized review supports that status.
                     </p>
                     <form action={uploadEvidenceFileAction} className="form-grid compact-form">
                       <input name="evidenceItemId" type="hidden" value={item.id} />
@@ -375,6 +387,8 @@ export default async function OrgEvidencePage({
               shared by default. PDF, PNG, JPG, WebP, TXT, CSV, or DOCX only,
               up to 10 MB. Shared reports expose selected summaries unless a
               future explicit raw-file sharing control is added and used.
+              Upload acceptance does not mean a file is malware-free, reviewed,
+              or accepted for trust context.
             </p>
           </div>
           <div className="field full">

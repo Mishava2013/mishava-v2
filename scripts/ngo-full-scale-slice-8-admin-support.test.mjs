@@ -41,7 +41,7 @@ test("support dashboard renders NGO operational summaries without raw file acces
   }
 
   assert.match(detailPage, /raw evidence file contents/);
-  assert.match(helper, /original_filename,mime_type,file_size_bytes,status,visibility,uploaded_at/);
+  assert.match(helper, /original_filename,mime_type,file_size_bytes,status,scan_status,quarantine_reason,visibility,uploaded_at/);
   assert.doesNotMatch(helper, /storage_path,/);
   assert.match(detailPage, /signed URLs, and storage paths are not shown by default/);
   assert.doesNotMatch(detailPage, /createSignedUrl|download raw/i);

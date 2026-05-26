@@ -32,6 +32,13 @@ type EvidenceFileRow = InsertedRow & {
   file_size_bytes: number;
   version_number: number;
   status: string;
+  scan_status: "pending" | "clean" | "suspicious" | "rejected" | "failed" | "not_scanned";
+  scanned_at: string | null;
+  scanner_name: string | null;
+  scanner_result_reference: string | null;
+  quarantine_reason: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
   visibility: string;
   uploaded_by: string | null;
   uploaded_at: string;
@@ -122,6 +129,9 @@ export type NgoEvidenceLibraryItem = EvidenceRow & {
   activeFileCount: number;
   fileAttachmentLabel: string;
   fileSummaries: EvidenceFileRow[];
+  fileScanStatusLabel: string;
+  blockedFileCount: number;
+  hasBlockedFiles: boolean;
   linkedStructuredClaimsCount: number;
   linkedAcceptedClaimsCount: number;
   linkedReportCount: number;
@@ -198,7 +208,7 @@ export async function getNgoEvidenceLibrary({
   const evidenceFiles = await client.selectMany<EvidenceFileRow>(
     "evidence_files",
     { organization_id: organizationId },
-    "id,organization_id,evidence_item_id,storage_bucket,storage_path,original_filename,safe_filename,mime_type,file_size_bytes,version_number,status,visibility,uploaded_by,uploaded_at",
+    "id,organization_id,evidence_item_id,storage_bucket,storage_path,original_filename,safe_filename,mime_type,file_size_bytes,version_number,status,scan_status,scanned_at,scanner_name,scanner_result_reference,quarantine_reason,reviewed_by,reviewed_at,visibility,uploaded_by,uploaded_at",
   );
 
   const submissions = ngoProfile
@@ -241,6 +251,7 @@ export async function getNgoEvidenceLibrary({
         .filter((file) => file.evidence_item_id === item.id)
         .sort((left, right) => right.version_number - left.version_number);
       const activeFileCount = files.filter((file) => file.status === "active").length;
+      const blockedFileCount = files.filter(isEvidenceFileBlockedFromUse).length;
       const submission = submissions.find(
         (entry) => entry.evidence_item_id === item.id,
       );
@@ -258,6 +269,9 @@ export async function getNgoEvidenceLibrary({
             ? `${activeFileCount} private file${activeFileCount === 1 ? "" : "s"}`
             : "No private files attached",
         fileSummaries: files,
+        fileScanStatusLabel: buildEvidenceFileScanStatusLabel(files),
+        blockedFileCount,
+        hasBlockedFiles: blockedFileCount > 0,
         linkedStructuredClaimsCount: linkedClaims.length,
         linkedAcceptedClaimsCount: linkedClaims.filter(
           (claim) => claim.status === "accepted",
@@ -330,7 +344,7 @@ export async function getNgoReportWorkspace({
     : [];
 
   const evidence = (await getNgoEvidenceLibrary({ client, organizationId })).filter(
-    (item) => item.canUseInNewReports,
+    (item) => item.canUseInNewReports && !item.hasBlockedFiles,
   );
   const acceptedClaimsRaw = await client.selectMany<StructuredClaimRow>(
     "structured_claims",
@@ -474,6 +488,20 @@ export async function createStructuredClaimDraft({
     };
   }
 
+  const evidenceFiles = await client.selectMany<EvidenceFileRow>(
+    "evidence_files",
+    { evidence_item_id: input.evidenceItemId, organization_id: input.organizationId },
+    "id,organization_id,evidence_item_id,storage_bucket,storage_path,original_filename,safe_filename,mime_type,file_size_bytes,version_number,status,scan_status,scanned_at,scanner_name,scanner_result_reference,quarantine_reason,reviewed_by,reviewed_at,visibility,uploaded_by,uploaded_at",
+  );
+
+  if (evidenceFiles.some(isEvidenceFileBlockedFromUse)) {
+    return {
+      ok: false,
+      message:
+        "Quarantined, rejected, or failed-scan files cannot support new structured claim drafts.",
+    };
+  }
+
   if (input.statement.trim().length < 8) {
     return {
       ok: false,
@@ -593,9 +621,19 @@ export async function createNgoReportDraft({
     ...reviewedEvidence,
     ...acceptedEvidence,
   ];
+  const evidenceFiles = await client.selectMany<EvidenceFileRow>(
+    "evidence_files",
+    { organization_id: input.organizationId },
+    "id,organization_id,evidence_item_id,storage_bucket,storage_path,original_filename,safe_filename,mime_type,file_size_bytes,version_number,status,scan_status,scanned_at,scanner_name,scanner_result_reference,quarantine_reason,reviewed_by,reviewed_at,visibility,uploaded_by,uploaded_at",
+  );
+  const evidenceIdsWithBlockedFiles = new Set(
+    evidenceFiles
+      .filter(isEvidenceFileBlockedFromUse)
+      .map((file) => file.evidence_item_id),
+  );
   const allowedEvidenceIds = new Set(allowedEvidence.map((item) => item.id));
   const selectedEvidenceIds = unique(input.evidenceItemIds).filter((id) =>
-    allowedEvidenceIds.has(id),
+    allowedEvidenceIds.has(id) && !evidenceIdsWithBlockedFiles.has(id),
   );
 
   if (selectedEvidenceIds.length !== unique(input.evidenceItemIds).length) {
@@ -1135,9 +1173,20 @@ async function validateReportSelections({
     { organization_id: organizationId },
     "id,organization_id,title,source_name,source_type,url,notes,verification_status,visibility,created_at,created_by,document_path,lifecycle_status,archived_at",
   );
+  const evidenceFiles = await client.selectMany<EvidenceFileRow>(
+    "evidence_files",
+    { organization_id: organizationId },
+    "id,organization_id,evidence_item_id,storage_bucket,storage_path,original_filename,safe_filename,mime_type,file_size_bytes,version_number,status,scan_status,scanned_at,scanner_name,scanner_result_reference,quarantine_reason,reviewed_by,reviewed_at,visibility,uploaded_by,uploaded_at",
+  );
+  const evidenceIdsWithBlockedFiles = new Set(
+    evidenceFiles
+      .filter(isEvidenceFileBlockedFromUse)
+      .map((file) => file.evidence_item_id),
+  );
   const allowedEvidenceIds = new Set(
     evidence
       .filter((item) => item.lifecycle_status !== "archived")
+      .filter((item) => !evidenceIdsWithBlockedFiles.has(item.id))
       .map((item) => item.id),
   );
   const selectedEvidenceIds = unique(evidenceItemIds).filter((id) =>
@@ -1242,6 +1291,36 @@ function getShareGrantDisplayStatus(grant: NgoShareGrantRow) {
     return "Expired";
   }
   return "Shared";
+}
+
+function isEvidenceFileBlockedFromUse(file: EvidenceFileRow) {
+  return (
+    file.status === "quarantined" ||
+    file.status === "scan_failed" ||
+    file.scan_status === "suspicious" ||
+    file.scan_status === "rejected" ||
+    file.scan_status === "failed"
+  );
+}
+
+function buildEvidenceFileScanStatusLabel(files: EvidenceFileRow[]) {
+  if (files.length === 0) return "No private files attached";
+  if (files.some((file) => file.scan_status === "suspicious")) {
+    return "Quarantined: suspicious file blocked";
+  }
+  if (files.some((file) => file.scan_status === "rejected")) {
+    return "Rejected file blocked";
+  }
+  if (files.some((file) => file.scan_status === "failed")) {
+    return "Scan failed: file blocked";
+  }
+  if (files.some((file) => file.scan_status === "pending")) {
+    return "Scan pending: raw file unavailable";
+  }
+  if (files.some((file) => file.scan_status === "not_scanned")) {
+    return "Not scanned: raw file unavailable";
+  }
+  return "Clean file available for authorized access";
 }
 
 function parseOptionalFutureDate(value?: string | null) {

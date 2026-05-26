@@ -1,10 +1,14 @@
-import type { AuthSession } from "./auth";
+import { hasNgoPermission, isAdminSession, type AuthSession } from "./auth";
 import { buildAuditEvent } from "./audit-log";
 import {
   enforceNgoEntitlement,
   enforceNgoStorageEntitlement,
 } from "./ngo-billing";
-import { evidenceFilesBucket, uploadPrivateEvidenceObject } from "./supabase/storage";
+import {
+  createPrivateEvidenceObjectSignedUrl,
+  evidenceFilesBucket,
+  uploadPrivateEvidenceObject,
+} from "./supabase/storage";
 import type { SupabaseServerClient } from "./supabase/server";
 
 export type EvidenceLifecycleStatus =
@@ -22,6 +26,14 @@ export type EvidenceFileStatus =
   | "quarantined"
   | "scan_failed";
 
+export type EvidenceFileScanStatus =
+  | "pending"
+  | "clean"
+  | "suspicious"
+  | "rejected"
+  | "failed"
+  | "not_scanned";
+
 export type EvidenceFileRow = Record<string, unknown> & {
   id: string;
   organization_id: string;
@@ -34,9 +46,25 @@ export type EvidenceFileRow = Record<string, unknown> & {
   file_size_bytes: number;
   version_number: number;
   status: EvidenceFileStatus;
+  scan_status: EvidenceFileScanStatus;
+  scanned_at: string | null;
+  scanner_name: string | null;
+  scanner_result_reference: string | null;
+  quarantine_reason: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
   visibility: string;
   uploaded_by: string | null;
   uploaded_at: string;
+};
+
+export type EvidenceFileScanStatusInput = {
+  evidenceFileId: string;
+  organizationId: string;
+  scanStatus: EvidenceFileScanStatus;
+  quarantineReason?: string | null;
+  scannerName?: string | null;
+  scannerResultReference?: string | null;
 };
 
 type EvidenceRow = Record<string, unknown> & {
@@ -76,6 +104,7 @@ const allowedEvidenceFileTypes = new Set([
 ]);
 
 export const maxEvidenceFileSizeBytes = 10 * 1024 * 1024;
+export const evidenceFileSignedUrlTtlSeconds = 60 * 5;
 
 export function normalizeEvidenceLifecycleStatus(
   value: FormDataEntryValue | string | null,
@@ -141,7 +170,7 @@ export async function uploadEvidenceFileForItem({
   const existingFiles = await client.selectMany<EvidenceFileRow>(
     "evidence_files",
     { evidence_item_id: evidenceItemId, organization_id: organizationId },
-    "id,organization_id,evidence_item_id,storage_bucket,storage_path,original_filename,safe_filename,mime_type,file_size_bytes,version_number,status,visibility,uploaded_by,uploaded_at",
+    evidenceFileSelect,
   );
 
   if (!existingFiles.some((item) => item.status === "active")) {
@@ -194,6 +223,9 @@ export async function uploadEvidenceFileForItem({
     file_size_bytes: file.size,
     version_number: nextVersion,
     status: "active",
+    scan_status: process.env.EVIDENCE_FILE_SCANNER_ENABLED === "true"
+      ? "pending"
+      : "not_scanned",
     visibility: "private",
     uploaded_by: session.user.id,
   });
@@ -235,10 +267,12 @@ export async function uploadEvidenceFileForItem({
       afterData: {
         evidence_item_id: evidenceItemId,
         storage_bucket: evidenceFilesBucket,
-        storage_path: storagePath,
+        storage_path_recorded_for_private_object: true,
         mime_type: file.type,
         file_size_bytes: file.size,
         version_number: nextVersion,
+        scan_status: evidenceFile.scan_status,
+        raw_file_public: false,
       },
     }),
   );
@@ -248,6 +282,158 @@ export async function uploadEvidenceFileForItem({
     message: "Evidence file uploaded.",
     evidenceFileId: evidenceFile.id,
   };
+}
+
+export async function createEvidenceFileSignedUrl({
+  client,
+  evidenceFileId,
+  organizationId,
+  session,
+}: {
+  client: SupabaseServerClient;
+  evidenceFileId: string;
+  organizationId: string;
+  session: AuthSession;
+}) {
+  if (!hasNgoPermission(session, organizationId, "view_evidence")) {
+    return { ok: false, message: "Evidence file access requires organization membership." };
+  }
+
+  const evidenceFile = await client.selectOne<EvidenceFileRow>(
+    "evidence_files",
+    { id: evidenceFileId, organization_id: organizationId },
+    evidenceFileSelect,
+  );
+
+  if (!evidenceFile) {
+    return { ok: false, message: "Evidence file was not found for this organization." };
+  }
+
+  if (evidenceFile.status !== "active" || evidenceFile.scan_status !== "clean") {
+    return {
+      ok: false,
+      message:
+        "Raw file access is unavailable until the file is clean and active. Pending, not scanned, suspicious, rejected, and failed files remain private.",
+    };
+  }
+
+  const signedUrl = await createPrivateEvidenceObjectSignedUrl({
+    expiresInSeconds: evidenceFileSignedUrlTtlSeconds,
+    path: evidenceFile.storage_path,
+  });
+
+  await client.insert(
+    "audit_events",
+    buildAuditEvent({
+      actorUserId: session.user.id,
+      organizationId,
+      action: "evidence.file_signed_url_created",
+      subjectTable: "evidence_files",
+      subjectId: evidenceFile.id,
+      reason: "Short-lived signed URL generated for clean private evidence file.",
+      afterData: {
+        evidence_item_id: evidenceFile.evidence_item_id,
+        expires_in_seconds: evidenceFileSignedUrlTtlSeconds,
+        scan_status: evidenceFile.scan_status,
+        raw_file_public: false,
+      },
+    }),
+  );
+
+  return { ok: true, signedUrl, expiresInSeconds: evidenceFileSignedUrlTtlSeconds };
+}
+
+export async function updateEvidenceFileScanStatus({
+  client,
+  input,
+  session,
+}: {
+  client: SupabaseServerClient;
+  input: EvidenceFileScanStatusInput;
+  session: AuthSession;
+}) {
+  if (
+    !isAdminSession(session) &&
+    !hasNgoPermission(session, input.organizationId, "admin_support")
+  ) {
+    return {
+      ok: false,
+      message: "File security review requires admin/support permission.",
+    };
+  }
+
+  const evidenceFile = await client.selectOne<EvidenceFileRow>(
+    "evidence_files",
+    { id: input.evidenceFileId, organization_id: input.organizationId },
+    evidenceFileSelect,
+  );
+
+  if (!evidenceFile) {
+    return { ok: false, message: "Evidence file was not found for this organization." };
+  }
+
+  const riskyStatus =
+    input.scanStatus === "suspicious" ||
+    input.scanStatus === "rejected" ||
+    input.scanStatus === "failed";
+  const quarantineReason = input.quarantineReason?.trim() || null;
+
+  if (riskyStatus && !quarantineReason) {
+    return {
+      ok: false,
+      message: "Quarantine or rejection requires a reason.",
+    };
+  }
+
+  const reviewedAt = new Date().toISOString();
+  await client.update<EvidenceFileRow>(
+    "evidence_files",
+    { id: evidenceFile.id, organization_id: input.organizationId },
+    {
+      scan_status: input.scanStatus,
+      scanned_at:
+        input.scanStatus === "pending" || input.scanStatus === "not_scanned"
+          ? null
+          : reviewedAt,
+      scanner_name: input.scannerName?.trim() || "manual_review",
+      scanner_result_reference: input.scannerResultReference?.trim() || null,
+      quarantine_reason: quarantineReason,
+      reviewed_by: session.user.id,
+      reviewed_at: reviewedAt,
+      status: riskyStatus
+        ? input.scanStatus === "failed"
+          ? "scan_failed"
+          : "quarantined"
+        : evidenceFile.status,
+    },
+  );
+
+  await client.insert(
+    "audit_events",
+    buildAuditEvent({
+      actorUserId: session.user.id,
+      organizationId: input.organizationId,
+      action: riskyStatus
+        ? "evidence.file_quarantined_or_rejected"
+        : "evidence.file_scan_status_changed",
+      subjectTable: "evidence_files",
+      subjectId: evidenceFile.id,
+      reason: "Evidence file scan/security status changed.",
+      beforeData: {
+        scan_status: evidenceFile.scan_status,
+        status: evidenceFile.status,
+      },
+      afterData: {
+        scan_status: input.scanStatus,
+        scanner_name: input.scannerName?.trim() || "manual_review",
+        scanner_result_reference: input.scannerResultReference?.trim() || null,
+        quarantine_reason: quarantineReason,
+        raw_file_public: false,
+      },
+    }),
+  );
+
+  return { ok: true, message: "Evidence file scan status updated." };
 }
 
 export async function updateEvidenceMetadata({
@@ -318,6 +504,9 @@ export async function updateEvidenceMetadata({
 
   return { ok: true, message: "Evidence updated." };
 }
+
+export const evidenceFileSelect =
+  "id,organization_id,evidence_item_id,storage_bucket,storage_path,original_filename,safe_filename,mime_type,file_size_bytes,version_number,status,scan_status,scanned_at,scanner_name,scanner_result_reference,quarantine_reason,reviewed_by,reviewed_at,visibility,uploaded_by,uploaded_at";
 
 export async function archiveEvidenceItem({
   client,

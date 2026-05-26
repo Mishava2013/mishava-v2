@@ -56,6 +56,8 @@ type EvidenceFileRow = Row & {
   mime_type: string;
   file_size_bytes: number;
   status: string;
+  scan_status?: string | null;
+  quarantine_reason?: string | null;
   visibility: string;
   uploaded_at: string;
 };
@@ -102,6 +104,7 @@ export type NgoSupportSummary = {
   pendingInviteCount: number;
   evidenceCount: number;
   privateFileCount: number;
+  scanStatusCounts: Record<string, number>;
   reportCount: number;
   activeShareGrantCount: number;
   billingStatus: string;
@@ -131,6 +134,7 @@ export type NgoSupportDetail = NgoSupportSummary & {
     expiresAt: string | null;
   }>;
   evidenceStatusCounts: Record<string, number>;
+  fileScanStatusCounts: Record<string, number>;
   evidenceItems: Array<{
     id: string;
     title: string;
@@ -213,7 +217,7 @@ export async function getNgoSupportSummaries({
     client.selectMany<EvidenceFileRow>(
       "evidence_files",
       undefined,
-      "id,organization_id,evidence_item_id,original_filename,mime_type,file_size_bytes,status,visibility,uploaded_at",
+      "id,organization_id,evidence_item_id,original_filename,mime_type,file_size_bytes,status,scan_status,quarantine_reason,visibility,uploaded_at",
     ),
     client.selectMany<ReportRow>(
       "ngo_reports",
@@ -308,7 +312,7 @@ export async function getNgoSupportDetail({
     client.selectMany<EvidenceFileRow>(
       "evidence_files",
       { organization_id: organizationId },
-      "id,organization_id,evidence_item_id,original_filename,mime_type,file_size_bytes,status,visibility,uploaded_at",
+      "id,organization_id,evidence_item_id,original_filename,mime_type,file_size_bytes,status,scan_status,quarantine_reason,visibility,uploaded_at",
     ),
     client.selectMany<ReportRow>(
       "ngo_reports",
@@ -368,6 +372,10 @@ export async function getNgoSupportDetail({
       evidence,
       (item) => item.lifecycle_status ?? "draft",
     ),
+    fileScanStatusCounts: countBy(
+      evidenceFiles,
+      (file) => file.scan_status ?? "not_scanned",
+    ),
     evidenceItems: evidence.sort(sortByCreatedAtDesc).slice(0, 12).map((item) => ({
       id: item.id,
       title: item.title,
@@ -407,7 +415,7 @@ export async function getNgoSupportDetail({
       }),
     ),
     rawFileAccessPolicy:
-      "Raw evidence file contents and storage paths are not exposed in this support view by default.",
+      "Raw evidence file contents, signed URLs, and storage paths are not exposed in this support view by default. Scan status is visible for support-safe triage.",
     trustOutcomePolicy:
       "This support view is read-only and cannot directly edit scores, evidence truth, verification outcomes, rankings, or credibility labels.",
   };
@@ -459,6 +467,10 @@ function buildSupportSummary({
     pendingInviteCount: invites.filter((invite) => invite.status === "pending").length,
     evidenceCount: evidence.length,
     privateFileCount: evidenceFiles.filter((file) => file.status === "active").length,
+    scanStatusCounts: countBy(
+      evidenceFiles,
+      (file) => file.scan_status ?? "not_scanned",
+    ),
     reportCount: reports.length,
     activeShareGrantCount: activeShareGrants.length,
     billingStatus: billing?.billingStatus ?? "not_loaded",

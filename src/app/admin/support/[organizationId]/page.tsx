@@ -145,6 +145,7 @@ export default async function AdminSupportDetailPage({
           </div>
         </div>
         <StatusCounts counts={detail.evidenceStatusCounts} label="Evidence lifecycle" />
+        <StatusCounts counts={detail.fileScanStatusCounts} label="File scan status" />
         <div className="evidence-library">
           {detail.evidenceItems.map((item) => (
             <article className="evidence-record" key={item.id}>
