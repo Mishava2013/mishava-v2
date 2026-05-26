@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
+import { canManageNgoReports } from "@/lib/auth";
 import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
 import { getNgoReportWorkspace } from "@/lib/ngo-evidence-reports";
 import {
@@ -16,6 +17,7 @@ export default async function OrgReportsPage({
 }) {
   const params = await searchParams;
   const { session, organizationId } = await requireCurrentOrganizationMembership();
+  const canManageReports = canManageNgoReports(session, organizationId);
   const workspace = isSupabaseServerConfigured()
     ? await getNgoReportWorkspace({
         client: createSupabaseAuthenticatedServerClient(session.accessToken),
@@ -58,7 +60,12 @@ export default async function OrgReportsPage({
           is invented when scoring output is incomplete.
         </p>
 
-        {workspace.templates.length === 0 || workspace.evidence.length === 0 ? (
+        {!canManageReports ? (
+          <EmptyState title="Report editing requires member access">
+            Your role can view allowed report drafts, but cannot create or edit
+            NGO reports.
+          </EmptyState>
+        ) : workspace.templates.length === 0 || workspace.evidence.length === 0 ? (
           <EmptyState title="Evidence and templates are required">
             Add real evidence before creating report drafts. Active templates
             must also exist in the database.

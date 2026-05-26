@@ -33,6 +33,8 @@ test("auth and session membership reads include NGO admin/viewer and active stat
   assert.match(auth, /canManageNgoReports/);
   assert.match(auth, /canViewNgoWorkspace/);
   assert.match(supabaseAuth, /params\.set\("status", "eq\.active"\)/);
+  assert.match(supabaseAuth, /readUserMemberships\(accessToken, user\.id\)/);
+  assert.match(supabaseAuth, /params\.set\("user_id", `eq\.\$\{userId\}`\)/);
   assert.match(supabaseAuth, /membership\.status \?\? "active"/);
 });
 

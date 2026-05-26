@@ -147,7 +147,7 @@ export async function getAuthSessionFromAccessToken(
   const user = await getAuthUser(accessToken);
   if (!user?.id || !user.email) return null;
 
-  const memberships = (await readUserMemberships(accessToken)).filter(
+  const memberships = (await readUserMemberships(accessToken, user.id)).filter(
     (membership) => (membership.status ?? "active") === "active",
   );
   const membershipRoles = memberships.map((membership) => membership.role);
@@ -175,15 +175,16 @@ export async function getAuthSessionFromAccessToken(
   };
 }
 
-export async function readUserMemberships(accessToken: string) {
+export async function readUserMemberships(accessToken: string, userId: string) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!url || !anonKey) return [];
+  if (!url || !anonKey || !userId) return [];
 
   const params = new URLSearchParams();
   params.set("select", "organization_id,role,status");
   params.set("status", "eq.active");
+  params.set("user_id", `eq.${userId}`);
 
   const response = await fetch(
     `${url.replace(/\/$/, "")}/rest/v1/organization_memberships?${params}`,

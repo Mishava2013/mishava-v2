@@ -71,3 +71,12 @@ test("team page exposes role-change UI, permission summaries, inactive-state lab
   assert.match(actions, /redirect\("\/org\/team\?updated=member_role_changed"\)/);
 });
 
+test("viewer report page stays read-only while member roles can create reports", () => {
+  const reportsPage = read("src/app/org/reports/page.tsx");
+
+  assert.match(reportsPage, /canManageNgoReports/);
+  assert.match(reportsPage, /const canManageReports = canManageNgoReports\(session, organizationId\)/);
+  assert.match(reportsPage, /!canManageReports \?/);
+  assert.match(reportsPage, /Report editing requires member access/);
+  assert.match(reportsPage, /cannot create or edit\s+NGO reports/);
+});
