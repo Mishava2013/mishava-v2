@@ -122,7 +122,8 @@ test("protected routes remain protected by middleware", () => {
   const proxy = read("middleware.ts");
 
   assert.match(proxy, /protectedPrefixes = \["\/app", "\/org", "\/admin"\]/);
+  assert.match(proxy, /resolveMishavaSubdomainRoute/);
   assert.match(proxy, /pathname\.startsWith\("\/admin"\)/);
   assert.match(proxy, /admin_required/);
-  assert.match(proxy, /matcher: \["\/app\/:path\*", "\/org\/:path\*", "\/admin\/:path\*"\]/);
+  assert.match(proxy, /NextResponse\.rewrite/);
 });

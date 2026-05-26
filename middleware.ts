@@ -6,14 +6,19 @@ import {
   sessionCookieName,
   supabaseAccessTokenCookieName,
 } from "@/lib/auth";
+import { resolveMishavaSubdomainRoute } from "@/lib/subdomain-routing";
 
 const protectedPrefixes = ["/app", "/org", "/admin"];
 
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
+  const routeDecision = resolveMishavaSubdomainRoute({
+    host: request.headers.get("host"),
+    pathname: request.nextUrl.pathname,
+  });
+  const pathname = routeDecision.targetPath ?? request.nextUrl.pathname;
 
   if (!protectedPrefixes.some((prefix) => pathname.startsWith(prefix))) {
-    return NextResponse.next();
+    return rewriteIfNeeded(request, routeDecision.targetPath);
   }
 
   const accessToken = request.cookies.get(supabaseAccessTokenCookieName)?.value;
@@ -29,7 +34,7 @@ export async function middleware(request: NextRequest) {
     return redirectWithReason(request, "admin_required");
   }
 
-  return NextResponse.next();
+  return rewriteIfNeeded(request, routeDecision.targetPath);
 }
 
 async function readMiddlewareSupabaseSession(accessToken: string) {
@@ -46,11 +51,21 @@ async function readMiddlewareSupabaseSession(accessToken: string) {
 
 function redirectWithReason(request: NextRequest, reason: string) {
   const url = request.nextUrl.clone();
-  url.pathname = "/";
+  url.pathname = "/auth/sign-in";
   url.searchParams.set("auth", reason);
   return NextResponse.redirect(url);
 }
 
+function rewriteIfNeeded(request: NextRequest, targetPath: string | null) {
+  if (!targetPath) return NextResponse.next();
+
+  const url = request.nextUrl.clone();
+  url.pathname = targetPath;
+  return NextResponse.rewrite(url);
+}
+
 export const config = {
-  matcher: ["/app/:path*", "/org/:path*", "/admin/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|map)$).*)",
+  ],
 };

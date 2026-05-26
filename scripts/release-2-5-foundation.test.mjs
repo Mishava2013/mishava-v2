@@ -11,7 +11,8 @@ function read(path) {
 test("/app, /org, and /admin are protected by middleware", () => {
   const middleware = read("middleware.ts");
 
-  assert.match(middleware, /matcher: \["\/app\/:path\*", "\/org\/:path\*", "\/admin\/:path\*"\]/);
+  assert.match(middleware, /protectedPrefixes = \["\/app", "\/org", "\/admin"\]/);
+  assert.match(middleware, /resolveMishavaSubdomainRoute/);
   assert.match(middleware, /isAdminSession\(session\)/);
   assert.match(read("src/app/org/layout.tsx"), /requireCurrentOrganizationMembership/);
 });
