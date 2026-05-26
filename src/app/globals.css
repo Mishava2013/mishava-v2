@@ -905,18 +905,65 @@ textarea {
   aspect-ratio: 1 / 1;
   display: grid;
   place-items: center;
-  background: #f1f5fb;
-  color: var(--secondary-text);
-  font-size: 13px;
-  font-weight: 700;
-  text-align: center;
-  padding: 12px;
+  background: #eef4f8;
+  padding: 10px;
 }
 
-.product-media img {
+.product-image-frame {
+  width: 100%;
+  height: 100%;
+}
+
+.product-image-frame img {
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+.product-image-frame-detail {
+  aspect-ratio: 1 / 1;
+  min-width: 180px;
+}
+
+.product-image-fallback {
+  align-content: center;
+  background:
+    linear-gradient(135deg, rgba(52, 101, 127, 0.12), rgba(89, 154, 139, 0.14)),
+    var(--white);
+  border: 1px dashed rgba(52, 101, 127, 0.32);
+  border-radius: 8px;
+  color: var(--brand-navy);
+  display: grid;
+  gap: 8px;
+  height: 100%;
+  justify-items: center;
+  min-height: 150px;
+  padding: 16px;
+  text-align: center;
+}
+
+.product-image-initials {
+  align-items: center;
+  background: var(--brand-navy);
+  border-radius: 999px;
+  color: var(--white);
+  display: inline-flex;
+  font-size: 24px;
+  font-weight: 840;
+  height: 62px;
+  justify-content: center;
+  width: 62px;
+}
+
+.product-image-label {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.product-image-note {
+  color: var(--secondary-text);
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .product-body {
@@ -1045,6 +1092,31 @@ textarea {
   padding: 5px 9px;
   color: var(--secondary-text);
   font-size: 12px;
+}
+
+.tag-score {
+  background: #eef6f5;
+  border-color: rgba(57, 123, 109, 0.26);
+  color: #275d55;
+}
+
+.tag-source {
+  background: #eef4ff;
+  border-color: rgba(28, 98, 179, 0.22);
+  color: #254f85;
+}
+
+.tag-commerce {
+  background: #fff6e6;
+  border-color: rgba(178, 124, 36, 0.24);
+  color: #73551e;
+}
+
+.product-detail-hero {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
 }
 
 .table {
@@ -1274,6 +1346,7 @@ textarea {
   .product-grid,
   .surface-list,
   .form-grid,
+  .product-detail-hero,
   .shopping-layout,
   .shopping-masthead {
     grid-template-columns: 1fr;

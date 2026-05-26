@@ -2,6 +2,7 @@ import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { ScoreExplainer } from "@/components/ScoreExplainer";
+import { ShoppingProductImage } from "@/components/ShoppingProductImage";
 import { ShoppingScoreExplainer } from "@/components/ShoppingScoreExplainer";
 import {
   buildShoppingScoreExplanation,
@@ -31,16 +32,29 @@ export default async function ProductPage({
       <div className="surface-list">
         {product ? (
           <div className="evidence-panel">
-            <h2 className="panel-title">{getProductTrustLabel(product)}</h2>
-            <div className="score-row">
-              <div className="score-badge">
-                {hasPublishedEvidenceScore(product) ? product.evidence_score : "--"}
+            <div className="product-detail-hero">
+              <ShoppingProductImage product={product} size="detail" />
+              <div>
+                <p className="product-meta">{product.brand_name ?? "Brand not listed"}</p>
+                <h2 className="panel-title">{getProductTrustLabel(product)}</h2>
+                <div className="score-row">
+                  <div className="score-badge">
+                    {hasPublishedEvidenceScore(product) ? product.evidence_score : "--"}
+                  </div>
+                  <p className="score-caption">
+                    {hasPublishedEvidenceScore(product)
+                      ? "This score is backed by a published score snapshot."
+                      : "Evidence profile pending. No public score appears until real reviewed evidence and a published snapshot exist."}
+                  </p>
+                </div>
+                <div className="status-row">
+                  <span className="tag tag-score">Score pending</span>
+                  <span className="tag tag-source">
+                    Source {product.source_review_status}
+                  </span>
+                  <span className="tag tag-commerce">No paid ranking</span>
+                </div>
               </div>
-              <p className="score-caption">
-                {hasPublishedEvidenceScore(product)
-                  ? "This score is backed by a published score snapshot."
-                  : "Evidence profile pending. No public score appears until real reviewed evidence and a published snapshot exist."}
-              </p>
             </div>
             <div className="metric-grid">
               <div className="metric">
@@ -74,7 +88,7 @@ export default async function ProductPage({
           <ScoreExplainer />
         )}
         <div className="card">
-          <h3>{product?.brand_name ?? "Brand or seller context"}</h3>
+            <h3>{product?.brand_name ?? "Brand or seller context"}</h3>
           {product ? (
             <>
               {product.product_summary ? <p>{product.product_summary}</p> : null}
@@ -96,10 +110,10 @@ export default async function ProductPage({
                 page withholds score values.
               </p>
               <div className="status-row">
-                <span className="tag">No commission ranking</span>
-                <span className="tag">No paid placement</span>
-                <span className="tag">Mishava is not the store</span>
-                <span className="tag">
+                <span className="tag tag-commerce">No commission ranking</span>
+                <span className="tag tag-commerce">No paid placement</span>
+                <span className="tag tag-commerce">Mishava is not the store</span>
+                <span className="tag tag-source">
                   {product.source_url ? "Source URL recorded" : "Source URL pending"}
                 </span>
               </div>
@@ -133,7 +147,8 @@ export default async function ProductPage({
         ) : placesToBuy.length === 0 ? (
           <EmptyState title="No places to buy loaded">
             This product exists, but no active real seller or availability
-            records are attached yet.
+            records are attached yet. Mishava will not create placeholder stores
+            or checkout links.
           </EmptyState>
         ) : (
           <>
@@ -171,7 +186,9 @@ export default async function ProductPage({
                     </td>
                     <td>
                       <div className="status-row">
-                        <span className="tag">{place.source_review_status}</span>
+                        <span className="tag tag-source">
+                          Source {place.source_review_status}
+                        </span>
                         <span className="tag">
                           {formatFreshness(place.source_captured_at ?? place.last_checked_at)}
                         </span>

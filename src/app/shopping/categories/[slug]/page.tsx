@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { ShoppingProductImage } from "@/components/ShoppingProductImage";
 import { ShoppingScoreExplainer } from "@/components/ShoppingScoreExplainer";
 import {
   buildShoppingScoreExplanation,
@@ -58,12 +59,7 @@ export default async function CategoryPage({
                 <article className="product-card" key={product.id}>
                   <Link href={`/shopping/products/${product.slug}`}>
                     <div className="product-media">
-                      {product.image_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img alt="" src={product.image_url} />
-                      ) : (
-                        <span>{product.product_subcategory ?? product.category}</span>
-                      )}
+                      <ShoppingProductImage product={product} />
                     </div>
                   </Link>
                   <div className="product-body">
@@ -83,13 +79,16 @@ export default async function CategoryPage({
                       triggerLabel={getProductTrustLabel(product)}
                     />
                     <div className="status-row">
-                      <span className="tag">
+                      <span className="tag tag-score">
                         {product.evidence_coverage ?? "Evidence profile pending"}
                       </span>
-                      <span className="tag">{product.source_review_status} source</span>
+                      <span className="tag tag-source">
+                        Source {product.source_review_status}
+                      </span>
                       <span className="tag">
                         {formatFreshness(product.source_captured_at)}
                       </span>
+                      <span className="tag tag-commerce">No paid ranking</span>
                     </div>
                   </div>
                 </article>

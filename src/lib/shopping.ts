@@ -14,6 +14,24 @@ export type ShoppingProduct = {
   package_details: string | null;
   product_url: string | null;
   image_url: string | null;
+  image_alt_text: string | null;
+  image_source_url: string | null;
+  image_source_type:
+    | "manufacturer"
+    | "brand"
+    | "retailer"
+    | "manual_upload"
+    | "placeholder"
+    | null;
+  image_review_status:
+    | "missing"
+    | "pending_review"
+    | "approved"
+    | "rejected"
+    | "stale"
+    | null;
+  image_last_reviewed_at: string | null;
+  image_rights_notes: string | null;
   evidence_score: number | null;
   score_label: string | null;
   evidence_coverage: "Low" | "Medium" | "High" | null;
@@ -121,7 +139,7 @@ export async function getShoppingProducts({
   const rows = await client.selectMany<ShoppingProduct>(
     "shopping_products",
     { active: true },
-    "id,slug,name,brand_name,category,product_subcategory,product_summary,package_details,product_url,image_url,evidence_score,score_label,evidence_coverage,evidence_recency,verification_confidence,score_snapshot_id,score_published_at,source_name,source_url,source_captured_at,source_review_status,data_origin,active",
+    "id,slug,name,brand_name,category,product_subcategory,product_summary,package_details,product_url,image_url,image_alt_text,image_source_url,image_source_type,image_review_status,image_last_reviewed_at,image_rights_notes,evidence_score,score_label,evidence_coverage,evidence_recency,verification_confidence,score_snapshot_id,score_published_at,source_name,source_url,source_captured_at,source_review_status,data_origin,active",
   );
 
   const normalizedQuery = query?.trim().toLowerCase();
@@ -155,7 +173,7 @@ export async function getShoppingProductBySlug(slug: string) {
   const product = await client.selectOne<ShoppingProduct>(
     "shopping_products",
     { slug, active: true },
-    "id,slug,name,brand_name,category,product_subcategory,product_summary,package_details,product_url,image_url,evidence_score,score_label,evidence_coverage,evidence_recency,verification_confidence,score_snapshot_id,score_published_at,source_name,source_url,source_captured_at,source_review_status,data_origin,active",
+    "id,slug,name,brand_name,category,product_subcategory,product_summary,package_details,product_url,image_url,image_alt_text,image_source_url,image_source_type,image_review_status,image_last_reviewed_at,image_rights_notes,evidence_score,score_label,evidence_coverage,evidence_recency,verification_confidence,score_snapshot_id,score_published_at,source_name,source_url,source_captured_at,source_review_status,data_origin,active",
   );
 
   if (!product) {
@@ -218,6 +236,47 @@ export function getProductTrustLabel(product: ShoppingProduct) {
   return "Score pending";
 }
 
+export function hasApprovedProductImage(product: ShoppingProduct) {
+  return Boolean(
+    product.image_url &&
+      product.image_alt_text &&
+      product.image_source_url &&
+      product.image_review_status === "approved",
+  );
+}
+
+export function getProductImageFallback(product: ShoppingProduct) {
+  const basis =
+    product.product_subcategory ??
+    product.category ??
+    product.brand_name ??
+    product.name;
+  const initials = basis
+    .split(/[\s/-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+
+  return {
+    initials: initials || "MI",
+    label:
+      product.product_subcategory === "wipes"
+        ? "Baby wipes"
+        : product.product_subcategory === "diapers"
+          ? "Diaper product"
+          : product.category,
+    reason:
+      product.image_review_status === "rejected"
+        ? "Product image rejected during rights review"
+        : product.image_review_status === "stale"
+          ? "Product image rights need review"
+          : product.image_review_status === "pending_review"
+            ? "Product image pending rights review"
+            : "Product image not available yet",
+  };
+}
+
 export function buildShoppingScoreExplanation({
   product,
   valuesState = "complete_priorities",
@@ -268,6 +327,9 @@ export function buildShoppingScoreExplanation({
       product.source_name ? `Source recorded: ${product.source_name}` : null,
       product.product_summary ? "Product summary recorded from source" : null,
       product.package_details ? `Package details: ${product.package_details}` : null,
+      hasApprovedProductImage(product)
+        ? `Product image approved from ${product.image_source_type ?? "reviewed source"}`
+        : "No approved product image displayed",
       product.source_captured_at
         ? `Source freshness: ${formatFreshness(product.source_captured_at)}`
         : null,

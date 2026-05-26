@@ -118,6 +118,51 @@ test("shopping display shows pending trust context instead of invented scores", 
   assert.doesNotMatch(detail, /Evidence Score 90|Evidence Score 92|Score 88/);
 });
 
+test("shopping product images use approved metadata or a non-photo fallback", () => {
+  const page = read("src/app/shopping/page.tsx");
+  const categoryPage = read("src/app/shopping/categories/[slug]/page.tsx");
+  const detail = read("src/app/shopping/products/[slug]/page.tsx");
+  const component = read("src/components/ShoppingProductImage.tsx");
+  const shopping = read("src/lib/shopping.ts");
+  const migration = read("supabase/migrations/202605260006_release_4_slice_5_shopping_image_metadata.sql");
+
+  assert.match(page, /ShoppingProductImage/);
+  assert.match(categoryPage, /ShoppingProductImage/);
+  assert.match(detail, /ShoppingProductImage/);
+  assert.match(component, /hasApprovedProductImage/);
+  assert.match(shopping, /Product image pending rights review|Product image not available yet/);
+  assert.match(component, /role="img"/);
+  assert.match(component, /aria-label/);
+  assert.match(shopping, /image_review_status === "approved"/);
+  assert.match(shopping, /image_alt_text/);
+  assert.match(shopping, /image_source_url/);
+  assert.match(migration, /image_review_status text not null default 'missing'/);
+  assert.match(migration, /shopping_products_approved_image_requires_reviewed_rights/);
+  assert.match(migration, /image_last_reviewed_at is not null/);
+  assert.match(migration, /image_rights_notes is not null/);
+  assert.match(migration, /No product image is displayed until image rights are reviewed and approved/);
+  assert.doesNotMatch(component, /generated|fake|ai product image/i);
+});
+
+test("shopping visual polish keeps score, source, and commerce boundaries explicit", () => {
+  const css = read("src/app/globals.css");
+  const page = read("src/app/shopping/page.tsx");
+  const categoryPage = read("src/app/shopping/categories/[slug]/page.tsx");
+  const detail = read("src/app/shopping/products/[slug]/page.tsx");
+
+  assert.match(css, /product-image-fallback/);
+  assert.match(css, /tag-score/);
+  assert.match(css, /tag-source/);
+  assert.match(css, /tag-commerce/);
+  assert.match(page, /No commission/);
+  assert.match(categoryPage, /No paid ranking/);
+  assert.match(detail, /No paid placement/);
+  assert.match(detail, /Mishava is not the store/);
+  assert.match(detail, /placeholder stores/);
+  assert.doesNotMatch(page, /<img alt="" src=\{product\.image_url\}/);
+  assert.doesNotMatch(categoryPage, /<img alt="" src=\{product\.image_url\}/);
+});
+
 test("shopping score explanation popup is accessible and policy-forward", () => {
   const page = read("src/app/shopping/page.tsx");
   const detail = read("src/app/shopping/products/[slug]/page.tsx");
