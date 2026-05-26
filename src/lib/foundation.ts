@@ -45,8 +45,16 @@ export const forbiddenTrustInfluenceInputs = [
   "referral_fee",
   "plan_key",
   "billing_status",
+  "billing_interval",
+  "stripe_customer_id",
+  "stripe_subscription_id",
   "stripe_subscription_status",
+  "current_period_end",
+  "cancel_at_period_end",
   "setup_service_purchase",
+  "setup_service_status",
+  "checkout_session_id",
+  "invoice_status",
   "sponsored_network_status",
 ] as const;
 

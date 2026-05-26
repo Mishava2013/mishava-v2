@@ -1,7 +1,7 @@
 import type { VisibilityLevel } from "./foundation";
 
 export type AuditEventInput = {
-  actorUserId: string;
+  actorUserId: string | null;
   organizationId?: string;
   action: string;
   subjectTable?: string;
@@ -26,4 +26,3 @@ export function buildAuditEvent(input: AuditEventInput) {
     created_at: new Date().toISOString(),
   };
 }
-

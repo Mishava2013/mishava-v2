@@ -112,6 +112,13 @@ export function canManageNgoReports(
   return canManageNgoEvidence(session, organizationId);
 }
 
+export function canManageNgoBilling(
+  session: AuthSession | null,
+  organizationId: string | null,
+) {
+  return hasNgoPermission(session, organizationId, "manage_billing");
+}
+
 export function canViewNgoWorkspace(
   session: AuthSession | null,
   organizationId: string | null,

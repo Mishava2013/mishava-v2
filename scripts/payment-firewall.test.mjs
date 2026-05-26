@@ -14,8 +14,16 @@ const forbiddenRankingInputs = [
   "referralFee",
   "planKey",
   "billingStatus",
+  "billingInterval",
+  "stripeCustomerId",
+  "stripeSubscriptionId",
   "stripeSubscriptionStatus",
+  "currentPeriodEnd",
+  "cancelAtPeriodEnd",
   "setupServicePurchase",
+  "setupServiceStatus",
+  "checkoutSessionId",
+  "invoiceStatus",
   "sponsoredNetworkStatus",
 ];
 

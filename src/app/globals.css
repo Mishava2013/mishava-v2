@@ -233,6 +233,26 @@ textarea {
   color: var(--white);
 }
 
+.secondary-button {
+  align-items: center;
+  background: var(--white);
+  border: 1px solid var(--medium-border);
+  border-radius: 8px;
+  color: var(--brand-navy);
+  display: inline-flex;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+.secondary-button:disabled {
+  background: var(--soft-mist);
+  color: var(--muted-text);
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
 .auth-grid {
   display: grid;
   grid-template-columns: minmax(0, 520px);
@@ -1186,6 +1206,12 @@ textarea {
 .record-note a {
   color: var(--brand-blue);
   overflow-wrap: anywhere;
+}
+
+.actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .inline-workflow {

@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/PageHeader";
+import { canManageNgoBilling } from "@/lib/auth";
 import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
 import {
   formatBytes,
@@ -9,6 +10,7 @@ import {
   noPaidTrustOutcomeMessage,
   type NgoBillingWorkspace,
 } from "@/lib/ngo-billing";
+import { startNgoPlanCheckout, startNgoSetupCheckout } from "./actions";
 import {
   createSupabaseAuthenticatedServerClient,
   isSupabaseServerConfigured,
@@ -52,12 +54,14 @@ function usageRows(workspace: NgoBillingWorkspace) {
 
 export default async function OrgBillingPage() {
   const { session, organizationId } = await requireCurrentOrganizationMembership();
+  const canManageBilling = canManageNgoBilling(session, organizationId);
   const workspace = isSupabaseServerConfigured()
     ? await getNgoBillingWorkspace({
         client: createSupabaseAuthenticatedServerClient(session.accessToken),
         organizationId,
       })
     : null;
+  const stripeReady = workspace?.stripeStatus === "test_mode_configured";
 
   return (
     <>
@@ -68,10 +72,10 @@ export default async function OrgBillingPage() {
       </PageHeader>
 
       <div className="notice" role="status">
-        Billing is not live yet. Stripe production charging is disabled in this
-        slice; the Free NGO self-serve path works without Stripe. Payment and
-        plan tier do not change trust outcomes, evidence truth, verification,
-        credibility labels, score, or ranking.
+        Billing is test-mode only. Stripe production charging is disabled in
+        this slice; the Free NGO self-serve path works without Stripe. Payment and
+        plan tier do not change trust outcomes, evidence truth,
+        verification, credibility labels, score, or ranking.
       </div>
 
       <section className="section">
@@ -92,6 +96,12 @@ export default async function OrgBillingPage() {
               Stripe: {workspace?.stripeStatus ?? "none"}
             </span>
             <span className="tag">Test mode / billing not live yet</span>
+            {workspace?.billingInterval &&
+            workspace.billingInterval !== "none" ? (
+              <span className="tag">
+                Interval: {workspace.billingInterval}
+              </span>
+            ) : null}
           </div>
         </div>
 
@@ -132,6 +142,12 @@ export default async function OrgBillingPage() {
 
       <section className="section">
         <h2>Available NGO plans</h2>
+        <p className="section-intro">
+          Owners and admins can start Stripe-hosted Checkout in test mode when
+          Stripe test keys and price ids are configured. Custom network plans
+          remain contact-only. The success redirect is not trusted by itself;
+          verified webhooks update billing status.
+        </p>
         <div className="evidence-library">
           {ngoPlanDefinitions.map((plan) => (
             <article className="evidence-record" key={plan.key}>
@@ -172,10 +188,55 @@ export default async function OrgBillingPage() {
                 </div>
               </div>
               <p className="record-note">
-                {plan.setupRecommendation}. Upgrade/downgrade checkout is a
-                placeholder until Stripe test-mode flow is implemented. Existing
-                evidence and reports remain readable if a plan changes.
+                {plan.setupRecommendation}. Existing evidence and reports
+                remain readable if a plan changes.
               </p>
+              {plan.key === "free" ? (
+                <p className="record-note">
+                  Free NGO access does not require Stripe or a card.
+                </p>
+              ) : plan.customPricing ? (
+                <p className="record-note">
+                  Contact Mishava for network, foundation, association, or
+                  sponsored multi-organization billing.
+                </p>
+              ) : (
+                <div className="actions-row" aria-label={`${plan.name} checkout options`}>
+                  <form action={startNgoPlanCheckout}>
+                    <input type="hidden" name="planKey" value={plan.key} />
+                    <input type="hidden" name="billingInterval" value="monthly" />
+                    <button
+                      className="secondary-button"
+                      disabled={!canManageBilling || !stripeReady}
+                      type="submit"
+                    >
+                      Monthly test Checkout
+                    </button>
+                  </form>
+                  <form action={startNgoPlanCheckout}>
+                    <input type="hidden" name="planKey" value={plan.key} />
+                    <input type="hidden" name="billingInterval" value="annual" />
+                    <button
+                      className="secondary-button"
+                      disabled={!canManageBilling || !stripeReady}
+                      type="submit"
+                    >
+                      Annual test Checkout
+                    </button>
+                  </form>
+                </div>
+              )}
+              {!stripeReady && !plan.customPricing && plan.key !== "free" ? (
+                <p className="record-note">
+                  Billing setup pending: Stripe test keys and price ids are not
+                  configured in this environment.
+                </p>
+              ) : null}
+              {!canManageBilling && plan.selfServeAllowed && plan.key !== "free" ? (
+                <p className="record-note">
+                  Billing changes require owner or admin access.
+                </p>
+              ) : null}
             </article>
           ))}
         </div>
@@ -196,7 +257,25 @@ export default async function OrgBillingPage() {
               <tr key={option.key}>
                 <td>{option.name}</td>
                 <td>{option.priceLabel}</td>
-                <td>{option.notes}</td>
+                <td>
+                  <p>{option.notes}</p>
+                  {!option.customPricing && option.priceCents ? (
+                    <form action={startNgoSetupCheckout}>
+                      <input type="hidden" name="setupKey" value={option.key} />
+                      <button
+                        className="secondary-button"
+                        disabled={!canManageBilling || !stripeReady}
+                        type="submit"
+                      >
+                        Start test Checkout
+                      </button>
+                    </form>
+                  ) : option.priceCents === 0 ? (
+                    <span className="tag">No Checkout needed</span>
+                  ) : (
+                    <span className="tag">Contact-only</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

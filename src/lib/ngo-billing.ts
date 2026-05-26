@@ -19,9 +19,14 @@ export type NgoDatabaseTier =
 export type NgoBillingStatus =
   | "free"
   | "test_mode_placeholder"
+  | "checkout_pending"
   | "active"
+  | "trialing"
   | "past_due"
   | "canceled"
+  | "incomplete"
+  | "unpaid"
+  | "manual_custom"
   | "custom"
   | "sponsored";
 
@@ -94,7 +99,12 @@ export type NgoBillingWorkspace = {
   billingStatus: NgoBillingStatus;
   billingInterval: NgoBillingInterval;
   usage: NgoUsage;
-  stripeStatus: "none" | "test_mode_placeholder";
+  stripeStatus: "none" | "test_mode_configured" | "live_key_blocked";
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  currentPeriodEnd?: string | null;
+  cancelAtPeriodEnd?: boolean;
+  setupServiceStatus?: string | null;
   noPaidTrustOutcomeMessage: string;
 };
 
@@ -103,6 +113,19 @@ type NgoProfileBillingRow = Record<string, unknown> & {
   organization_id: string;
   tier: NgoDatabaseTier;
   updated_at: string;
+};
+
+type NgoBillingAccountRow = Record<string, unknown> & {
+  id: string;
+  organization_id: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  plan_key: NgoPlanKey;
+  billing_status: NgoBillingStatus;
+  billing_interval: NgoBillingInterval;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  setup_service_status: string | null;
 };
 
 type EvidenceRow = Record<string, unknown> & {
@@ -322,10 +345,19 @@ export function planFromDatabaseTier(tier?: string | null) {
   );
 }
 
+export function planFromKey(planKey?: string | null) {
+  return (
+    ngoPlanDefinitions.find((plan) => plan.key === planKey) ??
+    ngoPlanDefinitions[0]
+  );
+}
+
 export function getStripeTestModeStatus() {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) return "none" as const;
-  return key.startsWith("sk_test_") ? ("test_mode_placeholder" as const) : ("none" as const);
+  return key.startsWith("sk_test_")
+    ? ("test_mode_configured" as const)
+    : ("live_key_blocked" as const);
 }
 
 export async function getNgoBillingWorkspace({
@@ -340,19 +372,49 @@ export async function getNgoBillingWorkspace({
     { organization_id: organizationId },
     "id,organization_id,tier,updated_at",
   );
-  const plan = planFromDatabaseTier(profile?.tier);
+  const billingAccount = await getNgoBillingAccount({ client, organizationId });
+  const plan = billingAccount
+    ? planFromKey(billingAccount.plan_key)
+    : planFromDatabaseTier(profile?.tier);
   const usage = await getNgoUsage({ client, organizationId });
 
   return {
     organizationId,
     plan,
     databaseTier: plan.databaseTier,
-    billingStatus: plan.key === "free" ? "free" : "test_mode_placeholder",
-    billingInterval: plan.key === "network_custom" ? "custom" : "none",
+    billingStatus:
+      billingAccount?.billing_status ??
+      (plan.key === "free" ? "free" : "test_mode_placeholder"),
+    billingInterval:
+      billingAccount?.billing_interval ??
+      (plan.key === "network_custom" ? "custom" : "none"),
     usage,
     stripeStatus: getStripeTestModeStatus(),
+    stripeCustomerId: billingAccount?.stripe_customer_id ?? null,
+    stripeSubscriptionId: billingAccount?.stripe_subscription_id ?? null,
+    currentPeriodEnd: billingAccount?.current_period_end ?? null,
+    cancelAtPeriodEnd: billingAccount?.cancel_at_period_end ?? false,
+    setupServiceStatus: billingAccount?.setup_service_status ?? null,
     noPaidTrustOutcomeMessage,
   };
+}
+
+export async function getNgoBillingAccount({
+  client,
+  organizationId,
+}: {
+  client: SupabaseServerClient;
+  organizationId: string;
+}) {
+  try {
+    return await client.selectOne<NgoBillingAccountRow>(
+      "ngo_billing_accounts",
+      { organization_id: organizationId },
+      "id,organization_id,stripe_customer_id,stripe_subscription_id,plan_key,billing_status,billing_interval,current_period_end,cancel_at_period_end,setup_service_status",
+    );
+  } catch {
+    return null;
+  }
 }
 
 export async function getNgoUsage({
@@ -471,7 +533,7 @@ export async function enforceNgoEntitlement({
           check,
           plan_key: result.plan.key,
           billing_status:
-            result.plan.key === "free" ? "free" : "test_mode_placeholder",
+            result.plan.key === "free" ? "free" : "checkout_pending",
           usage: result.usage,
           limit: result.limit,
         },
