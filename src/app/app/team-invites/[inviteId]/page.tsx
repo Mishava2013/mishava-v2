@@ -79,7 +79,7 @@ export default async function TeamInvitePage({
 
           {invite.status !== "pending" ? (
             <p className="notice" role="status">
-              This invite is not pending and cannot be accepted.
+              {inviteStatusMessage(invite.status)}
             </p>
           ) : null}
 
@@ -97,4 +97,17 @@ export default async function TeamInvitePage({
       )}
     </>
   );
+}
+
+function inviteStatusMessage(status: string) {
+  switch (status) {
+    case "accepted":
+      return "This invitation has already been accepted.";
+    case "revoked":
+      return "This invitation has been revoked. Ask the organization admin if you still need access.";
+    case "expired":
+      return "This invitation has expired. Ask the organization admin to send a new invite.";
+    default:
+      return "This invite is not pending and cannot be accepted.";
+  }
 }

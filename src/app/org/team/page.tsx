@@ -9,6 +9,7 @@ import {
 import {
   createTeamInviteAction,
   removeTeamMemberAction,
+  resendTeamInviteAction,
   revokeTeamInviteAction,
 } from "./actions";
 
@@ -25,6 +26,7 @@ export default async function OrgTeamPage({
   searchParams?: Promise<{
     accepted?: string;
     created?: string;
+    email?: string;
     error?: string;
     id?: string;
     updated?: string;
@@ -59,13 +61,14 @@ export default async function OrgTeamPage({
       ) : null}
       {params.created === "invite" ? (
         <div className="notice" role="status">
-          Invite created. Use the dev-safe invite link below until production
-          email delivery is wired.
+          Invite created. {emailStatusMessage(params.email)}
         </div>
       ) : null}
       {params.updated ? (
         <div className="notice" role="status">
-          Team update saved and audit event recorded.
+          {params.updated === "invite_resent"
+            ? `Invite email retry finished. ${emailStatusMessage(params.email)}`
+            : "Team update saved and audit event recorded."}
         </div>
       ) : null}
       {params.accepted === "invite" ? (
@@ -191,7 +194,8 @@ export default async function OrgTeamPage({
                 <th>Role</th>
                 <th>Status</th>
                 <th>Dates</th>
-                <th>Dev-safe invite link</th>
+                <th>Email delivery</th>
+                <th>Invite link fallback</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -208,16 +212,39 @@ export default async function OrgTeamPage({
                     <p>Expires: {formatDate(invite.expiresAt)}</p>
                   </td>
                   <td>
+                    <span className="tag">
+                      {emailDeliveryLabel(invite.emailDeliveryStatus)}
+                    </span>
+                    <p>{emailDeliveryHelp(invite.emailDeliveryStatus)}</p>
+                    {invite.emailLastAttemptAt ? (
+                      <p>Last attempt: {formatDate(invite.emailLastAttemptAt)}</p>
+                    ) : null}
+                    {invite.emailSentCount > 0 ? (
+                      <p>Sent count: {invite.emailSentCount}</p>
+                    ) : null}
+                    {invite.emailDeliveryError ? (
+                      <p className="record-note">{invite.emailDeliveryError}</p>
+                    ) : null}
+                  </td>
+                  <td>
                     <code>{`/app/team-invites/${invite.id}`}</code>
                   </td>
                   <td>
                     {workspace.canManageTeam && invite.status === "pending" ? (
-                      <form action={revokeTeamInviteAction}>
-                        <input name="inviteId" type="hidden" value={invite.id} />
-                        <button className="button" type="submit">
-                          Revoke
-                        </button>
-                      </form>
+                      <div className="toolbar">
+                        <form action={resendTeamInviteAction}>
+                          <input name="inviteId" type="hidden" value={invite.id} />
+                          <button className="button" type="submit">
+                            Resend email
+                          </button>
+                        </form>
+                        <form action={revokeTeamInviteAction}>
+                          <input name="inviteId" type="hidden" value={invite.id} />
+                          <button className="button" type="submit">
+                            Revoke
+                          </button>
+                        </form>
+                      </div>
                     ) : (
                       <span className="muted-copy">No action available</span>
                     )}
@@ -230,4 +257,37 @@ export default async function OrgTeamPage({
       </section>
     </>
   );
+}
+
+function emailStatusMessage(status?: string) {
+  switch (status) {
+    case "sent":
+      return "Email sent to the invited address.";
+    case "failed":
+      return "Email delivery failed. The invite link fallback remains available.";
+    default:
+      return "Email is not configured yet; copy the invite link fallback below.";
+  }
+}
+
+function emailDeliveryLabel(status: string) {
+  switch (status) {
+    case "sent":
+      return "Email sent";
+    case "failed":
+      return "Email failed";
+    default:
+      return "Email not configured";
+  }
+}
+
+function emailDeliveryHelp(status: string) {
+  switch (status) {
+    case "sent":
+      return "The recipient was emailed and still must sign in with the invited address.";
+    case "failed":
+      return "The invite is still valid; use the fallback link or retry later.";
+    default:
+      return "Use the fallback link until Resend is configured for this environment.";
+  }
 }

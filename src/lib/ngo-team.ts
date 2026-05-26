@@ -3,12 +3,19 @@ import {
   type AuthSession,
 } from "./auth";
 import { buildAuditEvent } from "./audit-log";
+import {
+  buildInviteUrl,
+  type EmailDeliveryResult,
+  renderNgoInviteEmail,
+  sendResendEmail,
+} from "./email";
 import { enforceNgoEntitlement } from "./ngo-billing";
 import type { SupabaseServerClient } from "./supabase/server";
 
 export type TeamRole = "ngo_owner" | "ngo_admin" | "ngo_member" | "ngo_viewer";
 export type MembershipStatus = "active" | "removed" | "suspended";
 export type InviteStatus = "pending" | "accepted" | "revoked" | "expired";
+export type InviteEmailDeliveryStatus = "not_configured" | "sent" | "failed";
 
 export type TeamMember = {
   id: string;
@@ -34,6 +41,11 @@ export type TeamInvite = {
   acceptedAt: string | null;
   revokedAt: string | null;
   expiresAt: string | null;
+  emailDeliveryStatus: InviteEmailDeliveryStatus;
+  emailDeliveryError: string | null;
+  emailSentAt: string | null;
+  emailLastAttemptAt: string | null;
+  emailSentCount: number;
 };
 
 export type TeamWorkspace = {
@@ -48,6 +60,7 @@ export type TeamResult = {
   message: string;
   inviteId?: string;
   organizationId?: string;
+  emailDeliveryStatus?: InviteEmailDeliveryStatus;
 };
 
 type OrganizationRow = {
@@ -82,6 +95,12 @@ type InviteRow = {
   accepted_at?: string | null;
   revoked_at?: string | null;
   expires_at?: string | null;
+  email_delivery_status?: string | null;
+  email_delivery_error?: string | null;
+  email_sent_at?: string | null;
+  email_last_attempt_at?: string | null;
+  email_sent_count?: number | null;
+  email_provider_message_id?: string | null;
 };
 
 const teamRoles: TeamRole[] = [
@@ -135,7 +154,7 @@ export async function getNgoTeamWorkspace({
   const invites = await client.selectMany<InviteRow>(
     "organization_invites",
     { organization_id: organizationId },
-    "id,organization_id,email,role,status,note,invited_by,accepted_by,invited_at,accepted_at,revoked_at,expires_at",
+    "id,organization_id,email,role,status,note,invited_by,accepted_by,invited_at,accepted_at,revoked_at,expires_at,email_delivery_status,email_delivery_error,email_sent_at,email_last_attempt_at,email_sent_count",
   );
 
   return {
@@ -168,6 +187,13 @@ export async function getNgoTeamWorkspace({
       acceptedAt: invite.accepted_at ?? null,
       revokedAt: invite.revoked_at ?? null,
       expiresAt: invite.expires_at ?? null,
+      emailDeliveryStatus: normalizeInviteEmailDeliveryStatus(
+        invite.email_delivery_status,
+      ),
+      emailDeliveryError: invite.email_delivery_error ?? null,
+      emailSentAt: invite.email_sent_at ?? null,
+      emailLastAttemptAt: invite.email_last_attempt_at ?? null,
+      emailSentCount: invite.email_sent_count ?? 0,
     })),
   };
 }
@@ -231,7 +257,83 @@ export async function createTeamInvite({
     }),
   );
 
-  return { ok: true, message: "Invite created.", inviteId: invite.id };
+  const deliveryResult = await sendTeamInviteEmail({
+    client,
+    invite: {
+      ...invite,
+      expires_at: invite.expires_at ?? null,
+    },
+    organizationName:
+      (
+        await client.selectOne<OrganizationRow>(
+          "organizations",
+          { id: input.organizationId },
+          "id,name",
+        )
+      )?.name ?? "your NGO workspace",
+    session,
+    auditAction: "team.invite_email_sent",
+  });
+
+  return {
+    ok: true,
+    message: "Invite created.",
+    inviteId: invite.id,
+    emailDeliveryStatus: deliveryResult.status,
+  };
+}
+
+export async function resendTeamInvite({
+  client,
+  inviteId,
+  organizationId,
+  session,
+}: {
+  client: SupabaseServerClient;
+  inviteId: string;
+  organizationId: string;
+  session: AuthSession;
+}): Promise<TeamResult> {
+  if (!canManageTeamRole(session, organizationId)) {
+    return { ok: false, message: "You do not have permission to manage this team." };
+  }
+
+  const invite = await client.selectOne<InviteRow>(
+    "organization_invites",
+    { id: inviteId },
+    "id,organization_id,email,role,status,expires_at,note,email_sent_count",
+  );
+
+  if (!invite || invite.organization_id !== organizationId) {
+    return { ok: false, message: "Invite was not found for this organization." };
+  }
+  if (normalizeInviteStatus(invite.status) !== "pending") {
+    return { ok: false, message: "Only pending invites can be resent." };
+  }
+  if (invite.expires_at && Date.parse(invite.expires_at) < Date.now()) {
+    await client.update("organization_invites", { id: inviteId }, { status: "expired" });
+    return { ok: false, message: "Invite has expired." };
+  }
+
+  const organization = await client.selectOne<OrganizationRow>(
+    "organizations",
+    { id: organizationId },
+    "id,name",
+  );
+  const deliveryResult = await sendTeamInviteEmail({
+    client,
+    invite,
+    organizationName: organization?.name ?? "your NGO workspace",
+    session,
+    auditAction: "team.invite_resent",
+  });
+
+  return {
+    ok: true,
+    message: "Invite resent.",
+    inviteId,
+    emailDeliveryStatus: deliveryResult.status,
+  };
 }
 
 export async function revokeTeamInvite({
@@ -471,6 +573,100 @@ function normalizeInviteStatus(value?: string | null): InviteStatus {
     return value;
   }
   return "pending";
+}
+
+function normalizeInviteEmailDeliveryStatus(
+  value?: string | null,
+): InviteEmailDeliveryStatus {
+  if (value === "sent" || value === "failed") return value;
+  return "not_configured";
+}
+
+async function sendTeamInviteEmail({
+  auditAction,
+  client,
+  invite,
+  organizationName,
+  session,
+}: {
+  auditAction: "team.invite_email_sent" | "team.invite_resent";
+  client: SupabaseServerClient;
+  invite: Pick<
+    InviteRow,
+    | "id"
+    | "organization_id"
+    | "email"
+    | "role"
+    | "expires_at"
+    | "email_sent_count"
+  >;
+  organizationName: string;
+  session: AuthSession;
+}): Promise<EmailDeliveryResult> {
+  const inviteUrl = buildInviteUrl(invite.id);
+  const email = renderNgoInviteEmail({
+    organizationName,
+    inviterEmail: session.user.email,
+    roleLabel: teamRoleLabel(invite.role),
+    inviteUrl,
+    expiresAt: invite.expires_at ?? null,
+  });
+  const result = await sendResendEmail({ ...email, to: invite.email });
+  const now = new Date().toISOString();
+
+  await client.update(
+    "organization_invites",
+    { id: invite.id },
+    {
+      email_delivery_status: result.status,
+      email_delivery_error: result.status === "failed" ? result.message : null,
+      email_sent_at: result.status === "sent" ? now : null,
+      email_last_attempt_at: now,
+      email_provider_message_id: result.providerMessageId ?? null,
+      email_sent_count:
+        result.status === "sent" ? (invite.email_sent_count ?? 0) + 1 : invite.email_sent_count ?? 0,
+    },
+  );
+
+  if (result.status === "sent") {
+    await client.insert(
+      "audit_events",
+      buildAuditEvent({
+        actorUserId: session.user.id,
+        organizationId: invite.organization_id,
+        action: auditAction,
+        subjectTable: "organization_invites",
+        subjectId: invite.id,
+        reason: auditAction === "team.invite_resent"
+          ? "NGO team invite email resent."
+          : "NGO team invite email sent.",
+        afterData: {
+          email: invite.email,
+          email_delivery_status: result.status,
+          provider_message_id: result.providerMessageId ?? null,
+        },
+      }),
+    );
+  } else if (result.status === "failed") {
+    await client.insert(
+      "audit_events",
+      buildAuditEvent({
+        actorUserId: session.user.id,
+        organizationId: invite.organization_id,
+        action: "team.invite_email_failed",
+        subjectTable: "organization_invites",
+        subjectId: invite.id,
+        reason: "NGO team invite email failed.",
+        afterData: {
+          email: invite.email,
+          email_delivery_status: result.status,
+          error: result.message,
+        },
+      }),
+    );
+  }
+
+  return result;
 }
 
 function sortMembers(a: TeamMember, b: TeamMember) {

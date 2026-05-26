@@ -6,6 +6,7 @@ import {
   createTeamInvite,
   normalizeTeamRole,
   removeTeamMember,
+  resendTeamInvite,
   revokeTeamInvite,
 } from "@/lib/ngo-team";
 import { createSupabaseAuthenticatedServerClient } from "@/lib/supabase/server";
@@ -35,7 +36,27 @@ export async function createTeamInviteAction(formData: FormData) {
     redirect(`/org/team?error=${encodeURIComponent(result.message)}`);
   }
 
-  redirect(`/org/team?created=invite&id=${result.inviteId}`);
+  redirect(
+    `/org/team?created=invite&id=${result.inviteId}&email=${result.emailDeliveryStatus ?? "not_configured"}`,
+  );
+}
+
+export async function resendTeamInviteAction(formData: FormData) {
+  const { session, organizationId } = await requireCurrentOrganizationMembership();
+  const result = await resendTeamInvite({
+    client: createSupabaseAuthenticatedServerClient(session.accessToken),
+    inviteId: String(formData.get("inviteId") ?? ""),
+    organizationId,
+    session,
+  });
+
+  if (!result.ok) {
+    redirect(`/org/team?error=${encodeURIComponent(result.message)}`);
+  }
+
+  redirect(
+    `/org/team?updated=invite_resent&id=${result.inviteId}&email=${result.emailDeliveryStatus ?? "not_configured"}`,
+  );
 }
 
 export async function revokeTeamInviteAction(formData: FormData) {
