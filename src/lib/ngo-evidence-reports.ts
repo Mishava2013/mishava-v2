@@ -1209,7 +1209,7 @@ function buildReportMissingItems({
       ? null
       : "No public score has been created from this report.",
     activeShareGrantCount === 0 ? "Not shared." : null,
-    "Exports not enabled yet.",
+    "CSV evidence export is enabled; PDF/DOCX file generation is not enabled yet.",
   ].filter(Boolean) as string[];
 }
 

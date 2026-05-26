@@ -11,6 +11,7 @@ export type NgoPermission =
   | "upload_files"
   | "create_reports"
   | "edit_reports"
+  | "export_reports"
   | "share_reports"
   | "view_reports"
   | "view_evidence"
@@ -34,6 +35,7 @@ export const ngoPermissions: NgoPermission[] = [
   "upload_files",
   "create_reports",
   "edit_reports",
+  "export_reports",
   "share_reports",
   "view_reports",
   "view_evidence",
@@ -52,6 +54,7 @@ export const ngoRolePermissionMatrix: Record<NgoRole, NgoPermission[]> = {
     "upload_files",
     "create_reports",
     "edit_reports",
+    "export_reports",
     "share_reports",
     "view_reports",
     "view_evidence",
@@ -67,6 +70,7 @@ export const ngoRolePermissionMatrix: Record<NgoRole, NgoPermission[]> = {
     "upload_files",
     "create_reports",
     "edit_reports",
+    "export_reports",
     "share_reports",
     "view_reports",
     "view_evidence",
@@ -80,11 +84,13 @@ export const ngoRolePermissionMatrix: Record<NgoRole, NgoPermission[]> = {
     "upload_files",
     "create_reports",
     "edit_reports",
+    "export_reports",
     "view_reports",
     "view_evidence",
     "view_billing",
   ],
   ngo_viewer: [
+    "export_reports",
     "view_reports",
     "view_evidence",
     "view_billing",
@@ -136,9 +142,8 @@ export function ngoPermissionSummary(role: NgoRole) {
     case "ngo_admin":
       return "Team management, billing management, reports, sharing, evidence, and files.";
     case "ngo_member":
-      return "Create and edit evidence and reports, upload files, and view billing.";
+      return "Create and edit evidence and reports, export report summaries, upload files, and view billing.";
     case "ngo_viewer":
-      return "Read-only access to allowed evidence, reports, and billing views.";
+      return "Read-only access to allowed evidence, report exports, and billing views.";
   }
 }
-

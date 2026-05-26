@@ -87,7 +87,7 @@ test("report creation writes audit event and does not expose reports publicly by
   assert.match(reportsPage, /Not enabled/);
 });
 
-test("Slice 3 does not add fake scores, exports, AI workflows, or shopping scope", () => {
+test("Slice 3 does not add fake scores, AI workflows, or shopping scope", () => {
   const migration = read("supabase/migrations/202605240008_release_3_slice_3_ngo_reports.sql");
   const helper = read("src/lib/ngo-evidence-reports.ts");
 
@@ -95,5 +95,4 @@ test("Slice 3 does not add fake scores, exports, AI workflows, or shopping scope
   assert.doesNotMatch(migration, /insert into shopping_products/i);
   assert.doesNotMatch(migration, /overall_score\s*=\s*[0-9]/i);
   assert.doesNotMatch(helper, /ai_assisted: true/);
-  assert.doesNotMatch(helper, /pdf|xlsx|docx/i);
 });

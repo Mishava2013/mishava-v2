@@ -417,6 +417,38 @@ export default async function OrgReportDetailPage({
       </section>
 
       <section className="section report-actions">
+        <h2>Server exports</h2>
+        <p className="section-intro">
+          Exports are generated server-side for this private report. Raw
+          evidence files, private storage paths, rejected claims, draft claims,
+          unrelated organization data, audit internals, and billing identifiers
+          are excluded by default.
+        </p>
+        <div className="status-row">
+          <Link
+            className="button primary"
+            href={`/org/reports/${detail.report.id}/exports/evidence.csv`}
+          >
+            Download CSV evidence summary
+          </Link>
+          <Link
+            className="button"
+            href={`/org/reports/${detail.report.id}/exports/report`}
+          >
+            Open PDF-ready report view
+          </Link>
+          <span className="tag">DOCX coming later</span>
+        </div>
+        <p className="muted-copy">
+          The CSV summarizes selected evidence only. The PDF-ready report view
+          can be printed or saved as PDF from the browser. These exports are
+          evidence-based, may be incomplete, and do not create a public score.
+          Shared recipients cannot export reports from their shared view in this
+          slice.
+        </p>
+      </section>
+
+      <section className="section report-actions">
         <h2>Edit private draft</h2>
         <p className="section-intro">
           Updates keep this report private and write an audit event. Rejected or
