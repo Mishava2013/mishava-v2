@@ -8,6 +8,7 @@ import {
   removeTeamMember,
   resendTeamInvite,
   revokeTeamInvite,
+  updateTeamMemberRole,
 } from "@/lib/ngo-team";
 import { createSupabaseAuthenticatedServerClient } from "@/lib/supabase/server";
 
@@ -89,4 +90,21 @@ export async function removeTeamMemberAction(formData: FormData) {
   }
 
   redirect("/org/team?updated=member_removed");
+}
+
+export async function updateTeamMemberRoleAction(formData: FormData) {
+  const { session, organizationId } = await requireCurrentOrganizationMembership();
+  const result = await updateTeamMemberRole({
+    client: createSupabaseAuthenticatedServerClient(session.accessToken),
+    membershipId: String(formData.get("membershipId") ?? ""),
+    newRole: normalizeTeamRole(formData.get("role")),
+    organizationId,
+    session,
+  });
+
+  if (!result.ok) {
+    redirect(`/org/team?error=${encodeURIComponent(result.message)}`);
+  }
+
+  redirect("/org/team?updated=member_role_changed");
 }

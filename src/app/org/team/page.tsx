@@ -11,6 +11,7 @@ import {
   removeTeamMemberAction,
   resendTeamInviteAction,
   revokeTeamInviteAction,
+  updateTeamMemberRoleAction,
 } from "./actions";
 
 function formatDate(value: string | null) {
@@ -68,6 +69,8 @@ export default async function OrgTeamPage({
         <div className="notice" role="status">
           {params.updated === "invite_resent"
             ? `Invite email retry finished. ${emailStatusMessage(params.email)}`
+            : params.updated === "member_role_changed"
+              ? "Member role changed and audit event recorded."
             : "Team update saved and audit event recorded."}
         </div>
       ) : null}
@@ -80,8 +83,10 @@ export default async function OrgTeamPage({
       <section className="section">
         <h2>Members</h2>
         <p className="section-intro">
-          Removed members lose access through server-side membership checks. The
-          current organization selector cannot restore access by itself.
+          Active members are governed by a central permission matrix. Removed
+          or suspended members lose access through server-side membership
+          checks, and the current organization selector cannot restore access by
+          itself.
         </p>
 
         {workspace.members.length === 0 ? (
@@ -93,7 +98,7 @@ export default async function OrgTeamPage({
             <thead>
               <tr>
                 <th>Email / name</th>
-                <th>Role</th>
+                <th>Role and permissions</th>
                 <th>Status</th>
                 <th>Dates</th>
                 <th>Action</th>
@@ -106,9 +111,18 @@ export default async function OrgTeamPage({
                     <strong>{member.displayEmail ?? member.userId}</strong>
                     {member.displayName ? <p>{member.displayName}</p> : null}
                   </td>
-                  <td>{teamRoleLabel(member.role)}</td>
                   <td>
-                    <span className="tag">{member.status}</span>
+                    <strong>{teamRoleLabel(member.role)}</strong>
+                    <p>{member.permissionSummary}</p>
+                  </td>
+                  <td>
+                    <span className="tag">{membershipStatusLabel(member.status)}</span>
+                    {member.status !== "active" ? (
+                      <p className="record-note">
+                        Inactive memberships cannot access this workspace or be
+                        selected in the organization switcher.
+                      </p>
+                    ) : null}
                   </td>
                   <td>
                     <p>Created: {formatDate(member.createdAt)}</p>
@@ -119,12 +133,47 @@ export default async function OrgTeamPage({
                   </td>
                   <td>
                     {workspace.canManageTeam && member.status === "active" ? (
-                      <form action={removeTeamMemberAction}>
-                        <input name="membershipId" type="hidden" value={member.id} />
-                        <button className="button" type="submit">
-                          Remove
-                        </button>
-                      </form>
+                      <div className="toolbar">
+                        <form action={updateTeamMemberRoleAction}>
+                          <input
+                            name="membershipId"
+                            type="hidden"
+                            value={member.id}
+                          />
+                          <label className="sr-only" htmlFor={`role-${member.id}`}>
+                            Change role for {member.displayEmail ?? member.userId}
+                          </label>
+                          <select
+                            id={`role-${member.id}`}
+                            name="role"
+                            defaultValue={member.role}
+                            aria-describedby={`role-help-${member.id}`}
+                          >
+                            <option value="ngo_owner">Owner</option>
+                            <option value="ngo_admin">Admin</option>
+                            <option value="ngo_member">Member</option>
+                            <option value="ngo_viewer">Viewer</option>
+                          </select>
+                          <p className="record-note" id={`role-help-${member.id}`}>
+                            Role changes affect workspace permissions and are
+                            recorded in the audit trail. The last owner cannot
+                            be demoted.
+                          </p>
+                          <button className="button" type="submit">
+                            Save role
+                          </button>
+                        </form>
+                        <form action={removeTeamMemberAction}>
+                          <input
+                            name="membershipId"
+                            type="hidden"
+                            value={member.id}
+                          />
+                          <button className="button" type="submit">
+                            Remove
+                          </button>
+                        </form>
+                      </div>
                     ) : (
                       <span className="muted-copy">No action available</span>
                     )}
@@ -174,7 +223,7 @@ export default async function OrgTeamPage({
         ) : (
           <EmptyState title="Team management requires owner or admin access">
             Your current role can view allowed workspace information, but cannot
-            invite, revoke, or remove team members.
+            invite, revoke, remove, or change roles for team members.
           </EmptyState>
         )}
       </section>
@@ -257,6 +306,17 @@ export default async function OrgTeamPage({
       </section>
     </>
   );
+}
+
+function membershipStatusLabel(status: string) {
+  switch (status) {
+    case "removed":
+      return "Removed";
+    case "suspended":
+      return "Suspended";
+    default:
+      return "Active";
+  }
 }
 
 function emailStatusMessage(status?: string) {

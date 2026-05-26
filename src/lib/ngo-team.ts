@@ -10,9 +10,15 @@ import {
   sendResendEmail,
 } from "./email";
 import { enforceNgoEntitlement } from "./ngo-billing";
+import {
+  ngoPermissionSummary,
+  ngoRoleLabel,
+  ngoRoles,
+  type NgoRole,
+} from "./ngo-permissions";
 import type { SupabaseServerClient } from "./supabase/server";
 
-export type TeamRole = "ngo_owner" | "ngo_admin" | "ngo_member" | "ngo_viewer";
+export type TeamRole = NgoRole;
 export type MembershipStatus = "active" | "removed" | "suspended";
 export type InviteStatus = "pending" | "accepted" | "revoked" | "expired";
 export type InviteEmailDeliveryStatus = "not_configured" | "sent" | "failed";
@@ -21,6 +27,7 @@ export type TeamMember = {
   id: string;
   userId: string;
   role: TeamRole;
+  permissionSummary: string;
   status: MembershipStatus;
   displayEmail: string | null;
   displayName: string | null;
@@ -103,29 +110,17 @@ type InviteRow = {
   email_provider_message_id?: string | null;
 };
 
-const teamRoles: TeamRole[] = [
-  "ngo_owner",
-  "ngo_admin",
-  "ngo_member",
-  "ngo_viewer",
-];
-
 export function normalizeTeamRole(value: FormDataEntryValue | string | null): TeamRole {
   const role = String(value ?? "ngo_member");
-  return teamRoles.includes(role as TeamRole) ? (role as TeamRole) : "ngo_member";
+  return ngoRoles.includes(role as TeamRole) ? (role as TeamRole) : "ngo_member";
 }
 
 export function teamRoleLabel(role: string) {
-  switch (role) {
-    case "ngo_owner":
-      return "Owner";
-    case "ngo_admin":
-      return "Admin";
-    case "ngo_viewer":
-      return "Viewer";
-    default:
-      return "Member";
-  }
+  return ngoRoleLabel(role);
+}
+
+export function teamRolePermissionSummary(role: TeamRole) {
+  return ngoPermissionSummary(role);
 }
 
 export function canManageTeamRole(session: AuthSession, organizationId: string) {
@@ -165,6 +160,7 @@ export async function getNgoTeamWorkspace({
         id: member.id,
         userId: member.user_id,
         role: normalizeTeamRole(member.role),
+        permissionSummary: teamRolePermissionSummary(normalizeTeamRole(member.role)),
         status: normalizeMembershipStatus(member.status),
         displayEmail:
           member.display_email ??
@@ -518,6 +514,14 @@ export async function removeTeamMember({
   if (membership.role === "ngo_owner") {
     const activeOwners = await countActiveOwners(client, organizationId);
     if (activeOwners <= 1) {
+      await logBlockedLastOwnerAttempt({
+        client,
+        membershipId,
+        organizationId,
+        session,
+        attemptedAction: "remove",
+        currentRole: membership.role,
+      });
       return { ok: false, message: "At least one active owner is required." };
     }
   }
@@ -550,6 +554,80 @@ export async function removeTeamMember({
   return { ok: true, message: "Member removed." };
 }
 
+export async function updateTeamMemberRole({
+  client,
+  membershipId,
+  newRole,
+  organizationId,
+  session,
+}: {
+  client: SupabaseServerClient;
+  membershipId: string;
+  newRole: TeamRole;
+  organizationId: string;
+  session: AuthSession;
+}): Promise<TeamResult> {
+  if (!canManageTeamRole(session, organizationId)) {
+    return { ok: false, message: "You do not have permission to manage this team." };
+  }
+
+  const membership = await client.selectOne<MembershipRow>(
+    "organization_memberships",
+    { id: membershipId },
+    "id,organization_id,user_id,role,status",
+  );
+
+  if (!membership || membership.organization_id !== organizationId) {
+    return { ok: false, message: "Member was not found for this organization." };
+  }
+  if (normalizeMembershipStatus(membership.status) !== "active") {
+    return { ok: false, message: "This member is not active." };
+  }
+
+  const currentRole = normalizeTeamRole(membership.role);
+  if (currentRole === newRole) {
+    return { ok: false, message: "Choose a different role before saving." };
+  }
+
+  if (currentRole === "ngo_owner" && newRole !== "ngo_owner") {
+    const activeOwners = await countActiveOwners(client, organizationId);
+    if (activeOwners <= 1) {
+      await logBlockedLastOwnerAttempt({
+        client,
+        membershipId,
+        organizationId,
+        session,
+        attemptedAction: "role_change",
+        currentRole,
+        newRole,
+      });
+      return { ok: false, message: "At least one active owner is required." };
+    }
+  }
+
+  await client.update(
+    "organization_memberships",
+    { id: membershipId },
+    { role: newRole },
+  );
+
+  await client.insert(
+    "audit_events",
+    buildAuditEvent({
+      actorUserId: session.user.id,
+      organizationId,
+      action: "team.member_role_changed",
+      subjectTable: "organization_memberships",
+      subjectId: membershipId,
+      reason: "NGO team member role changed.",
+      beforeData: { role: currentRole, status: membership.status ?? "active" },
+      afterData: { role: newRole, status: membership.status ?? "active" },
+    }),
+  );
+
+  return { ok: true, message: "Member role updated." };
+}
+
 async function countActiveOwners(client: SupabaseServerClient, organizationId: string) {
   const members = await client.selectMany<MembershipRow>(
     "organization_memberships",
@@ -561,6 +639,38 @@ async function countActiveOwners(client: SupabaseServerClient, organizationId: s
     (member) =>
       member.role === "ngo_owner" && normalizeMembershipStatus(member.status) === "active",
   ).length;
+}
+
+async function logBlockedLastOwnerAttempt({
+  attemptedAction,
+  client,
+  currentRole,
+  membershipId,
+  newRole,
+  organizationId,
+  session,
+}: {
+  attemptedAction: "remove" | "role_change";
+  client: SupabaseServerClient;
+  currentRole: string;
+  membershipId: string;
+  newRole?: string;
+  organizationId: string;
+  session: AuthSession;
+}) {
+  await client.insert(
+    "audit_events",
+    buildAuditEvent({
+      actorUserId: session.user.id,
+      organizationId,
+      action: "team.last_owner_change_blocked",
+      subjectTable: "organization_memberships",
+      subjectId: membershipId,
+      reason: "Blocked attempt that would leave the NGO workspace without an active owner.",
+      beforeData: { role: currentRole, attempted_action: attemptedAction },
+      afterData: { role: newRole ?? currentRole, blocked: true },
+    }),
+  );
 }
 
 function normalizeMembershipStatus(value?: string | null): MembershipStatus {

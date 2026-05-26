@@ -1,4 +1,5 @@
 import type { RoleCode } from "./foundation";
+import { rolesHaveNgoPermission, type NgoPermission } from "./ngo-permissions";
 
 export type SessionUser = {
   id: string;
@@ -94,23 +95,14 @@ export function canManageNgoTeam(
   session: AuthSession | null,
   organizationId: string | null,
 ) {
-  return hasOrganizationRole(session, organizationId, [
-    "ngo_owner",
-    "ngo_admin",
-    "mishava_admin",
-  ]);
+  return hasNgoPermission(session, organizationId, "manage_team");
 }
 
 export function canManageNgoEvidence(
   session: AuthSession | null,
   organizationId: string | null,
 ) {
-  return hasOrganizationRole(session, organizationId, [
-    "ngo_owner",
-    "ngo_admin",
-    "ngo_member",
-    "mishava_admin",
-  ]);
+  return hasNgoPermission(session, organizationId, "create_evidence");
 }
 
 export function canManageNgoReports(
@@ -124,13 +116,20 @@ export function canViewNgoWorkspace(
   session: AuthSession | null,
   organizationId: string | null,
 ) {
-  return hasOrganizationRole(session, organizationId, [
-    "ngo_owner",
-    "ngo_admin",
-    "ngo_member",
-    "ngo_viewer",
-    "mishava_admin",
-  ]);
+  return hasNgoPermission(session, organizationId, "view_evidence");
+}
+
+export function hasNgoPermission(
+  session: AuthSession | null,
+  organizationId: string | null,
+  permission: NgoPermission,
+) {
+  if (!session || !organizationId) return false;
+  return session.memberships.some(
+    (membership) =>
+      membership.organizationId === organizationId &&
+      rolesHaveNgoPermission(membership.roles, permission),
+  );
 }
 
 export function parseSessionCookieValue(value?: string | null): AuthSession | null {
