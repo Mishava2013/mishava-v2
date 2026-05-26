@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { canManageNgoEvidence } from "@/lib/auth";
 import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
+import { reviewAiEvidenceSuggestion } from "@/lib/ai-evidence-parsing";
 import {
   archiveEvidenceItem,
   normalizeEvidenceLifecycleStatus,
@@ -216,4 +217,28 @@ export async function archiveEvidenceAction(formData: FormData) {
   }
 
   redirect("/org/evidence?updated=archived");
+}
+
+export async function reviewAiEvidenceSuggestionAction(formData: FormData) {
+  const { session, organizationId } = await requireCurrentOrganizationMembership();
+  if (!canManageNgoEvidence(session, organizationId)) {
+    redirect("/org/evidence?error=AI%20suggestion%20review%20requires%20member%20access.");
+  }
+
+  const result = await reviewAiEvidenceSuggestion({
+    client: createSupabaseAuthenticatedServerClient(session.accessToken),
+    input: {
+      organizationId,
+      suggestionId: String(formData.get("suggestionId") ?? ""),
+      status: formData.get("reviewStatus") === "accepted" ? "accepted" : "rejected",
+      reviewNote: String(formData.get("reviewNote") ?? ""),
+    },
+    session,
+  });
+
+  if (!result.ok) {
+    redirect(`/org/evidence?error=${encodeURIComponent(result.message)}`);
+  }
+
+  redirect("/org/evidence?updated=ai-suggestion");
 }

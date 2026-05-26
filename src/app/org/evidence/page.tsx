@@ -8,6 +8,7 @@ import {
   archiveEvidenceAction,
   createEvidenceAction,
   createStructuredClaimDraftAction,
+  reviewAiEvidenceSuggestionAction,
   updateEvidenceMetadataAction,
   uploadEvidenceFileAction,
 } from "./actions";
@@ -64,7 +65,9 @@ export default async function OrgEvidencePage({
           Raw files are private to your organization and are not shared by
           default. New uploads are pending/not scanned until a scanner or
           authorized review clears them; quarantined or rejected files are
-          blocked from new reports, exports, and sharing by default.
+          blocked from new reports, exports, and sharing by default. AI
+          suggestions, when present, are private draft assistance only and do
+          not become verified facts or trust outcomes without human review.
         </p>
 
         {evidenceLibrary.length === 0 ? (
@@ -124,6 +127,10 @@ export default async function OrgEvidencePage({
                     </strong>
                   </div>
                   <div className="metric">
+                    <span>AI assistance</span>
+                    <strong>{item.aiSuggestionLabel}</strong>
+                  </div>
+                  <div className="metric">
                     <span>Reports</span>
                     <strong>{item.reportAttachmentLabel}</strong>
                   </div>
@@ -166,6 +173,60 @@ export default async function OrgEvidencePage({
                           {file.quarantine_reason
                             ? ` · ${file.quarantine_reason}`
                             : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {item.aiSuggestionSummaries.length > 0 ? (
+                  <div className="inline-workflow">
+                    <strong>AI-assisted suggestions</strong>
+                    <p className="muted-copy">
+                      AI-assisted suggestions are private to your organization.
+                      Human review is required. A suggestion is not a verified
+                      fact and does not affect score, ranking, verification, or
+                      report trust context by itself.
+                    </p>
+                    <ul>
+                      {item.aiSuggestionSummaries.map((suggestion) => (
+                        <li key={suggestion.id}>
+                          <strong>{suggestion.status}</strong>:{" "}
+                          {suggestion.suggested_text}
+                          {suggestion.created_structured_claim_id
+                            ? " · reviewed draft claim created"
+                            : ""}
+                          {canManageEvidence &&
+                          (suggestion.status === "suggested" ||
+                            suggestion.status === "reviewed") ? (
+                            <form action={reviewAiEvidenceSuggestionAction} className="toolbar">
+                              <input name="suggestionId" type="hidden" value={suggestion.id} />
+                              <label className="sr-only" htmlFor={`review-note-${suggestion.id}`}>
+                                Review note
+                              </label>
+                              <input
+                                id={`review-note-${suggestion.id}`}
+                                name="reviewNote"
+                                placeholder="Optional review note"
+                              />
+                              <button
+                                className="button"
+                                name="reviewStatus"
+                                type="submit"
+                                value="accepted"
+                              >
+                                Accept as reviewed draft claim
+                              </button>
+                              <button
+                                className="button"
+                                name="reviewStatus"
+                                type="submit"
+                                value="rejected"
+                              >
+                                Reject suggestion
+                              </button>
+                            </form>
+                          ) : null}
                         </li>
                       ))}
                     </ul>
@@ -323,6 +384,9 @@ export default async function OrgEvidencePage({
           and store. Evidence may be incomplete or require review. Mishava does
           not guarantee funding, donations, ratings, certifications,
           procurement decisions, or other outcomes from submitted evidence.
+          AI assistance is not enabled for raw-file processing in this slice;
+          future AI suggestions require human review before becoming structured
+          claim drafts.
         </div>
         {canManageEvidence ? (
         <form action={createEvidenceAction} className="form-grid">

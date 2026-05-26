@@ -75,7 +75,9 @@ export const legalPages = {
       {
         title: "AI and subprocessors",
         body: [
-          "Production NGO AI automation is not enabled in the current baseline. Future AI or subprocessor use must be disclosed before launch of those workflows.",
+          "Production NGO AI automation is not enabled in the current baseline. Mishava may prepare AI-assisted evidence suggestions, but those suggestions remain private draft assistance and require human review before becoming structured claim drafts.",
+          "Raw evidence files are not sent to AI in the current baseline. Future AI provider/subprocessor use, raw-file processing, retention settings, and no-training-on-customer-data posture must be reviewed and disclosed before launch of those workflows.",
+          "AI assistance must not create final trust outcomes, scores, rankings, verification labels, credibility labels, methodology outputs, or report trust conclusions by itself.",
         ],
       },
     ],
@@ -107,6 +109,7 @@ export const legalPages = {
         body: [
           "Submitted evidence may be incomplete, outdated, disputed, or require review. Evidence-backed corrections may change future outputs without silently erasing the prior history.",
           "Mishava may reject, label, limit, or request clarification for evidence that cannot be verified, appears unsafe to share, or raises legal/privacy concerns.",
+          "AI-assisted suggestions, if used, are not verified facts until a human reviewer accepts them into the structured evidence workflow.",
         ],
       },
     ],

@@ -1,4 +1,5 @@
 import type { AuthSession } from "./auth";
+import type { AiEvidenceSuggestionRow } from "./ai-evidence-parsing";
 import { buildAuditEvent } from "./audit-log";
 import { enforceNgoEntitlement } from "./ngo-billing";
 import type { SupabaseServerClient } from "./supabase/server";
@@ -144,6 +145,8 @@ export type NgoEvidenceLibraryItem = EvidenceRow & {
   reportAttachmentLabel: string;
   nextStepLabel: string;
   canUseInNewReports: boolean;
+  aiSuggestionSummaries: AiEvidenceSuggestionRow[];
+  aiSuggestionLabel: string;
 };
 
 export type NgoReportDraftInput = {
@@ -238,6 +241,11 @@ export async function getNgoEvidenceLibrary({
     { organization_id: organizationId },
     "id,subject_table,subject_id",
   );
+  const aiSuggestions = await client.selectMany<AiEvidenceSuggestionRow>(
+    "ai_evidence_suggestions",
+    { organization_id: organizationId },
+    "id,organization_id,evidence_item_id,parse_job_id,suggestion_type,suggested_text,suggested_claim_type,suggested_claim_value,suggested_confidence,source_excerpt,source_reference,status,reviewed_by,reviewed_at,review_note,created_structured_claim_id,created_at,updated_at",
+  );
 
   return evidence
     .map<NgoEvidenceLibraryItem>((item) => {
@@ -259,6 +267,16 @@ export async function getNgoEvidenceLibrary({
         (event) =>
           event.subject_table === "evidence_items" && event.subject_id === item.id,
       );
+      const itemAiSuggestions = aiSuggestions
+        .filter((suggestion) => suggestion.evidence_item_id === item.id)
+        .sort(
+          (left, right) =>
+            Date.parse(right.created_at) - Date.parse(left.created_at),
+        );
+      const pendingAiSuggestionCount = itemAiSuggestions.filter(
+        (suggestion) =>
+          suggestion.status === "suggested" || suggestion.status === "reviewed",
+      ).length;
 
       return {
         ...item,
@@ -308,6 +326,15 @@ export async function getNgoEvidenceLibrary({
                 ? "Needs review: draft claims cannot support report trust summaries yet"
                 : "Available now: create a structured claim draft",
         canUseInNewReports: item.lifecycle_status !== "archived",
+        aiSuggestionSummaries: itemAiSuggestions,
+        aiSuggestionLabel:
+          itemAiSuggestions.length === 0
+            ? "No AI suggestions"
+            : pendingAiSuggestionCount > 0
+              ? `${pendingAiSuggestionCount} AI suggestion${
+                  pendingAiSuggestionCount === 1 ? "" : "s"
+                } need human review`
+              : "AI suggestions reviewed",
       };
     })
     .sort(

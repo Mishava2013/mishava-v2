@@ -56,6 +56,12 @@ export const forbiddenTrustInfluenceInputs = [
   "checkout_session_id",
   "invoice_status",
   "sponsored_network_status",
+  "ai_parse_status",
+  "ai_suggestion_status",
+  "ai_provider",
+  "ai_model",
+  "ai_confidence",
+  "ai_estimated_cost",
 ] as const;
 
 export const billableInfrastructureSurfaces = [
