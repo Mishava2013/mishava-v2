@@ -9,6 +9,7 @@ import {
   getProductTrustLabel,
   getShoppingProducts,
   getSupplierTransparencyLabels,
+  getToiletPaperPreview,
   hasSupplierEvidenceGap,
 } from "@/lib/shopping";
 
@@ -103,7 +104,7 @@ export default async function ShoppingPage({
             <label>
               Sort
               <select defaultValue={params.sort ?? "evidence"} form="shopping-controls" name="sort">
-                <option value="evidence">Evidence Score</option>
+                <option value="evidence">Evidence readiness</option>
                 <option value="price">Price</option>
                 <option value="distance">Distance</option>
               </select>
@@ -143,13 +144,13 @@ export default async function ShoppingPage({
           </div>
 
           <div className="trust-callout">
-            <span className="score-pill">Evidence Score</span>
+            <span className="score-pill">Evidence Score Preview</span>
             <p>
               Shoppers can click through for trust details. If there is no real
-              published score snapshot, Mishava shows score pending or draft
-              trust context instead of a made-up number. Personal values
-              sorting stays off until Shopping Priorities are complete and
-              enough evidence-backed scoring data exists.
+              published score snapshot, Mishava shows score pending, evidence
+              profile incomplete, or draft trust context instead of a made-up
+              number. Personal match stays unavailable until Shopping
+              Priorities are complete and enough reviewed evidence exists.
             </p>
             <Link href="/app/shopping-priorities">
               Complete Shopping Priorities to see Your Values Score when it is valid.
@@ -173,6 +174,10 @@ export default async function ShoppingPage({
               const explanation = buildShoppingScoreExplanation({ product });
               const readinessLabels = getEvidenceReadinessLabels(product);
               const supplierLabels = getSupplierTransparencyLabels(product);
+              const toiletPaperPreview =
+                product.product_subcategory === "toilet-paper"
+                  ? getToiletPaperPreview(product)
+                  : null;
 
               return (
                 <article className="product-card" key={product.id}>
@@ -200,8 +205,15 @@ export default async function ShoppingPage({
                     />
                     <div className="status-row">
                       <span className="tag tag-score">
-                        {product.evidence_coverage ?? "Evidence profile pending"}
+                        {toiletPaperPreview?.confidenceLabel ??
+                          product.evidence_coverage ??
+                          "Evidence profile pending"}
                       </span>
+                      {toiletPaperPreview ? (
+                        <span className="tag tag-score">
+                          {toiletPaperPreview.evidenceLabel}
+                        </span>
+                      ) : null}
                       <span className="tag">
                         {product.product_subcategory ?? product.category}
                       </span>

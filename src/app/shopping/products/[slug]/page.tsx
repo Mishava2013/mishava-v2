@@ -14,6 +14,8 @@ import {
   getShoppingProductBySlug,
   getShoppingResearchReadiness,
   getSupplierTransparencyLabels,
+  getToiletPaperEvidenceDimensions,
+  getToiletPaperPreview,
   hasSupplierEvidenceGap,
   hasPublishedEvidenceScore,
 } from "@/lib/shopping";
@@ -32,6 +34,9 @@ export default async function ProductPage({
   const researchTemplate =
     product?.product_subcategory ? getShoppingCategoryResearchTemplate(product.product_subcategory) : null;
   const isToiletPaper = product?.product_subcategory === "toilet-paper";
+  const toiletPaperPreview = product && isToiletPaper ? getToiletPaperPreview(product) : null;
+  const toiletPaperDimensions =
+    product && isToiletPaper ? getToiletPaperEvidenceDimensions(product, placesToBuy) : [];
 
   return (
     <>
@@ -53,13 +58,27 @@ export default async function ProductPage({
                     {hasPublishedEvidenceScore(product) ? product.evidence_score : "--"}
                   </div>
                   <p className="score-caption">
-                    {hasPublishedEvidenceScore(product)
+                    {toiletPaperPreview
+                      ? `${toiletPaperPreview.summary} ${toiletPaperPreview.disclaimer}`
+                      : hasPublishedEvidenceScore(product)
                       ? "This score is backed by a published score snapshot."
                       : "Evidence profile pending. No public score appears until real reviewed evidence and a published snapshot exist."}
                   </p>
                 </div>
                 <div className="status-row">
-                  <span className="tag tag-score">Score pending</span>
+                  <span className="tag tag-score">
+                    {toiletPaperPreview?.evidenceLabel ?? "Score pending"}
+                  </span>
+                  {toiletPaperPreview ? (
+                    <>
+                      <span className="tag tag-score">
+                        {toiletPaperPreview.confidenceLabel}
+                      </span>
+                      <span className="tag tag-score">
+                        {toiletPaperPreview.valuesLabel}
+                      </span>
+                    </>
+                  ) : null}
                   <span className="tag tag-source">
                     Source {product.source_review_status}
                   </span>
@@ -138,6 +157,36 @@ export default async function ProductPage({
               </p>
               {isToiletPaper ? (
                 <div className="surface-list compact">
+                  {toiletPaperPreview ? (
+                    <div>
+                      <h4>Early toilet paper preview</h4>
+                      <p>
+                        This is an early preview. Mishava is showing reviewed
+                        evidence, source context, and evidence gaps so a shopper
+                        can understand what is known and what is still missing.
+                        Scores remain pending when evidence is incomplete.
+                      </p>
+                      <p>
+                        Your Values Match Preview appears only when Shopping
+                        Priorities and reviewed evidence are both sufficient.
+                        This is not medical advice; Mishava does not guarantee
+                        that a product is safe or suitable for any medical
+                        condition.
+                      </p>
+                      <p>{toiletPaperPreview.disclaimer}</p>
+                      <div className="status-row">
+                        <span className="tag tag-score">
+                          {toiletPaperPreview.evidenceLabel}
+                        </span>
+                        <span className="tag tag-score">
+                          {toiletPaperPreview.valuesLabel}
+                        </span>
+                        <span className="tag tag-source">
+                          Not a completed public score
+                        </span>
+                      </div>
+                    </div>
+                  ) : null}
                   <div>
                     <h4>Toilet paper research readiness</h4>
                     <p>
@@ -194,6 +243,32 @@ export default async function ProductPage({
                         </Link>
                       ) : null}
                     </div>
+                  </div>
+                  <div>
+                    <h4>Evidence dimensions</h4>
+                    <p>
+                      These dimensions are preview signals only. They do not
+                      create a final score, and unreviewed research tasks do not
+                      become score facts.
+                    </p>
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Dimension</th>
+                          <th>Status</th>
+                          <th>Evidence context</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {toiletPaperDimensions.map((dimension) => (
+                          <tr key={dimension.label}>
+                            <td>{dimension.label}</td>
+                            <td>{dimension.status}</td>
+                            <td>{dimension.detail}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                   {product.external_evidence_reference_url ? (
                     <Link href={product.external_evidence_reference_url}>

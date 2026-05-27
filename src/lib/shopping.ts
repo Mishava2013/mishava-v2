@@ -168,9 +168,12 @@ export type YourValuesScoreState =
 export type ShoppingScoreExplanation = {
   label:
     | "Evidence Score"
+    | "Evidence Score Preview"
     | "Draft trust context"
     | "Score pending"
     | "Your Values Score unavailable"
+    | "Your Values Match Preview"
+    | "Your Values Match Preview unavailable"
     | "Your Values Score pending"
     | "More evidence needed";
   score: number | null;
@@ -186,6 +189,26 @@ export type ShoppingScoreExplanation = {
   missing: string[];
   why: string;
   valuesMessage: string;
+};
+
+export type ToiletPaperEvidenceDimension = {
+  label: string;
+  status:
+    | "Reviewed"
+    | "Source recorded"
+    | "External reference only"
+    | "Missing"
+    | "Not reviewed"
+    | "Not applicable";
+  detail: string;
+};
+
+export type ToiletPaperPreview = {
+  evidenceLabel: "Evidence Score Preview" | "Score pending";
+  valuesLabel: "Your Values Match Preview" | "Your Values Match Preview unavailable";
+  confidenceLabel: "Evidence profile incomplete" | "Mishava review not finalized";
+  disclaimer: string;
+  summary: string;
 };
 
 export const shoppingPriorityVersionCode = "Shopping_Priorities_V2.01_2026.05.24";
@@ -482,6 +505,7 @@ export function buildShoppingScoreExplanation({
   const valuesMessage = getYourValuesScoreMessage(valuesState);
   const missing = [];
   const evidenceReadiness = getEvidenceReadinessLabels(product);
+  const isToiletPaper = product.product_subcategory === "toilet-paper";
 
   if (!product.evidence_coverage) missing.push("reviewed evidence coverage");
   if (!product.evidence_recency) missing.push("published evidence recency");
@@ -490,7 +514,7 @@ export function buildShoppingScoreExplanation({
   if (!product.score_published_at) missing.push("snapshot publication date");
   if (product.evidence_score === null) missing.push("evidence-backed score value");
   if (
-    product.product_subcategory === "toilet-paper" &&
+    isToiletPaper &&
     product.mishava_evidence_review_status !== "score_ready"
   ) {
     missing.push("toilet paper scoring version");
@@ -508,6 +532,8 @@ export function buildShoppingScoreExplanation({
       ? "Evidence Score"
       : hasDraftContext
         ? "Draft trust context"
+        : isToiletPaper
+          ? "Evidence Score Preview"
         : valuesState === "more_evidence_needed"
           ? "More evidence needed"
           : valuesState === "your_values_score_pending"
@@ -551,10 +577,117 @@ export function buildShoppingScoreExplanation({
       ? "This Evidence Score is backed by a published score snapshot."
       : hasDraftContext
         ? "Mishava has draft trust context, but it is not a public score."
-        : product.product_subcategory === "toilet-paper"
-          ? "Toilet paper evidence is recorded as source context only. A public Mishava score needs reviewed tissue claims, a supported scoring version, and a published score snapshot."
+        : isToiletPaper
+          ? "This is an early toilet paper evidence preview. A public Mishava score needs reviewed tissue claims, a supported scoring version, and a published score snapshot."
         : "A public score needs reviewed evidence, accepted scoring facts, a scoring version, and a published score snapshot.",
     valuesMessage,
+  };
+}
+
+export function getToiletPaperEvidenceDimensions(
+  product: ShoppingProduct,
+  placesToBuy: PlaceToBuy[] = [],
+) {
+  const hasReviewedPlace =
+    placesToBuy.length > 0 &&
+    placesToBuy.some((place) => place.source_review_status === "approved");
+  const hasPrice = placesToBuy.some((place) => place.price_cents !== null);
+
+  return [
+    {
+      label: "Softness/comfort claim",
+      status: "Not reviewed",
+      detail:
+        "Comfort claims are not reviewed yet. Mishava does not make medical suitability claims.",
+    },
+    {
+      label: "Fragrance/free-from claim",
+      status: "Not reviewed",
+      detail:
+        "Fragrance, dye, lotion, or similar sensitive-use claims are not reviewed unless a source-backed claim is recorded.",
+    },
+    {
+      label: "Recycled content",
+      status: product.recycled_content_claim ? "Source recorded" : "Missing",
+      detail: product.recycled_content_claim ?? "No reviewed recycled-content claim is recorded.",
+    },
+    {
+      label: "Post-consumer recycled content",
+      status: product.post_consumer_recycled_content_claim
+        ? "Source recorded"
+        : "Missing",
+      detail:
+        product.post_consumer_recycled_content_claim ??
+        "No reviewed post-consumer recycled-content claim is recorded.",
+    },
+    {
+      label: "Bamboo/tree-free/FSC claim",
+      status: product.bamboo_fsc_claim ? "Source recorded" : "Missing",
+      detail: product.bamboo_fsc_claim ?? "No reviewed bamboo, tree-free, or FSC claim is recorded.",
+    },
+    {
+      label: "Virgin fiber reliance",
+      status: product.virgin_fiber_claim ? "Source recorded" : "Not reviewed",
+      detail: product.virgin_fiber_claim ?? "Virgin-fiber reliance has not been reviewed.",
+    },
+    {
+      label: "Bleaching/process claims",
+      status: product.bleaching_process_claim ? "Source recorded" : "Not reviewed",
+      detail: product.bleaching_process_claim ?? "Bleaching/process claims have not been reviewed.",
+    },
+    {
+      label: "Packaging claims",
+      status: product.packaging_claim ? "Source recorded" : "Not reviewed",
+      detail: product.packaging_claim ?? "Packaging claims have not been reviewed.",
+    },
+    {
+      label: "Brand/manufacturer/supplier transparency",
+      status: hasSupplierEvidenceGap(product) ? "Missing" : "Reviewed",
+      detail: getSupplierTransparencyLabels(product).join(" | "),
+    },
+    {
+      label: "Retailer/source freshness",
+      status: product.source_captured_at ? "Reviewed" : "Missing",
+      detail: `${product.source_name ?? "Source"} - ${formatFreshness(product.source_captured_at)}`,
+    },
+    {
+      label: "Price/value",
+      status: hasPrice ? "Source recorded" : hasReviewedPlace ? "Not reviewed" : "Missing",
+      detail: hasPrice
+        ? "At least one reviewed place-to-buy row includes price."
+        : hasReviewedPlace
+          ? "Place-to-buy source exists, but price/value is not safely verified."
+          : "No reviewed place-to-buy source is available.",
+    },
+    {
+      label: "Third-party scorecard/reference",
+      status: product.external_evidence_reference_url
+        ? "External reference only"
+        : "Not applicable",
+      detail: product.external_evidence_reference_url
+        ? "Recorded as evidence context only. It is not copied as a Mishava Score."
+        : "No outside evidence reference is recorded.",
+    },
+  ] satisfies ToiletPaperEvidenceDimension[];
+}
+
+export function getToiletPaperPreview(product: ShoppingProduct): ToiletPaperPreview {
+  const hasEvidenceScore = hasPublishedEvidenceScore(product);
+  const scoreReady = product.mishava_evidence_review_status === "score_ready";
+
+  return {
+    evidenceLabel: hasEvidenceScore ? "Evidence Score Preview" : "Score pending",
+    valuesLabel:
+      hasEvidenceScore && scoreReady
+        ? "Your Values Match Preview"
+        : "Your Values Match Preview unavailable",
+    confidenceLabel: scoreReady
+      ? "Mishava review not finalized"
+      : "Evidence profile incomplete",
+    disclaimer:
+      "This is not medical advice. Mishava does not guarantee that a product is safe or suitable for any medical condition.",
+    summary:
+      "Mishava is showing reviewed evidence, source context, and evidence gaps. Final scores stay pending until reviewed claims, a supported scoring version, and a published score snapshot exist.",
   };
 }
 

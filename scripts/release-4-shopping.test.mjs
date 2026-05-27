@@ -256,6 +256,61 @@ test("shopping display shows pending trust context instead of invented scores", 
   assert.doesNotMatch(detail, /Evidence Score 90|Evidence Score 92|Score 88/);
 });
 
+test("Slice 8 toilet paper preview uses conservative score and match language", () => {
+  const page = read("src/app/shopping/page.tsx");
+  const categoryPage = read("src/app/shopping/categories/[slug]/page.tsx");
+  const detail = read("src/app/shopping/products/[slug]/page.tsx");
+  const shopping = read("src/lib/shopping.ts");
+
+  assert.match(page, /Evidence Score Preview/);
+  assert.match(page, /Evidence readiness/);
+  assert.match(page, /Personal match stays unavailable/);
+  assert.match(categoryPage, /This early toilet paper preview/);
+  assert.match(categoryPage, /does not show a completed public score/);
+  assert.match(categoryPage, /Complete Shopping Priorities to unlock match context/);
+  assert.match(detail, /Early toilet paper preview/);
+  assert.match(detail, /Your Values Match Preview/);
+  assert.match(detail, /Not a completed public score/);
+  assert.match(shopping, /Evidence Score Preview/);
+  assert.match(shopping, /Your Values Match Preview unavailable/);
+  assert.match(shopping, /getToiletPaperPreview/);
+  assert.doesNotMatch(page + categoryPage + detail + shopping, /Final Mishava Score|certified score|medical-safe score|best for Crohn|guaranteed non-irritating/i);
+});
+
+test("Slice 8 toilet paper preview surfaces evidence dimensions without creating scores", () => {
+  const detail = read("src/app/shopping/products/[slug]/page.tsx");
+  const shopping = read("src/lib/shopping.ts");
+
+  assert.match(shopping, /getToiletPaperEvidenceDimensions/);
+  assert.match(shopping, /Softness\/comfort claim/);
+  assert.match(shopping, /Fragrance\/free-from claim/);
+  assert.match(shopping, /Recycled content/);
+  assert.match(shopping, /Post-consumer recycled content/);
+  assert.match(shopping, /Bamboo\/tree-free\/FSC claim/);
+  assert.match(shopping, /Virgin fiber reliance/);
+  assert.match(shopping, /Bleaching\/process claims/);
+  assert.match(shopping, /Packaging claims/);
+  assert.match(shopping, /Brand\/manufacturer\/supplier transparency/);
+  assert.match(shopping, /Third-party scorecard\/reference/);
+  assert.match(shopping, /Recorded as evidence context only\. It is not copied as a Mishava Score/);
+  assert.match(detail, /Evidence dimensions/);
+  assert.match(detail, /unreviewed research tasks do not\s+become score facts/);
+  assert.match(detail, /This is not medical advice/);
+  assert.match(detail, /does not guarantee\s+that a product is safe or suitable for any medical\s+condition/);
+  assert.doesNotMatch(shopping, /research task.*score facts/i);
+});
+
+test("Slice 8 result documents preview readiness without score or medical overclaims", () => {
+  const result = read("docs/release-4-slice-8-toilet-paper-evidence-score-preview-result.md");
+
+  assert.match(result, /controlled preview ready for an evidence\/gap walkthrough/);
+  assert.match(result, /No final Mishava Scores were invented/);
+  assert.match(result, /No medical claims were added/);
+  assert.match(result, /No migration or seed process was needed/);
+  assert.match(result, /Old Supabase project was not touched/);
+  assert.doesNotMatch(result, /certified score|medical-safe score|guaranteed non-irritating|best for Crohn/i);
+});
+
 test("shopping product images use approved metadata or a non-photo fallback", () => {
   const page = read("src/app/shopping/page.tsx");
   const categoryPage = read("src/app/shopping/categories/[slug]/page.tsx");
