@@ -8,6 +8,12 @@ This slice keeps Mishava evidence-first: retailer, brand, private-label owner, m
 
 ## What Was Implemented
 
+- Confirmed the Slice 7 product/UI completion scope:
+  - Costco/Kirkland exists as an active Shopping product record and an internal research task.
+  - Cashmere and Purex exist as active Shopping product records and internal research tasks.
+  - Supplier/manufacturer transparency fields live directly on `shopping_products`, not only on research tasks.
+  - Research tasks track workflow status, source count, confidence summary, unresolved gaps, and review timing.
+  - Product detail and score-explanation UI separate retailer/source, consumer brand, private-label owner, parent company, manufacturer, supplier, confidence, source links, and evidence gaps.
 - Added supplier/manufacturer transparency fields to `shopping_products`:
   - `retailer_name`
   - `brand_display_name`
@@ -47,10 +53,14 @@ This slice keeps Mishava evidence-first: retailer, brand, private-label owner, m
   - `rejected`
 - Added supplier transparency helpers for UI and scoring explanation context.
 - Updated Shopping product cards and product detail pages to show supplier/manufacturer gaps.
+- Backfilled existing active toilet paper products conservatively:
+  - Existing active products have explicit retailer/source, consumer brand, manufacturer confidence, supplier confidence, and evidence gap notes.
+  - Target `up&up` is marked with Target as private-label owner, while manufacturer and supplier remain unverified.
+  - Unknown manufacturer/supplier values remain visible evidence gaps instead of guessed identities.
 
 ## Costco / Kirkland Handling
 
-Added one Costco/Kirkland toilet paper record:
+Added one Costco/Kirkland toilet paper record as both an actual Shopping product and an internal research task:
 
 - `Kirkland Signature Bath Tissue - 2-Ply - 380 Sheets - 30 Rolls`
 - Retailer: Costco
@@ -67,7 +77,7 @@ Seeded an internal research task for the Kirkland record with status `evidence_g
 
 ## Kruger Products Handling
 
-Added two Kruger Products brand records:
+Added two Kruger Products brand records as actual Shopping products and internal research tasks:
 
 - `Cashmere Bathroom Tissue`
 - `Purex Bathroom Tissue`
@@ -111,6 +121,12 @@ Migration status:
 - Costco/Kirkland supplier identity remains unknown unless a stronger public source is reviewed later.
 - Kruger Products records do not yet include full product-level sourcing, recycled content, bleaching/process, packaging, or supplier details.
 - No autonomous research crawler, AI scoring, or full supplier database was added.
+
+## Controlled Preview Readiness
+
+Supplier transparency product/UI completion is now in place for the toilet paper POC. The category can be used for an internal stakeholder demo of Mishava's evidence-first research model, including the Costco/Kirkland and Kruger/Cashmere/Purex transparency cases.
+
+Toilet paper is not yet ready for a scored controlled consumer preview. The honest state is `Score pending` / `Evidence profile pending` / `External evidence available` where applicable because product-level tissue sourcing, fiber, bleaching/process, packaging, and supplier evidence still need deeper review before Mishava can present final scores or conclusions.
 
 ## Remaining Shopping Work
 

@@ -220,6 +220,20 @@ test("Slice 7 research task model tracks reusable Shopping research workflow sta
   assert.doesNotMatch(migration, /create table .*crawler|create table .*scrap|create table .*score/i);
 });
 
+test("Slice 7 result doc confirms product coverage and preview readiness honestly", () => {
+  const result = read("docs/release-4-slice-7-shopping-research-pipeline-supplier-transparency-result.md");
+
+  assert.match(result, /Costco\/Kirkland exists as an active Shopping product record and an internal research task/);
+  assert.match(result, /Cashmere and Purex exist as active Shopping product records and internal research tasks/);
+  assert.match(result, /fields live directly on `shopping_products`, not only on research tasks/);
+  assert.match(result, /Product detail and score-explanation UI separate retailer\/source, consumer brand, private-label owner, parent company, manufacturer, supplier/);
+  assert.match(result, /Unknown manufacturer\/supplier values remain visible evidence gaps instead of guessed identities/);
+  assert.match(result, /not yet ready for a scored controlled consumer preview/);
+  assert.match(result, /Score pending/);
+  assert.match(result, /Evidence profile pending/);
+  assert.doesNotMatch(result, /controlled-preview-ready/i);
+});
+
 test("shopping display shows pending trust context instead of invented scores", () => {
   const page = read("src/app/shopping/page.tsx");
   const detail = read("src/app/shopping/products/[slug]/page.tsx");
