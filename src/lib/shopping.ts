@@ -41,6 +41,20 @@ export type ShoppingProduct = {
   brand_sourcing_policy_url: string | null;
   external_evidence_reference_url: string | null;
   external_evidence_reference_notes: string | null;
+  retailer_name: string | null;
+  brand_display_name: string | null;
+  private_label_owner: string | null;
+  parent_company: string | null;
+  manufacturer_name: string | null;
+  supplier_name: string | null;
+  supplier_role: string | null;
+  supplier_region: string | null;
+  manufacturer_source_url: string | null;
+  supplier_source_url: string | null;
+  manufacturer_confidence: SupplierConfidence;
+  supplier_confidence: SupplierConfidence;
+  evidence_gap_notes: string | null;
+  supplier_reviewed_at: string | null;
   mishava_evidence_review_status:
     | "not_started"
     | "external_evidence_available"
@@ -65,6 +79,23 @@ export type ShoppingProduct = {
     | "local_store_submission"
     | "business_catalog";
   active: boolean;
+};
+
+export type SupplierConfidence = "verified" | "likely" | "unverified" | "unknown";
+
+export type ShoppingResearchQuestion = {
+  key: string;
+  label: string;
+  sourcePriority: "primary" | "secondary";
+};
+
+export type ShoppingCategoryResearchTemplate = {
+  categoryKey: string;
+  requiredIdentityFields: string[];
+  requiredSupplierFields: string[];
+  claimAreas: ShoppingResearchQuestion[];
+  sourceTypes: string[];
+  scoreReadinessPrerequisites: string[];
 };
 
 export type PlaceToBuy = {
@@ -135,7 +166,87 @@ export const shoppingPriorityVersionCode = "Shopping_Priorities_V2.01_2026.05.24
 export const shoppingPriorityConsentVersion = "Shopping_Priorities_Privacy_V1_2026.05.24";
 
 const shoppingProductColumns =
-  "id,slug,name,brand_name,category,product_subcategory,product_summary,package_details,product_url,image_url,image_alt_text,image_source_url,image_source_type,image_review_status,image_last_reviewed_at,image_rights_notes,recycled_content_claim,post_consumer_recycled_content_claim,bamboo_fsc_claim,virgin_fiber_claim,bleaching_process_claim,packaging_claim,brand_sourcing_policy_url,external_evidence_reference_url,external_evidence_reference_notes,mishava_evidence_review_status,evidence_score,score_label,evidence_coverage,evidence_recency,verification_confidence,score_snapshot_id,score_published_at,source_name,source_url,source_captured_at,source_review_status,data_origin,active";
+  "id,slug,name,brand_name,category,product_subcategory,product_summary,package_details,product_url,image_url,image_alt_text,image_source_url,image_source_type,image_review_status,image_last_reviewed_at,image_rights_notes,recycled_content_claim,post_consumer_recycled_content_claim,bamboo_fsc_claim,virgin_fiber_claim,bleaching_process_claim,packaging_claim,brand_sourcing_policy_url,external_evidence_reference_url,external_evidence_reference_notes,retailer_name,brand_display_name,private_label_owner,parent_company,manufacturer_name,supplier_name,supplier_role,supplier_region,manufacturer_source_url,supplier_source_url,manufacturer_confidence,supplier_confidence,evidence_gap_notes,supplier_reviewed_at,mishava_evidence_review_status,evidence_score,score_label,evidence_coverage,evidence_recency,verification_confidence,score_snapshot_id,score_published_at,source_name,source_url,source_captured_at,source_review_status,data_origin,active";
+
+export const shoppingCategoryResearchTemplates: Record<
+  string,
+  ShoppingCategoryResearchTemplate
+> = {
+  "toilet-paper": {
+    categoryKey: "toilet-paper",
+    requiredIdentityFields: [
+      "product name",
+      "consumer-facing brand",
+      "retailer",
+      "private-label owner when applicable",
+    ],
+    requiredSupplierFields: [
+      "manufacturer",
+      "supplier",
+      "supplier role",
+      "manufacturer confidence",
+      "supplier confidence",
+    ],
+    claimAreas: [
+      {
+        key: "recycled_content",
+        label: "Recycled content percentage",
+        sourcePriority: "primary",
+      },
+      {
+        key: "post_consumer_recycled_content",
+        label: "Post-consumer recycled content",
+        sourcePriority: "primary",
+      },
+      {
+        key: "bamboo_fsc",
+        label: "Bamboo/FSC certification",
+        sourcePriority: "primary",
+      },
+      {
+        key: "virgin_fiber",
+        label: "Virgin forest fiber reliance",
+        sourcePriority: "secondary",
+      },
+      {
+        key: "bleaching_process",
+        label: "Bleaching/process claims",
+        sourcePriority: "primary",
+      },
+      {
+        key: "packaging",
+        label: "Packaging claims",
+        sourcePriority: "primary",
+      },
+      {
+        key: "sourcing_policy",
+        label: "Company/brand sourcing policy",
+        sourcePriority: "primary",
+      },
+      {
+        key: "third_party_references",
+        label: "Third-party tissue scorecards as evidence references only",
+        sourcePriority: "secondary",
+      },
+    ],
+    sourceTypes: [
+      "brand/manufacturer official website",
+      "retailer product page",
+      "product packaging/label",
+      "sustainability or sourcing report",
+      "certification database",
+      "third-party scorecard as evidence reference",
+    ],
+    scoreReadinessPrerequisites: [
+      "reviewed product identity",
+      "explicit manufacturer/supplier confidence",
+      "reviewed tissue sourcing claims",
+      "accepted structured claims",
+      "supported scoring version",
+      "published score snapshot",
+    ],
+  },
+};
 
 export async function getShoppingProducts({
   query,
@@ -167,6 +278,14 @@ export async function getShoppingProducts({
   const products = normalizedQuery
     ? categoryProducts.filter((product) =>
         [product.name, product.brand_name, product.category, product.product_subcategory]
+          .concat([
+            product.retailer_name,
+            product.brand_display_name,
+            product.private_label_owner,
+            product.parent_company,
+            product.manufacturer_name,
+            product.supplier_name,
+          ])
           .filter(Boolean)
           .some((value) => value?.toLowerCase().includes(normalizedQuery)),
       )
@@ -323,6 +442,12 @@ export function buildShoppingScoreExplanation({
     missing.push("toilet paper scoring version");
     missing.push("Mishava-reviewed tissue sourcing claims");
   }
+  if (isLowConfidence(product.manufacturer_confidence)) {
+    missing.push("verified manufacturer source");
+  }
+  if (isLowConfidence(product.supplier_confidence)) {
+    missing.push("verified supplier source");
+  }
 
   return {
     label: hasEvidenceScore
@@ -364,6 +489,7 @@ export function buildShoppingScoreExplanation({
       product.source_review_status
         ? `Source review status: ${product.source_review_status}`
         : null,
+      ...getSupplierTransparencyLabels(product),
       ...evidenceReadiness,
     ].filter((item): item is string => Boolean(item)),
     missing,
@@ -376,6 +502,39 @@ export function buildShoppingScoreExplanation({
         : "A public score needs reviewed evidence, accepted scoring facts, a scoring version, and a published score snapshot.",
     valuesMessage,
   };
+}
+
+export function getShoppingCategoryResearchTemplate(category: string) {
+  return shoppingCategoryResearchTemplates[category] ?? null;
+}
+
+export function getSupplierTransparencyLabels(product: ShoppingProduct) {
+  const labels = [
+    product.retailer_name ? `Retailer/source: ${product.retailer_name}` : null,
+    product.brand_display_name ? `Consumer brand: ${product.brand_display_name}` : null,
+    product.private_label_owner
+      ? `Private-label owner: ${product.private_label_owner}`
+      : null,
+    product.parent_company ? `Parent company: ${product.parent_company}` : null,
+    product.manufacturer_name
+      ? `Manufacturer: ${product.manufacturer_name} (${product.manufacturer_confidence})`
+      : `Manufacturer not verified (${product.manufacturer_confidence})`,
+    product.supplier_name
+      ? `Supplier: ${product.supplier_name} (${product.supplier_confidence})`
+      : `Supplier not verified (${product.supplier_confidence})`,
+    product.supplier_role ? `Supplier role: ${product.supplier_role}` : null,
+    product.supplier_region ? `Supplier region: ${product.supplier_region}` : null,
+    product.evidence_gap_notes ? `Evidence gap: ${product.evidence_gap_notes}` : null,
+  ];
+
+  return labels.filter((item): item is string => Boolean(item));
+}
+
+export function hasSupplierEvidenceGap(product: ShoppingProduct) {
+  return (
+    isLowConfidence(product.manufacturer_confidence) ||
+    isLowConfidence(product.supplier_confidence)
+  );
 }
 
 export function getEvidenceReadinessLabels(product: ShoppingProduct) {
@@ -407,6 +566,10 @@ export function getEvidenceReadinessLabels(product: ShoppingProduct) {
       ? "Mishava review not finalized"
       : null,
   ].filter((item): item is string => Boolean(item));
+}
+
+function isLowConfidence(value: SupplierConfidence) {
+  return value === "unknown" || value === "unverified";
 }
 
 export function getYourValuesScoreState({

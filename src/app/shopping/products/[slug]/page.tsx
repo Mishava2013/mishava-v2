@@ -10,7 +10,10 @@ import {
   formatPrice,
   getEvidenceReadinessLabels,
   getProductTrustLabel,
+  getShoppingCategoryResearchTemplate,
   getShoppingProductBySlug,
+  getSupplierTransparencyLabels,
+  hasSupplierEvidenceGap,
   hasPublishedEvidenceScore,
 } from "@/lib/shopping";
 
@@ -23,6 +26,9 @@ export default async function ProductPage({
   const { product, placesToBuy, configured } = await getShoppingProductBySlug(slug);
   const explanation = product ? buildShoppingScoreExplanation({ product }) : null;
   const evidenceReadiness = product ? getEvidenceReadinessLabels(product) : [];
+  const supplierTransparency = product ? getSupplierTransparencyLabels(product) : [];
+  const researchTemplate =
+    product?.product_subcategory ? getShoppingCategoryResearchTemplate(product.product_subcategory) : null;
   const isToiletPaper = product?.product_subcategory === "toilet-paper";
 
   return (
@@ -58,6 +64,11 @@ export default async function ProductPage({
                   {isToiletPaper ? (
                     <span className="tag tag-source">External evidence available</span>
                   ) : null}
+                  {product && hasSupplierEvidenceGap(product) ? (
+                    <span className="tag tag-source">
+                      Supplier/manufacturer evidence gap
+                    </span>
+                  ) : null}
                   <span className="tag tag-commerce">No paid ranking</span>
                 </div>
               </div>
@@ -74,6 +85,14 @@ export default async function ProductPage({
               <div className="metric">
                 <span>Source</span>
                 <strong>{product.source_name ?? "Not listed"}</strong>
+              </div>
+              <div className="metric">
+                <span>Manufacturer</span>
+                <strong>{product.manufacturer_confidence}</strong>
+              </div>
+              <div className="metric">
+                <span>Supplier</span>
+                <strong>{product.supplier_confidence}</strong>
               </div>
               <div className="metric">
                 <span>Freshness</span>
@@ -118,19 +137,54 @@ export default async function ProductPage({
               {isToiletPaper ? (
                 <div className="surface-list compact">
                   <div>
-                    <h4>Toilet paper evidence readiness</h4>
+                    <h4>Toilet paper research readiness</h4>
                     <p>
                       Recycled content, bamboo/FSC, virgin-fiber reliance,
                       bleaching/process, packaging, and sourcing-policy claims
-                      are tracked as evidence context. Outside scorecards may be
-                      evidence references, but they are not Mishava Scores.
+                      are tracked as evidence context. Retailer, brand,
+                      private-label owner, manufacturer, and supplier are kept
+                      separate. Outside scorecards may be evidence references,
+                      but they are not Mishava Scores.
                     </p>
+                    {researchTemplate ? (
+                      <p>
+                        Required before a public tissue score:{" "}
+                        {researchTemplate.scoreReadinessPrerequisites.join(", ")}.
+                      </p>
+                    ) : null}
                     <div className="status-row">
                       {evidenceReadiness.map((label) => (
                         <span className="tag tag-source" key={label}>
                           {label}
                         </span>
                       ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4>Supplier and manufacturer transparency</h4>
+                    <p>
+                      Mishava shows unknowns as evidence gaps. A retailer or
+                      private-label owner is not treated as the manufacturer
+                      unless a reviewed source supports that link.
+                    </p>
+                    <div className="status-row">
+                      {supplierTransparency.map((label) => (
+                        <span className="tag tag-source" key={label}>
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="surface-list compact">
+                      {product.manufacturer_source_url ? (
+                        <Link href={product.manufacturer_source_url}>
+                          Open manufacturer source
+                        </Link>
+                      ) : null}
+                      {product.supplier_source_url ? (
+                        <Link href={product.supplier_source_url}>
+                          Open supplier source
+                        </Link>
+                      ) : null}
                     </div>
                   </div>
                   {product.external_evidence_reference_url ? (

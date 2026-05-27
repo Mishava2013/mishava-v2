@@ -8,6 +8,8 @@ import {
   getEvidenceReadinessLabels,
   getProductTrustLabel,
   getShoppingProducts,
+  getSupplierTransparencyLabels,
+  hasSupplierEvidenceGap,
 } from "@/lib/shopping";
 
 const departmentLinks = [
@@ -170,6 +172,7 @@ export default async function ShoppingPage({
             {products.map((product) => {
               const explanation = buildShoppingScoreExplanation({ product });
               const readinessLabels = getEvidenceReadinessLabels(product);
+              const supplierLabels = getSupplierTransparencyLabels(product);
 
               return (
                 <article className="product-card" key={product.id}>
@@ -216,6 +219,17 @@ export default async function ShoppingPage({
                           {label}
                         </span>
                       ))}
+                      {hasSupplierEvidenceGap(product) ? (
+                        <span className="tag tag-source">
+                          Manufacturer/supplier gap
+                        </span>
+                      ) : (
+                        supplierLabels.slice(4, 5).map((label) => (
+                          <span className="tag tag-source" key={label}>
+                            {label}
+                          </span>
+                        ))
+                      )}
                       <span className="tag tag-commerce">No commission</span>
                     </div>
                   </div>

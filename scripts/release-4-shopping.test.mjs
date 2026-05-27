@@ -126,6 +126,72 @@ test("Slice 6 seeds a narrow reviewed toilet paper data set with score guardrail
   assert.doesNotMatch(migration, /Evidence Score 90|Evidence Score 92|Score 88/);
 });
 
+test("Slice 7 adds reusable supplier transparency fields and confidence guardrails", () => {
+  const migration = read("supabase/migrations/202605260008_release_4_slice_7_shopping_research_pipeline_supplier_transparency.sql");
+
+  assert.match(migration, /retailer_name/);
+  assert.match(migration, /brand_display_name/);
+  assert.match(migration, /private_label_owner/);
+  assert.match(migration, /parent_company/);
+  assert.match(migration, /manufacturer_name/);
+  assert.match(migration, /supplier_name/);
+  assert.match(migration, /manufacturer_source_url/);
+  assert.match(migration, /supplier_source_url/);
+  assert.match(migration, /manufacturer_confidence/);
+  assert.match(migration, /supplier_confidence/);
+  assert.match(migration, /shopping_products_verified_manufacturer_requires_source/);
+  assert.match(migration, /shopping_products_verified_supplier_requires_source/);
+  assert.match(migration, /shopping_products_active_requires_supplier_context/);
+  assert.match(migration, /shopping_products_toilet_paper_score_ready_requires_supplier_context/);
+});
+
+test("Slice 7 handles Costco/Kirkland without guessing manufacturer or supplier", () => {
+  const migration = read("supabase/migrations/202605260008_release_4_slice_7_shopping_research_pipeline_supplier_transparency.sql");
+
+  assert.match(migration, /Kirkland Signature Bath Tissue/);
+  assert.match(migration, /Costco private-label toilet paper record/);
+  assert.match(migration, /'Costco',\n    'Kirkland Signature',\n    'Costco'/);
+  assert.match(migration, /Manufacturer and supplier are not publicly verified/);
+  assert.match(migration, /Supplier may vary by region or time/);
+  assert.match(migration, /'unknown',\n    'unknown'/);
+  assert.doesNotMatch(migration, /Costco manufactures/i);
+  assert.doesNotMatch(migration, /Costco is the manufacturer/i);
+});
+
+test("Slice 7 adds Kruger Products coverage without confusing Kruger with Kroger", () => {
+  const migration = read("supabase/migrations/202605260008_release_4_slice_7_shopping_research_pipeline_supplier_transparency.sql");
+
+  assert.match(migration, /Cashmere Bathroom Tissue/);
+  assert.match(migration, /Purex Bathroom Tissue/);
+  assert.match(migration, /Kruger Products/);
+  assert.match(migration, /manufacturer and brand owner/);
+  assert.match(migration, /Product-level fiber sourcing, recycled content, bleaching\/process, packaging, and supplier details remain evidence gaps/);
+  assert.match(migration, /has not copied any outside score as a Mishava Score/i);
+  assert.doesNotMatch(migration, /Kroger/);
+});
+
+test("shopping supplier transparency helpers expose unknowns as evidence gaps", () => {
+  const shopping = read("src/lib/shopping.ts");
+  const detail = read("src/app/shopping/products/[slug]/page.tsx");
+  const page = read("src/app/shopping/page.tsx");
+  const categoryPage = read("src/app/shopping/categories/[slug]/page.tsx");
+
+  assert.match(shopping, /shoppingCategoryResearchTemplates/);
+  assert.match(shopping, /requiredSupplierFields/);
+  assert.match(shopping, /manufacturer confidence/);
+  assert.match(shopping, /supplier confidence/);
+  assert.match(shopping, /getSupplierTransparencyLabels/);
+  assert.match(shopping, /Manufacturer not verified/);
+  assert.match(shopping, /Supplier not verified/);
+  assert.match(shopping, /hasSupplierEvidenceGap/);
+  assert.match(shopping, /verified manufacturer source/);
+  assert.match(shopping, /verified supplier source/);
+  assert.match(detail, /Supplier and manufacturer transparency/);
+  assert.match(detail, /retailer or\s+private-label owner is not treated as the manufacturer/);
+  assert.match(page, /Manufacturer\/supplier gap/);
+  assert.match(categoryPage, /Manufacturer\/supplier gap/);
+});
+
 test("shopping display shows pending trust context instead of invented scores", () => {
   const page = read("src/app/shopping/page.tsx");
   const detail = read("src/app/shopping/products/[slug]/page.tsx");
@@ -137,7 +203,7 @@ test("shopping display shows pending trust context instead of invented scores", 
   assert.match(page, /Evidence profile pending/);
   assert.match(detail, /Evidence profile pending/);
   assert.match(detail, /No public score appears/);
-  assert.match(detail, /Outside scorecards may be\s+evidence references, but they are not Mishava Scores/);
+  assert.match(detail, /Outside scorecards may be\s+evidence references,\s+but they are not Mishava Scores/);
   assert.match(shopping, /return "Score pending"/);
   assert.match(shopping, /return "Draft trust context"/);
   assert.match(shopping, /return "Evidence profile pending"/);

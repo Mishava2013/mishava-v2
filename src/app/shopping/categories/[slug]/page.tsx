@@ -9,6 +9,8 @@ import {
   getEvidenceReadinessLabels,
   getProductTrustLabel,
   getShoppingProducts,
+  getSupplierTransparencyLabels,
+  hasSupplierEvidenceGap,
 } from "@/lib/shopping";
 
 export default async function CategoryPage({
@@ -59,6 +61,7 @@ export default async function CategoryPage({
             {products.map((product) => {
               const explanation = buildShoppingScoreExplanation({ product });
               const readinessLabels = getEvidenceReadinessLabels(product);
+              const supplierLabels = getSupplierTransparencyLabels(product);
 
               return (
                 <article className="product-card" key={product.id}>
@@ -98,6 +101,17 @@ export default async function CategoryPage({
                           {status}
                         </span>
                       ))}
+                      {isToiletPaper && hasSupplierEvidenceGap(product) ? (
+                        <span className="tag tag-source">
+                          Manufacturer/supplier gap
+                        </span>
+                      ) : isToiletPaper ? (
+                        supplierLabels.slice(4, 5).map((label) => (
+                          <span className="tag tag-source" key={label}>
+                            {label}
+                          </span>
+                        ))
+                      ) : null}
                       <span className="tag tag-commerce">No paid ranking</span>
                     </div>
                   </div>
