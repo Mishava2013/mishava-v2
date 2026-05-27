@@ -35,6 +35,16 @@ This slice keeps Mishava evidence-first: retailer, brand, private-label owner, m
   - active products must carry explicit supplier/manufacturer context
   - toilet paper cannot become `score_ready` without supplier/manufacturer context
 - Added a reusable toilet paper research template in `src/lib/shopping.ts`.
+- Added source hierarchy and research readiness helpers in `src/lib/shopping.ts`.
+- Added a lightweight internal `shopping_research_tasks` model with statuses:
+  - `research_needed`
+  - `source_found`
+  - `claim_drafted`
+  - `human_review_needed`
+  - `reviewed`
+  - `evidence_gap`
+  - `stale`
+  - `rejected`
 - Added supplier transparency helpers for UI and scoring explanation context.
 - Updated Shopping product cards and product detail pages to show supplier/manufacturer gaps.
 
@@ -53,6 +63,8 @@ Added one Costco/Kirkland toilet paper record:
 
 Mishava does not treat Costco as the manufacturer or supplier without evidence.
 
+Seeded an internal research task for the Kirkland record with status `evidence_gap`, two reviewed sources, and unresolved manufacturer/supplier gaps.
+
 ## Kruger Products Handling
 
 Added two Kruger Products brand records:
@@ -67,26 +79,29 @@ For these records:
 - Supplier details remain unknown.
 - Fiber sourcing, recycled content, bleaching/process, packaging, and supplier details remain evidence gaps.
 - No Kruger score or outside score was copied as a Mishava Score.
+- Seeded internal research tasks for Cashmere and Purex with status `evidence_gap`, verified Kruger manufacturer/brand-owner context, and unresolved product-level sourcing/supplier gaps.
 
 ## Migration
 
 Added migration:
 
 - `supabase/migrations/202605260008_release_4_slice_7_shopping_research_pipeline_supplier_transparency.sql`
+- `supabase/migrations/202605260009_release_4_slice_7_shopping_research_tasks.sql`
 
 Migration status:
 
-- Applied to clean V2 Supabase project `mishava-v2-dev / snnscnodegbyqexnopvf`.
-- `supabase migration list --linked` shows local and remote aligned through `202605260008`.
+- Applied to clean V2 Supabase project `mishava-v2-dev / snnscnodegbyqexnopvf` through `202605260009`.
+- `supabase migration list --linked` shows local and remote aligned through `202605260009`.
 - Old Supabase project was not touched.
 
 ## Tests Run
 
 - `npm run typecheck` - passed.
 - `npm run lint` - passed.
-- `npm test` - passed, 145/145.
+- `npm test` - passed, 146/146.
 - `npm run build` - passed.
 - `supabase db push --linked` - applied `202605260008` after moving the active-product context constraint after the data backfill.
+- `supabase db push --linked` - applied `202605260009` for the lightweight research task/status model.
 - `supabase migration list --linked` - aligned.
 
 ## Known Limitations

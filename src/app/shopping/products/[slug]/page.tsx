@@ -12,6 +12,7 @@ import {
   getProductTrustLabel,
   getShoppingCategoryResearchTemplate,
   getShoppingProductBySlug,
+  getShoppingResearchReadiness,
   getSupplierTransparencyLabels,
   hasSupplierEvidenceGap,
   hasPublishedEvidenceScore,
@@ -27,6 +28,7 @@ export default async function ProductPage({
   const explanation = product ? buildShoppingScoreExplanation({ product }) : null;
   const evidenceReadiness = product ? getEvidenceReadinessLabels(product) : [];
   const supplierTransparency = product ? getSupplierTransparencyLabels(product) : [];
+  const researchReadiness = product ? getShoppingResearchReadiness(product) : null;
   const researchTemplate =
     product?.product_subcategory ? getShoppingCategoryResearchTemplate(product.product_subcategory) : null;
   const isToiletPaper = product?.product_subcategory === "toilet-paper";
@@ -150,6 +152,12 @@ export default async function ProductPage({
                       <p>
                         Required before a public tissue score:{" "}
                         {researchTemplate.scoreReadinessPrerequisites.join(", ")}.
+                      </p>
+                    ) : null}
+                    {researchReadiness?.missing.length ? (
+                      <p>
+                        Current research task status: evidence gap. Missing:{" "}
+                        {researchReadiness.missing.join(", ")}.
                       </p>
                     ) : null}
                     <div className="status-row">

@@ -89,6 +89,32 @@ export type ShoppingResearchQuestion = {
   sourcePriority: "primary" | "secondary";
 };
 
+export type ShoppingResearchTaskStatus =
+  | "research_needed"
+  | "source_found"
+  | "claim_drafted"
+  | "human_review_needed"
+  | "reviewed"
+  | "evidence_gap"
+  | "stale"
+  | "rejected";
+
+export type ShoppingResearchTask = {
+  id: string;
+  product_id: string;
+  category_key: string;
+  status: ShoppingResearchTaskStatus;
+  assigned_to: string | null;
+  last_reviewed_at: string | null;
+  next_review_due_at: string | null;
+  source_count: number;
+  unresolved_gap_count: number;
+  confidence_summary: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ShoppingCategoryResearchTemplate = {
   categoryKey: string;
   requiredIdentityFields: string[];
@@ -167,6 +193,34 @@ export const shoppingPriorityConsentVersion = "Shopping_Priorities_Privacy_V1_20
 
 const shoppingProductColumns =
   "id,slug,name,brand_name,category,product_subcategory,product_summary,package_details,product_url,image_url,image_alt_text,image_source_url,image_source_type,image_review_status,image_last_reviewed_at,image_rights_notes,recycled_content_claim,post_consumer_recycled_content_claim,bamboo_fsc_claim,virgin_fiber_claim,bleaching_process_claim,packaging_claim,brand_sourcing_policy_url,external_evidence_reference_url,external_evidence_reference_notes,retailer_name,brand_display_name,private_label_owner,parent_company,manufacturer_name,supplier_name,supplier_role,supplier_region,manufacturer_source_url,supplier_source_url,manufacturer_confidence,supplier_confidence,evidence_gap_notes,supplier_reviewed_at,mishava_evidence_review_status,evidence_score,score_label,evidence_coverage,evidence_recency,verification_confidence,score_snapshot_id,score_published_at,source_name,source_url,source_captured_at,source_review_status,data_origin,active";
+
+export const shoppingResearchTaskStatuses: ShoppingResearchTaskStatus[] = [
+  "research_needed",
+  "source_found",
+  "claim_drafted",
+  "human_review_needed",
+  "reviewed",
+  "evidence_gap",
+  "stale",
+  "rejected",
+];
+
+export const shoppingSourceHierarchy = {
+  primary: [
+    "brand/manufacturer official website",
+    "product packaging or label",
+    "retailer product page",
+    "sustainability, sourcing, or impact report",
+    "certification or certifier database",
+    "government or regulatory source",
+  ],
+  secondary: [
+    "third-party scorecard",
+    "NGO report",
+    "credible journalism",
+    "academic or industry report",
+  ],
+} as const;
 
 export const shoppingCategoryResearchTemplates: Record<
   string,
@@ -506,6 +560,43 @@ export function buildShoppingScoreExplanation({
 
 export function getShoppingCategoryResearchTemplate(category: string) {
   return shoppingCategoryResearchTemplates[category] ?? null;
+}
+
+export function getShoppingResearchReadiness(product: ShoppingProduct) {
+  const template = product.product_subcategory
+    ? getShoppingCategoryResearchTemplate(product.product_subcategory)
+    : null;
+  const missing = [
+    !product.retailer_name ? "retailer/source identity" : null,
+    !product.brand_display_name ? "consumer-facing brand" : null,
+    isLowConfidence(product.manufacturer_confidence)
+      ? "verified or likely manufacturer evidence"
+      : null,
+    isLowConfidence(product.supplier_confidence)
+      ? "verified or likely supplier evidence"
+      : null,
+    product.product_subcategory === "toilet-paper" && !product.virgin_fiber_claim
+      ? "virgin forest fiber review"
+      : null,
+    product.product_subcategory === "toilet-paper" && !product.bleaching_process_claim
+      ? "bleaching/process review"
+      : null,
+    product.product_subcategory === "toilet-paper" && !product.packaging_claim
+      ? "packaging review"
+      : null,
+  ].filter((item): item is string => Boolean(item));
+
+  return {
+    template,
+    status: missing.length === 0 ? "human_review_needed" : "evidence_gap",
+    missing,
+    sourceHierarchy: shoppingSourceHierarchy,
+  } satisfies {
+    template: ShoppingCategoryResearchTemplate | null;
+    status: Extract<ShoppingResearchTaskStatus, "human_review_needed" | "evidence_gap">;
+    missing: string[];
+    sourceHierarchy: typeof shoppingSourceHierarchy;
+  };
 }
 
 export function getSupplierTransparencyLabels(product: ShoppingProduct) {

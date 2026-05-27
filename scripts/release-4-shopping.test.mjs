@@ -192,6 +192,34 @@ test("shopping supplier transparency helpers expose unknowns as evidence gaps", 
   assert.match(categoryPage, /Manufacturer\/supplier gap/);
 });
 
+test("Slice 7 research task model tracks reusable Shopping research workflow status", () => {
+  const migration = read("supabase/migrations/202605260009_release_4_slice_7_shopping_research_tasks.sql");
+  const shopping = read("src/lib/shopping.ts");
+  const detail = read("src/app/shopping/products/[slug]/page.tsx");
+
+  assert.match(migration, /create table if not exists public\.shopping_research_tasks/);
+  assert.match(migration, /research_needed/);
+  assert.match(migration, /source_found/);
+  assert.match(migration, /claim_drafted/);
+  assert.match(migration, /human_review_needed/);
+  assert.match(migration, /reviewed/);
+  assert.match(migration, /evidence_gap/);
+  assert.match(migration, /stale/);
+  assert.match(migration, /rejected/);
+  assert.match(migration, /source_count integer not null default 0/);
+  assert.match(migration, /unresolved_gap_count integer not null default 0/);
+  assert.match(migration, /confidence_summary/);
+  assert.match(migration, /Service role can manage shopping research tasks/);
+  assert.match(migration, /Costco and Kirkland Signature identity reviewed; manufacturer and supplier remain unknown/);
+  assert.match(migration, /Cashmere consumer brand and Kruger Products manufacturer\/brand-owner relationship reviewed/);
+  assert.match(migration, /Purex consumer brand and Kruger Products manufacturer\/brand-owner relationship reviewed/);
+  assert.match(shopping, /shoppingResearchTaskStatuses/);
+  assert.match(shopping, /shoppingSourceHierarchy/);
+  assert.match(shopping, /getShoppingResearchReadiness/);
+  assert.match(detail, /Current research task status: evidence gap/);
+  assert.doesNotMatch(migration, /create table .*crawler|create table .*scrap|create table .*score/i);
+});
+
 test("shopping display shows pending trust context instead of invented scores", () => {
   const page = read("src/app/shopping/page.tsx");
   const detail = read("src/app/shopping/products/[slug]/page.tsx");
