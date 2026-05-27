@@ -80,7 +80,7 @@ export default async function ShoppingPage({
           <p>
             The proof of concept starts with baby diapers, wipes, and toilet
             paper records from real reviewed source metadata only. Payment
-            never changes placement.
+            never changes placement, and Mishava is not the store.
           </p>
         </div>
         <div className="storefront-promise">
@@ -125,7 +125,10 @@ export default async function ShoppingPage({
 
           <div className="filter-note">
             <strong>No paid ranking</strong>
-            <span>Tools, hosting, and catalogs can be paid. Placement cannot.</span>
+            <span>
+              Tools, hosting, and catalogs can be paid. Placement cannot, and
+              Mishava is not the store.
+            </span>
           </div>
         </aside>
 
