@@ -613,6 +613,109 @@ textarea {
   padding: 16px;
 }
 
+.ngo-signin-page {
+  display: grid;
+  gap: 28px;
+}
+
+.ngo-signin-hero {
+  align-items: start;
+  display: grid;
+  gap: 28px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 420px);
+}
+
+.ngo-signin-hero h1 {
+  font-size: clamp(36px, 5vw, 54px);
+  line-height: 1.04;
+  margin-top: 12px;
+}
+
+.ngo-signin-hero p {
+  color: var(--secondary-text);
+  font-size: 18px;
+  line-height: 1.6;
+  margin-top: 18px;
+}
+
+.ngo-workspace-preview {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ngo-workspace-preview h2 {
+  font-size: 22px;
+  line-height: 1.25;
+  margin: 10px 0 14px;
+}
+
+.workspace-item-grid {
+  border-top: 1px solid var(--light-border);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
+.workspace-item-grid span {
+  border-bottom: 1px solid var(--light-border);
+  color: var(--mishava-ink);
+  font-weight: 750;
+  padding: 14px 4px;
+}
+
+.workspace-stat-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  margin-top: 18px;
+}
+
+.workspace-stat {
+  background: var(--paper);
+  border: 1px solid var(--light-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.workspace-stat strong {
+  color: var(--brand-navy);
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.workspace-stat span {
+  color: var(--secondary-text);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.step-card {
+  display: grid;
+  gap: 10px;
+}
+
+.step-card h3 {
+  margin-bottom: 0;
+}
+
+.step-number {
+  align-items: center;
+  background: var(--paper);
+  border: 1px solid var(--light-border);
+  border-radius: 6px;
+  color: var(--brand-navy);
+  display: inline-flex;
+  font-weight: 800;
+  height: 28px;
+  justify-content: center;
+  width: 36px;
+}
+
 .page-title {
   max-width: 880px;
   padding: 20px 0 36px;
@@ -1346,6 +1449,8 @@ textarea {
   .product-grid,
   .surface-list,
   .form-grid,
+  .ngo-signin-hero,
+  .ngo-workspace-preview,
   .product-detail-hero,
   .shopping-layout,
   .shopping-masthead {
@@ -1383,6 +1488,10 @@ textarea {
   }
 
   .score-explanation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-item-grid {
     grid-template-columns: 1fr;
   }
 
