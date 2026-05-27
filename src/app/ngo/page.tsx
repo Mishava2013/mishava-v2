@@ -2,74 +2,194 @@ import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { ngoTiers } from "@/lib/ngo";
 
+const valueCards = [
+  {
+    title: "Stop rebuilding the same funder packet",
+    body: "Keep reports, source notes, outcomes, and supporting evidence connected so each new request starts from organized work.",
+  },
+  {
+    title: "Keep evidence organized and reviewable",
+    body: "Track documents, claims, links, and report context in one workspace instead of scattered folders and last-minute searches.",
+  },
+  {
+    title: "Show what is verified, pending, and missing",
+    body: "Make the state of evidence clear before a report is shared, including gaps that still need review or stronger support.",
+  },
+  {
+    title: "Share limited reports without opening your workspace",
+    body: "Give funders, donors, and partners scoped report access while raw files and unrelated organization data stay private by default.",
+  },
+];
+
+const workflowSteps = [
+  {
+    step: "1",
+    title: "Create your NGO profile",
+    body: "Start with the organization details funders and partners need to understand who you are.",
+  },
+  {
+    step: "2",
+    title: "Add evidence and documents",
+    body: "Attach source links, files, notes, and context so claims can be reviewed instead of simply asserted.",
+  },
+  {
+    step: "3",
+    title: "Build a report from reviewed evidence",
+    body: "Turn selected evidence and accepted facts into a clearer report preview with limitations visible.",
+  },
+  {
+    step: "4",
+    title: "Share a scoped report",
+    body: "Share only the report a recipient needs, without exposing the whole workspace or raw files by default.",
+  },
+];
+
+const planGuidance: Record<string, string> = {
+  free_ngo: "Start organizing a basic profile.",
+  grassroots: "For small NGOs getting evidence organized.",
+  growth: "For NGOs preparing reports and sharing with funders.",
+  trust_pro: "For larger or more evidence-heavy organizations.",
+  network: "For portfolio or network reporting.",
+};
+
 export default function NgoPage() {
   return (
     <>
-      <PageHeader eyebrow="NGO" title="NGO trust profiles, evidence, and funder reports.">
-        NGO launches early because it creates credible evidence context for the
-        rest of Mishava. Free NGOs get limited self-serve tools; paid tiers add
-        report building, scoped sharing, AI-assisted drafting, and stronger workflows.
+      <PageHeader
+        eyebrow="NGO"
+        title="Turn scattered evidence into funder-ready trust reports."
+      >
+        Mishava helps NGOs organize documents, claims, outcomes, and evidence
+        into clearer reports that show what is known, what is missing, and what
+        is still being reviewed.
       </PageHeader>
 
-      <div className="card-grid">
-        <div className="card">
-          <h3>Evidence intake</h3>
-          <p>
-            Start with uploaded evidence, photos, manual data entry, and limited
-            public-record lookup. AI assistance scales only where pricing can
-            cover the cost.
-          </p>
+      <section className="ngo-public-hero">
+        <div className="hero-actions">
+          <Link className="button primary" href="/ngo/onboarding">
+            Start a free NGO profile
+          </Link>
+          <Link className="button" href="/ngo/reports">
+            See how reports work
+          </Link>
         </div>
-        <div className="card">
-          <h3>Reports</h3>
-          <p>
-            NGOs can use Mishava templates or create their own reports, with
-            manager approval, export controls, and funder-specific visibility.
-          </p>
-        </div>
-        <div className="card">
-          <h3>Scoped sharing</h3>
-          <p>
-            Funders, donors, and partners can be granted limited access by the
-            NGO, including what they can see and when they can see it.
-          </p>
-        </div>
-      </div>
+        <p className="ngo-trust-line">
+          No paid trust outcomes. Evidence stays reviewable. Reports stay
+          private until shared.
+        </p>
+      </section>
 
       <section className="section">
-        <h2>NGO access model</h2>
+        <h2>Why NGOs need this</h2>
         <p className="section-intro">
-          NGO pricing stays accessible. AI and deeper report workflows are tied
-          to paid tiers so Mishava does not create runaway AI cost without revenue.
+          Reporting gets harder when evidence lives across folders, email
+          threads, public links, and old board packets. Mishava gives teams a
+          calmer way to prepare credible, limited, evidence-based reports.
         </p>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Tier</th>
-              <th>Price</th>
-              <th>AI access</th>
-              <th>Evidence</th>
-              <th>Reports</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ngoTiers.map((tier) => (
-              <tr key={tier.code}>
-                <td>{tier.name}</td>
-                <td>{tier.price}</td>
-                <td>{tier.aiAccess}</td>
-                <td>{tier.evidenceLimit}</td>
-                <td>{tier.reportAccess}</td>
+        <div className="card-grid ngo-value-grid">
+          {valueCards.map((card) => (
+            <div className="card" key={card.title}>
+              <h3>{card.title}</h3>
+              <p>{card.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="section">
+        <h2>How Mishava works for NGOs</h2>
+        <p className="section-intro">
+          Start small, build a reviewable evidence base, and share only the
+          report context a recipient needs.
+        </p>
+        <div className="ngo-flow-grid">
+          {workflowSteps.map((item) => (
+            <div className="card ngo-step-card" key={item.step}>
+              <span className="ngo-step-number">{item.step}</span>
+              <h3>{item.title}</h3>
+              <p>{item.body}</p>
+            </div>
+          ))}
+        </div>
+        <div className="hero-actions">
+          <Link className="button primary" href="/ngo/onboarding">
+            Start a free NGO profile
+          </Link>
+          <Link className="button" href="/ngo/sharing">
+            See scoped sharing
+          </Link>
+        </div>
+      </section>
+
+      <section className="section ngo-guardrails">
+        <h2>Built for trust without overclaiming</h2>
+        <div className="card-grid">
+          <div className="card">
+            <h3>Evidence-based, not absolute</h3>
+            <p>
+              Reports can explain what is supported, incomplete, provisional, or
+              still waiting for review.
+            </p>
+          </div>
+          <div className="card">
+            <h3>Payment buys tools, not credibility</h3>
+            <p>
+              Plan tier can unlock capacity and workflows. It does not change
+              trust outcomes, rankings, verification, or evidence truth.
+            </p>
+          </div>
+          <div className="card">
+            <h3>Human review stays central</h3>
+            <p>
+              AI assistance can help draft or organize where available, but it
+              does not replace human review or create final trust outcomes.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="section ngo-pricing-section">
+        <h2>Choose your starting point</h2>
+        <p className="section-intro">
+          Start with a free NGO profile, then add capacity when your team needs
+          more evidence, reports, sharing, or setup support.
+        </p>
+        <div className="table-scroll" role="region" aria-label="NGO access model">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Tier</th>
+                <th>Best fit</th>
+                <th>Price</th>
+                <th>AI access</th>
+                <th>Evidence</th>
+                <th>Reports</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {ngoTiers.map((tier) => (
+                <tr key={tier.code}>
+                  <td>{tier.name}</td>
+                  <td>{planGuidance[tier.code]}</td>
+                  <td>{tier.price}</td>
+                  <td>{tier.aiAccess}</td>
+                  <td>{tier.evidenceLimit}</td>
+                  <td>{tier.reportAccess}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="ngo-pricing-note">
+          Payment unlocks tools, capacity, setup services, and reporting
+          workflows. It does not buy a better trust outcome.
+        </p>
       </section>
 
       <section className="section">
         <div className="hero-actions">
           <Link className="button primary" href="/ngo/onboarding">
-            Start NGO onboarding
+            Start a free NGO profile
           </Link>
           <Link className="button" href="/ngo/reports">
             Review report tools
