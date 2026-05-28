@@ -12,20 +12,40 @@ const authCookieOptions = {
   path: "/",
 };
 
+function safeNextPath(value: FormDataEntryValue | null) {
+  const path = String(value ?? "/app");
+
+  if (!path.startsWith("/") || path.startsWith("//")) {
+    return "/app";
+  }
+
+  if (path.startsWith("/auth/sign-in")) {
+    return "/app";
+  }
+
+  return path;
+}
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+  const nextPath = safeNextPath(formData.get("next"));
   const result = await signInWithPassword({ email, password });
 
   if (!result.ok || !result.accessToken) {
+    const redirectUrl = new URL("/", request.url);
+    redirectUrl.searchParams.set("signIn", "1");
+    redirectUrl.searchParams.set("error", result.message);
+    redirectUrl.searchParams.set("next", nextPath);
+
     return NextResponse.redirect(
-      new URL(`/auth/sign-in?error=${encodeURIComponent(result.message)}`, request.url),
+      redirectUrl,
       303,
     );
   }
 
-  const response = NextResponse.redirect(new URL("/app", request.url), 303);
+  const response = NextResponse.redirect(new URL(nextPath, request.url), 303);
 
   response.cookies.set(supabaseAccessTokenCookieName, result.accessToken, {
     ...authCookieOptions,

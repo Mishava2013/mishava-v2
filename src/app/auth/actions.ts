@@ -46,7 +46,7 @@ export async function signUpAction(formData: FormData) {
     redirect("/ngo/onboarding?created=account");
   }
 
-  redirect("/auth/sign-in?notice=check_email");
+  redirect("/?signIn=1&notice=check_email");
 }
 
 export async function signInAction(formData: FormData) {
@@ -56,7 +56,7 @@ export async function signInAction(formData: FormData) {
   const result = await signInWithPassword({ email, password });
 
   if (!result.ok || !result.accessToken) {
-    redirect(`/auth/sign-in?error=${encodeURIComponent(result.message)}`);
+    redirect(`/?signIn=1&error=${encodeURIComponent(result.message)}`);
   }
 
   await setSupabaseAuthCookies({
@@ -72,7 +72,7 @@ export async function signOutAction() {
   const session = await getCurrentSession();
   await signOutAccessToken(session?.accessToken);
   await clearAuthCookies();
-  redirect("/auth/sign-in?notice=signed_out");
+  redirect("/?signIn=1&notice=signed_out");
 }
 
 export async function requestPasswordResetAction(formData: FormData) {
@@ -86,7 +86,7 @@ export async function requestPasswordResetAction(formData: FormData) {
     redirect(`/auth/reset-password?error=${encodeURIComponent(result.message)}`);
   }
 
-  redirect("/auth/sign-in?notice=reset_requested");
+  redirect("/?signIn=1&notice=reset_requested");
 }
 
 export async function updatePasswordAction(formData: FormData) {
@@ -94,7 +94,7 @@ export async function updatePasswordAction(formData: FormData) {
   const password = String(formData.get("password") ?? "");
 
   if (!session?.accessToken) {
-    redirect("/auth/sign-in?error=session_required");
+    redirect("/?signIn=1&notice=session_required&next=/auth/update-password");
   }
 
   const result = await updatePasswordWithToken({

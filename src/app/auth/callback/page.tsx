@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
+import { SignInModalButton } from "@/components/SignInModal";
 
 export default function AuthCallbackPage() {
   return (
@@ -16,9 +17,7 @@ export default function AuthCallbackPage() {
             account slices.
           </p>
           <div className="hero-actions">
-            <Link className="button primary" href="/auth/sign-in">
-              Sign in
-            </Link>
+            <SignInModalButton className="button primary" nextPath="/app" />
             <Link className="button" href="/auth/update-password">
               Update password
             </Link>

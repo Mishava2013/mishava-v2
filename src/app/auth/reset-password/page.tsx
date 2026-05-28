@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
+import { SignInModalButton } from "@/components/SignInModal";
 import { requestPasswordResetAction } from "../actions";
 
 export default async function ResetPasswordPage({
@@ -28,7 +29,13 @@ export default async function ResetPasswordPage({
             Send reset link
           </button>
           <div className="auth-links">
-            <Link href="/auth/sign-in">Back to sign in</Link>
+            <SignInModalButton
+              aria-label="Back to sign in"
+              className="link-button"
+              nextPath="/app"
+            >
+              Back to sign in
+            </SignInModalButton>
           </div>
         </form>
       </section>

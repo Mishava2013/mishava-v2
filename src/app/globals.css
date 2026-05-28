@@ -227,6 +227,23 @@ textarea {
   color: var(--white);
 }
 
+.link-button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--brand-blue);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0;
+  text-align: left;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .button.ink {
   background: var(--brand-navy);
   border-color: var(--brand-navy);
@@ -293,6 +310,75 @@ textarea {
   color: var(--brand-blue);
   font-size: 14px;
   font-weight: 700;
+}
+
+.modal-open {
+  overflow: hidden;
+}
+
+.modal-backdrop {
+  align-items: center;
+  display: grid;
+  inset: 0;
+  justify-items: center;
+  padding: 24px;
+  position: fixed;
+  z-index: 1000;
+}
+
+.modal-scrim {
+  appearance: none;
+  background: rgba(17, 35, 68, 0.58);
+  border: 0;
+  cursor: pointer;
+  inset: 0;
+  position: absolute;
+}
+
+.sign-in-modal {
+  max-height: min(720px, calc(100vh - 48px));
+  max-width: 460px;
+  overflow: auto;
+  position: relative;
+  width: min(100%, 460px);
+  z-index: 1;
+}
+
+.modal-header {
+  align-items: start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.modal-header h2 {
+  color: var(--brand-navy);
+  font-size: 28px;
+  line-height: 1.15;
+  margin-top: 4px;
+}
+
+.modal-close {
+  align-items: center;
+  appearance: none;
+  background: var(--soft-mist);
+  border: 1px solid var(--light-border);
+  border-radius: 999px;
+  color: var(--brand-navy);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 22px;
+  font-weight: 700;
+  height: 36px;
+  justify-content: center;
+  line-height: 1;
+  width: 36px;
+}
+
+.modal-copy,
+.ngo-signin-panel p {
+  color: var(--secondary-text);
+  line-height: 1.55;
 }
 
 .form-message {

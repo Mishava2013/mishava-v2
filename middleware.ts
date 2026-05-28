@@ -27,11 +27,11 @@ export async function middleware(request: NextRequest) {
     parseSessionCookieValue(request.cookies.get(sessionCookieName)?.value);
 
   if (!session) {
-    return redirectWithReason(request, "required");
+    return redirectWithReason(request, "required", pathname);
   }
 
   if (pathname.startsWith("/admin") && !isAdminSession(session)) {
-    return redirectWithReason(request, "admin_required");
+    return redirectWithReason(request, "admin_required", pathname);
   }
 
   return rewriteIfNeeded(request, routeDecision.targetPath);
@@ -49,10 +49,18 @@ async function readMiddlewareSupabaseSession(accessToken: string) {
   };
 }
 
-function redirectWithReason(request: NextRequest, reason: string) {
+function redirectWithReason(request: NextRequest, reason: string, nextPath: string) {
   const url = request.nextUrl.clone();
-  url.pathname = "/auth/sign-in";
+  const host = request.headers.get("host")?.split(":")[0]?.toLowerCase();
+
+  if (host?.endsWith(".mishava.org")) {
+    url.hostname = "mishava.org";
+  }
+
+  url.pathname = "/";
   url.searchParams.set("auth", reason);
+  url.searchParams.set("signIn", "1");
+  url.searchParams.set("next", `${nextPath}${request.nextUrl.search}`);
   return NextResponse.redirect(url);
 }
 

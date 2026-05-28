@@ -1,6 +1,7 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { MishavaMark } from "./MishavaMark";
+import { SignInModalButton, SignInModalController } from "./SignInModal";
 
 const navItems = [
   { href: "/shopping", label: "Shopping" },
@@ -32,12 +33,13 @@ export function SiteShell({ children }: { children: ReactNode }) {
             ))}
           </nav>
           <div className="header-actions">
-            <Link className="button" href="/auth/sign-in">
-              Sign in
-            </Link>
+            <SignInModalButton />
           </div>
         </div>
       </header>
+      <Suspense fallback={null}>
+        <SignInModalController />
+      </Suspense>
       <main className="main" id="main-content">
         {children}
       </main>

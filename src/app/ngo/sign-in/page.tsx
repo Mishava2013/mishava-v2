@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SignInModalButton } from "@/components/SignInModal";
 
 const workspaceItems = [
   "Board reports",
@@ -67,7 +68,8 @@ export default function NgoSignInPage() {
           <p>
             A focused NGO workspace for evidence files, board reports, funder
             updates, and scoped sharing. New organizations should request access
-            first; approved users can sign in below.
+            first; approved users can sign in from a popup without leaving this
+            page.
           </p>
           <div className="hero-actions">
             <Link className="button primary" href="/support">
@@ -78,30 +80,19 @@ export default function NgoSignInPage() {
             </Link>
           </div>
         </div>
-        <form action="/auth/sign-in/submit" className="auth-card" method="post">
-          <h2>Sign in</h2>
-          <label>
-            Email
-            <input autoComplete="email" name="email" required type="email" />
-          </label>
-          <label>
-            Password
-            <input
-              autoComplete="current-password"
-              minLength={6}
-              name="password"
-              required
-              type="password"
-            />
-          </label>
-          <button className="button primary" type="submit">
-            Sign in
-          </button>
+        <div className="auth-card ngo-signin-panel">
+          <p className="eyebrow">Approved access</p>
+          <h2>Sign in without losing context</h2>
+          <p>
+            Sign in opens in a popup so the NGO overview stays visible while
+            you access your workspace.
+          </p>
+          <SignInModalButton className="button primary" nextPath="/app" />
           <div className="auth-links">
             <Link href="/auth/reset-password">Reset password</Link>
             <Link href="/auth/sign-up">Create account</Link>
           </div>
-        </form>
+        </div>
       </section>
 
       <section className="ngo-workspace-preview" aria-label="NGO workspace preview">

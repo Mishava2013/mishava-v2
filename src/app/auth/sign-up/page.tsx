@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
+import { SignInModalButton } from "@/components/SignInModal";
 import { signUpAction } from "../actions";
 
 export default async function SignUpPage({
@@ -43,7 +43,9 @@ export default async function SignUpPage({
             Create account
           </button>
           <div className="auth-links">
-            <Link href="/auth/sign-in">Already have an account?</Link>
+            <SignInModalButton className="link-button" nextPath="/app">
+              Already have an account?
+            </SignInModalButton>
           </div>
         </form>
       </section>

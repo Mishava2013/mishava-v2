@@ -26,9 +26,13 @@ test("Supabase Auth-aware server and browser utilities exist without exposing se
 test("auth pages and actions cover sign-up, sign-in, sign-out, reset, update, and callback", () => {
   const actions = read("src/app/auth/actions.ts");
   const ngoSignIn = read("src/app/ngo/sign-in/page.tsx");
+  const signInModal = read("src/components/SignInModal.tsx");
 
   assert.match(read("src/app/auth/sign-up/page.tsx"), /signUpAction/);
-  assert.match(read("src/app/auth/sign-in/page.tsx"), /\/auth\/sign-in\/submit/);
+  assert.match(read("src/app/auth/sign-in/page.tsx"), /popup/);
+  assert.match(signInModal, /\/auth\/sign-in\/submit/);
+  assert.match(signInModal, /aria-modal="true"/);
+  assert.match(signInModal, /mishava:open-sign-in/);
   assert.match(read("src/app/auth/sign-in/submit/route.ts"), /signInWithPassword/);
   assert.match(
     read("src/app/auth/sign-in/submit/route.ts"),
@@ -40,8 +44,10 @@ test("auth pages and actions cover sign-up, sign-in, sign-out, reset, update, an
   assert.match(read("src/app/auth/callback/page.tsx"), /Email verification/);
   assert.match(actions, /setSupabaseAuthCookies/);
   assert.match(actions, /clearAuthCookies/);
+  assert.doesNotMatch(read("src/components/SiteShell.tsx"), /href="\/auth\/sign-in"/);
   assert.match(ngoSignIn, /Inside the workspace/);
   assert.match(ngoSignIn, /Keep the reporting picture in one place/);
+  assert.match(ngoSignIn, /SignInModalButton/);
   assert.match(ngoSignIn, /<h3>\{step\.title\}<\/h3>/);
   assert.doesNotMatch(ngoSignIn, /\{step\.number\}\. \{step\.title\}/);
 });
