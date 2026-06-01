@@ -20,6 +20,19 @@ import {
   hasPublishedEvidenceScore,
 } from "@/lib/shopping";
 
+type EvidenceSourceCard = {
+  title: string;
+  type: string;
+  url: string | null;
+  reviewedStatus: string;
+  reviewedDate: string | null;
+  claimSummary: string;
+  supports: string;
+  doesNotProve: string;
+  gaps: string;
+  confidence: string;
+};
+
 export default async function ProductPage({
   params,
 }: {
@@ -37,6 +50,93 @@ export default async function ProductPage({
   const toiletPaperPreview = product && isToiletPaper ? getToiletPaperPreview(product) : null;
   const toiletPaperDimensions =
     product && isToiletPaper ? getToiletPaperEvidenceDimensions(product, placesToBuy) : [];
+  const evidenceSources: EvidenceSourceCard[] = product
+    ? ([
+        {
+          title: product.source_name ?? "Product source",
+          type:
+            product.data_origin === "retailer_page"
+              ? "Retailer/product page"
+              : "Product source",
+          url: product.source_url ?? product.product_url,
+          reviewedStatus: product.source_review_status,
+          reviewedDate: product.source_captured_at,
+          claimSummary:
+            product.product_summary ??
+            "Source recorded for product identity and basic product context.",
+          supports: "Product identity, package details, source freshness, and recorded product claims where present.",
+          doesNotProve:
+            "This source does not create a final score or verify medical suitability.",
+          gaps:
+            product.evidence_gap_notes ??
+            "Reviewed evidence coverage, accepted scoring facts, and a published score snapshot are still missing.",
+          confidence:
+            product.source_review_status === "approved"
+              ? "Source reviewed"
+              : "Needs Mishava review",
+        },
+        product.brand_sourcing_policy_url
+          ? {
+              title: "Brand sourcing context",
+              type: "Brand/manufacturer context",
+              url: product.brand_sourcing_policy_url,
+              reviewedStatus: product.source_review_status,
+              reviewedDate: product.supplier_reviewed_at ?? product.source_captured_at,
+              claimSummary:
+                "Brand or company sourcing context is available as evidence context.",
+              supports:
+                "Company-level sourcing or sustainability context where the source supports it.",
+              doesNotProve:
+                "Company-level context does not automatically prove product-level recycled content, FSC status, bleaching/process claims, packaging claims, or supplier identity.",
+              gaps:
+                "Product-level claims still need Mishava review before they can support scoring.",
+              confidence:
+                product.manufacturer_confidence === "verified" ||
+                product.supplier_confidence === "verified"
+                  ? "Verified source context"
+                  : "Context only; product-level evidence still needed",
+            }
+          : null,
+        product.external_evidence_reference_url
+          ? {
+              title: "External evidence reference",
+              type: "Third-party reference",
+              url: product.external_evidence_reference_url,
+              reviewedStatus: product.source_review_status,
+              reviewedDate: product.source_captured_at,
+              claimSummary:
+                product.external_evidence_reference_notes ??
+                "External reference recorded as evidence context.",
+              supports:
+                "Outside context that may help Mishava identify claims, gaps, or research questions.",
+              doesNotProve:
+                "Outside scorecards or rankings are not Mishava Scores and are not copied into Mishava scoring.",
+              gaps:
+                "Mishava-reviewed structured claims and a supported scoring method are still required.",
+              confidence: "Evidence reference only",
+            }
+          : null,
+        ...placesToBuy.slice(0, 2).map((place) => ({
+          title: `${place.seller_name} place-to-buy source`,
+          type: "Retailer/place-to-buy page",
+          url: place.source_url ?? place.url,
+          reviewedStatus: place.source_review_status,
+          reviewedDate: place.source_captured_at ?? place.last_checked_at,
+          claimSummary:
+            place.fulfillment_notes ??
+            "Place-to-buy record is available as shopping context.",
+          supports:
+            "Seller identity, availability context, fulfillment notes, and source freshness where recorded.",
+          doesNotProve:
+            "A seller link does not create checkout, commission ranking, medical suitability, or a Mishava Score.",
+          gaps: "Price/value may remain unverified unless a current reviewed price source is present.",
+          confidence:
+            place.source_review_status === "approved"
+              ? "Source reviewed"
+              : "Needs Mishava review",
+        })),
+      ].filter(Boolean) as EvidenceSourceCard[])
+    : [];
 
   return (
     <>
@@ -171,7 +271,10 @@ export default async function ProductPage({
                         Priorities and reviewed evidence are both sufficient.
                         This is not medical advice; Mishava does not guarantee
                         that a product is safe or suitable for any medical
-                        condition.
+                        condition. Comfort, fragrance-free, or
+                        sensitivity-related claims are shown only when
+                        source-supported. Ask a medical professional for
+                        medical suitability.
                       </p>
                       <p>{toiletPaperPreview.disclaimer}</p>
                       <div className="status-row">
@@ -269,6 +372,51 @@ export default async function ProductPage({
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                  <div>
+                    <h4>Evidence sources</h4>
+                    <p>
+                      Mishava separates product, company, supplier, and seller
+                      evidence. A source can support one claim while leaving
+                      other claims unproven.
+                    </p>
+                    <div className="card-grid">
+                      {evidenceSources.map((source) => (
+                        <div className="card" key={`${source.title}-${source.url}`}>
+                          <h5>{source.title}</h5>
+                          <p className="product-meta">
+                            {source.type} · {source.confidence}
+                          </p>
+                          <div className="status-row">
+                            <span className="tag tag-source">
+                              Source {source.reviewedStatus}
+                            </span>
+                            <span className="tag">
+                              {formatFreshness(source.reviewedDate)}
+                            </span>
+                          </div>
+                          <p>
+                            <strong>Claim summary:</strong> {source.claimSummary}
+                          </p>
+                          <p>
+                            <strong>What this source supports:</strong>{" "}
+                            {source.supports}
+                          </p>
+                          <p>
+                            <strong>What this source does not prove:</strong>{" "}
+                            {source.doesNotProve}
+                          </p>
+                          <p>
+                            <strong>Missing evidence gaps:</strong> {source.gaps}
+                          </p>
+                          {source.url ? (
+                            <Link href={source.url}>Open evidence source</Link>
+                          ) : (
+                            <p>Source URL not available for public review.</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   {product.external_evidence_reference_url ? (
                     <Link href={product.external_evidence_reference_url}>

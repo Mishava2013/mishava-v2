@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { requireAuthenticatedSession } from "@/lib/auth-server";
 import {
@@ -33,6 +34,16 @@ export default async function ShoppingPrioritiesPage({
         questions. Users can retake the questionnaire and tighten preferences
         over time through occasional prompts.
       </PageHeader>
+
+      <div className="notice" role="note">
+        Shopping Priorities help Mishava explain personal fit later. They do not
+        create a final score, do not change the base Evidence Score, and do not
+        make medical suitability claims.{" "}
+        <Link href="/shopping/categories/toilet-paper">
+          Return to the toilet paper preview
+        </Link>
+        .
+      </div>
 
       {params.saved ? (
         <div className="notice" role="status">
@@ -173,6 +184,9 @@ export default async function ShoppingPrioritiesPage({
             <button className="button primary" type="submit">
               {priorityProfile ? "Update priorities" : "Save priorities"}
             </button>
+            <Link className="button" href="/shopping">
+              Back to Shopping
+            </Link>
           </div>
         </form>
       </section>

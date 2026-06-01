@@ -23,9 +23,25 @@ function appUrl(path: string) {
   return `${baseUrl.replace(/\/$/, "")}${path}`;
 }
 
+function safeAuthNextPath(value: FormDataEntryValue | null) {
+  const next = String(value ?? "");
+
+  if (!next || !next.startsWith("/") || next.startsWith("//")) {
+    return null;
+  }
+
+  return next;
+}
+
+function appendAuthNotice(path: string, notice: string) {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}signIn=1&notice=${notice}`;
+}
+
 export async function signUpAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+  const nextPath = safeAuthNextPath(formData.get("next"));
 
   const result = await signUpWithPassword({
     email,
@@ -34,7 +50,8 @@ export async function signUpAction(formData: FormData) {
   });
 
   if (!result.ok) {
-    redirect(`/auth/sign-up?error=${encodeURIComponent(result.message)}`);
+    const nextQuery = nextPath ? `&next=${encodeURIComponent(nextPath)}` : "";
+    redirect(`/auth/sign-up?error=${encodeURIComponent(result.message)}${nextQuery}`);
   }
 
   if (result.accessToken) {
@@ -43,20 +60,22 @@ export async function signUpAction(formData: FormData) {
       refreshToken: result.refreshToken,
       expiresIn: result.expiresIn,
     });
-    redirect("/ngo/onboarding?created=account");
+    redirect(nextPath ?? "/ngo/onboarding?created=account");
   }
 
-  redirect("/?signIn=1&notice=check_email");
+  redirect(appendAuthNotice(nextPath ?? "/", "check_email"));
 }
 
 export async function signInAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+  const nextPath = safeAuthNextPath(formData.get("next"));
 
   const result = await signInWithPassword({ email, password });
 
   if (!result.ok || !result.accessToken) {
-    redirect(`/?signIn=1&error=${encodeURIComponent(result.message)}`);
+    const nextQuery = nextPath ? `&next=${encodeURIComponent(nextPath)}` : "";
+    redirect(`/?signIn=1&error=${encodeURIComponent(result.message)}${nextQuery}`);
   }
 
   await setSupabaseAuthCookies({
@@ -65,7 +84,7 @@ export async function signInAction(formData: FormData) {
     expiresIn: result.expiresIn,
   });
 
-  redirect("/app");
+  redirect(nextPath ?? "/app");
 }
 
 export async function signOutAction() {

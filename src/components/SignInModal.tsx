@@ -232,7 +232,9 @@ export function SignInModalController({
         </button>
         <div className="auth-links">
           <Link href="/auth/reset-password">Reset password</Link>
-          <Link href="/auth/sign-up">Create account</Link>
+          <Link href={`/auth/sign-up?next=${encodeURIComponent(nextPath)}`}>
+            Create account
+          </Link>
         </div>
       </form>
     </div>

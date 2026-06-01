@@ -444,3 +444,82 @@ test("places to buy sorting excludes commission, affiliate, sponsorship, and pai
   assert.doesNotMatch(shopping, /sponsor/i);
   assert.doesNotMatch(shopping, /paid_placement|paidBoost|paid_boost/i);
 });
+
+test("Slice 12 account flow preserves Shopping return paths for first-user setup", () => {
+  const modal = read("src/components/SignInModal.tsx");
+  const signUp = read("src/app/auth/sign-up/page.tsx");
+  const signIn = read("src/app/auth/sign-in/page.tsx");
+  const actions = read("src/app/auth/actions.ts");
+  const submitRoute = read("src/app/auth/sign-in/submit/route.ts");
+
+  assert.match(modal, /auth\/sign-up\?next=/);
+  assert.match(modal, /Sign in here and keep your place/);
+  assert.match(signUp, /Create your Mishava account/);
+  assert.match(signUp, /Shopping Priorities/);
+  assert.match(signUp, /Shopping product evidence remains viewable without\s+inventing scores/);
+  assert.match(signUp, /name="next"/);
+  assert.match(signUp, /return to Shopping after confirming your email/);
+  assert.match(signIn, /Shopping Priorities/);
+  assert.match(actions, /safeAuthNextPath/);
+  assert.match(actions, /appendAuthNotice/);
+  assert.match(actions, /redirect\(nextPath \?\? "\/app"\)/);
+  assert.match(submitRoute, /safeNextPath/);
+  assert.match(submitRoute, /new URL\(nextPath, request\.url\)/);
+  assert.doesNotMatch(
+    modal + signUp + signIn + actions + submitRoute,
+    /best for Crohn|safe for Crohn|medical-safe|guaranteed non-irritating|medically recommended/i,
+  );
+});
+
+test("Slice 12 Shopping Priorities explains preview limits and returns to toilet paper", () => {
+  const priorities = read("src/app/app/shopping-priorities/page.tsx");
+
+  assert.match(priorities, /Shopping Priorities help Mishava explain personal fit later/);
+  assert.match(priorities, /do not\s+create a final score/);
+  assert.match(priorities, /do not\s+change the base Evidence Score/);
+  assert.match(priorities, /do not\s+make medical suitability claims/);
+  assert.match(priorities, /Return to the toilet paper preview/);
+  assert.match(priorities, /Back to Shopping/);
+  assert.match(priorities, /Your Values Score is a personal fit overlay/);
+  assert.doesNotMatch(
+    priorities,
+    /best for Crohn|safe for Crohn|medical-safe|guaranteed non-irritating|medically recommended/i,
+  );
+});
+
+test("Slice 12 product detail shows source-backed evidence cards without final scores", () => {
+  const detail = read("src/app/shopping/products/[slug]/page.tsx");
+
+  assert.match(detail, /type EvidenceSourceCard/);
+  assert.match(detail, /Evidence sources/);
+  assert.match(detail, /Mishava separates product, company, supplier, and seller\s+evidence/);
+  assert.match(detail, /Claim summary/);
+  assert.match(detail, /What this source supports/);
+  assert.match(detail, /What this source does not prove/);
+  assert.match(detail, /Missing evidence gaps/);
+  assert.match(detail, /Open evidence source/);
+  assert.match(detail, /does not create a final score/);
+  assert.match(detail, /does not create checkout, commission ranking, medical suitability, or a Mishava Score/);
+  assert.match(detail, /Outside scorecards or rankings are not Mishava Scores/);
+  assert.match(detail, /Comfort, fragrance-free, or\s+sensitivity-related claims are shown only when\s+source-supported/);
+  assert.match(detail, /Ask a medical professional for\s+medical suitability/);
+  assert.match(detail, /unreviewed research tasks do not\s+become score facts/);
+  assert.doesNotMatch(
+    detail,
+    /best for Crohn|safe for Crohn|medical-safe|guaranteed non-irritating|medically recommended/i,
+  );
+});
+
+test("Slice 12 evidence source display requires URLs, review status, and gap language", () => {
+  const detail = read("src/app/shopping/products/[slug]/page.tsx");
+
+  assert.match(detail, /url: product\.source_url \?\? product\.product_url/);
+  assert.match(detail, /reviewedStatus: product\.source_review_status/);
+  assert.match(detail, /reviewedDate: product\.source_captured_at/);
+  assert.match(detail, /url: product\.brand_sourcing_policy_url/);
+  assert.match(detail, /url: product\.external_evidence_reference_url/);
+  assert.match(detail, /url: place\.source_url \?\? place\.url/);
+  assert.match(detail, /Source URL not available for public review/);
+  assert.match(detail, /Product-level claims still need Mishava review/);
+  assert.match(detail, /Mishava-reviewed structured claims and a supported scoring method are still required/);
+});

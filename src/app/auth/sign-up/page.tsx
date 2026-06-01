@@ -5,15 +5,20 @@ import { signUpAction } from "../actions";
 export default async function SignUpPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const params = await searchParams;
+  const nextPath =
+    params.next && params.next.startsWith("/") && !params.next.startsWith("//")
+      ? params.next
+      : "/app";
 
   return (
     <>
-      <PageHeader eyebrow="NGO account" title="Create your Mishava account.">
-        Start with a real account, then create or join an NGO workspace. Your
-        organization data remains private unless you choose scoped sharing.
+      <PageHeader eyebrow="Account access" title="Create your Mishava account.">
+        Use one Mishava account for Shopping Priorities, NGO workspaces, and
+        other saved tools. Shopping product evidence remains viewable without
+        inventing scores, and payment never changes trust outcomes.
       </PageHeader>
       <section className="auth-grid">
         <form action={signUpAction} className="auth-card">
@@ -22,9 +27,11 @@ export default async function SignUpPage({
           ) : (
             <p className="form-message">
               Supabase Auth powers this foundation. Email confirmation behavior
-              depends on the project dashboard settings.
+              depends on the project dashboard settings. If confirmation is
+              required, return to Shopping after confirming your email.
             </p>
           )}
+          <input name="next" type="hidden" value={nextPath} />
           <label>
             Email
             <input autoComplete="email" name="email" required type="email" />
@@ -43,7 +50,7 @@ export default async function SignUpPage({
             Create account
           </button>
           <div className="auth-links">
-            <SignInModalButton className="link-button" nextPath="/app">
+            <SignInModalButton className="link-button" nextPath={nextPath}>
               Already have an account?
             </SignInModalButton>
           </div>
