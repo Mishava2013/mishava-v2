@@ -169,11 +169,15 @@ export type ShoppingScoreExplanation = {
   label:
     | "Evidence Score"
     | "Evidence Score Preview"
+    | "Evidence review preview"
     | "Draft trust context"
     | "Score pending"
+    | "Score not ready yet"
     | "Your Values Score unavailable"
     | "Your Values Match Preview"
     | "Your Values Match Preview unavailable"
+    | "Personal match preview"
+    | "Personal match is not ready yet"
     | "Your Values Score pending"
     | "More evidence needed";
   score: number | null;
@@ -204,8 +208,8 @@ export type ToiletPaperEvidenceDimension = {
 };
 
 export type ToiletPaperPreview = {
-  evidenceLabel: "Evidence Score Preview" | "Score pending";
-  valuesLabel: "Your Values Match Preview" | "Your Values Match Preview unavailable";
+  evidenceLabel: "Evidence review preview" | "Score not ready yet";
+  valuesLabel: "Personal match preview" | "Personal match is not ready yet";
   confidenceLabel: "Evidence profile incomplete" | "Mishava review not finalized";
   disclaimer: string;
   summary: string;
@@ -533,7 +537,7 @@ export function buildShoppingScoreExplanation({
       : hasDraftContext
         ? "Draft trust context"
         : isToiletPaper
-          ? "Evidence Score Preview"
+          ? "Evidence review preview"
         : valuesState === "more_evidence_needed"
           ? "More evidence needed"
           : valuesState === "your_values_score_pending"
@@ -676,11 +680,11 @@ export function getToiletPaperPreview(product: ShoppingProduct): ToiletPaperPrev
   const scoreReady = product.mishava_evidence_review_status === "score_ready";
 
   return {
-    evidenceLabel: hasEvidenceScore ? "Evidence Score Preview" : "Score pending",
+    evidenceLabel: hasEvidenceScore ? "Evidence review preview" : "Score not ready yet",
     valuesLabel:
       hasEvidenceScore && scoreReady
-        ? "Your Values Match Preview"
-        : "Your Values Match Preview unavailable",
+        ? "Personal match preview"
+        : "Personal match is not ready yet",
     confidenceLabel: scoreReady
       ? "Mishava review not finalized"
       : "Evidence profile incomplete",
@@ -764,7 +768,7 @@ export function hasSupplierEvidenceGap(product: ShoppingProduct) {
 export function getEvidenceReadinessLabels(product: ShoppingProduct) {
   return [
     product.mishava_evidence_review_status === "external_evidence_available"
-      ? "External evidence available"
+      ? "Outside source found"
       : null,
     product.mishava_evidence_review_status === "draft_claims"
       ? "Draft trust context"
@@ -817,11 +821,11 @@ export function getYourValuesScoreState({
 export function getYourValuesScoreMessage(state: YourValuesScoreState) {
   switch (state) {
     case "complete_priorities":
-      return "Complete Shopping Priorities to see Your Values Score when enough evidence exists.";
+      return "Tell Mishava what matters to you to see personal fit later, when enough evidence exists.";
     case "more_evidence_needed":
-      return "More evidence needed before Your Values Score can be shown.";
+      return "More evidence is needed before Mishava can show personal fit.";
     case "your_values_score_pending":
-      return "Your Values Score pending until the personal fit calculation is enabled.";
+      return "Personal fit is pending until the calculation is enabled.";
     case "evidence_score_only":
       return "Evidence Score only.";
   }

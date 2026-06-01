@@ -141,9 +141,9 @@ export default async function ProductPage({
   return (
     <>
       <PageHeader eyebrow="Product profile" title={product?.name ?? "Product not available"}>
-        Product pages show only real product and place-to-buy records. If scoring
-        evidence is not ready, Mishava labels the trust context as pending rather
-        than inventing a number.
+        Product pages show real source records, what Mishava found, and what is
+        still missing. If evidence is not ready, Mishava says the score is not
+        ready instead of inventing a number.
       </PageHeader>
       <div className="surface-list">
         {product ? (
@@ -152,7 +152,11 @@ export default async function ProductPage({
               <ShoppingProductImage product={product} size="detail" />
               <div>
                 <p className="product-meta">{product.brand_name ?? "Brand not listed"}</p>
-                <h2 className="panel-title">{getProductTrustLabel(product)}</h2>
+                <h2 className="panel-title">
+                  {hasPublishedEvidenceScore(product)
+                    ? getProductTrustLabel(product)
+                    : "Score not ready yet"}
+                </h2>
                 <div className="score-row">
                   <div className="score-badge">
                     {hasPublishedEvidenceScore(product) ? product.evidence_score : "--"}
@@ -162,7 +166,7 @@ export default async function ProductPage({
                       ? `${toiletPaperPreview.summary} ${toiletPaperPreview.disclaimer}`
                       : hasPublishedEvidenceScore(product)
                       ? "This score is backed by a published score snapshot."
-                      : "Evidence profile pending. No public score appears until real reviewed evidence and a published snapshot exist."}
+                      : "No final score is shown until real reviewed evidence and a published score snapshot exist."}
                   </p>
                 </div>
                 <div className="status-row">
@@ -183,7 +187,7 @@ export default async function ProductPage({
                     Source {product.source_review_status}
                   </span>
                   {isToiletPaper ? (
-                    <span className="tag tag-source">External evidence available</span>
+                    <span className="tag tag-source">Outside source found</span>
                   ) : null}
                   {product && hasSupplierEvidenceGap(product) ? (
                     <span className="tag tag-source">
@@ -196,11 +200,11 @@ export default async function ProductPage({
             </div>
             <div className="metric-grid">
               <div className="metric">
-                <span>Coverage</span>
+                <span>What we found</span>
                 <strong>{product.evidence_coverage ?? "Pending"}</strong>
               </div>
               <div className="metric">
-                <span>Recency</span>
+                <span>Source age</span>
                 <strong>{product.evidence_recency ?? "Pending"}</strong>
               </div>
               <div className="metric">
@@ -208,11 +212,11 @@ export default async function ProductPage({
                 <strong>{product.source_name ?? "Not listed"}</strong>
               </div>
               <div className="metric">
-                <span>Manufacturer</span>
+                <span>Manufacturer info</span>
                 <strong>{product.manufacturer_confidence}</strong>
               </div>
               <div className="metric">
-                <span>Supplier</span>
+                <span>Supplier info</span>
                 <strong>{product.supplier_confidence}</strong>
               </div>
               <div className="metric">
@@ -225,7 +229,7 @@ export default async function ProductPage({
                 <ShoppingScoreExplainer explanation={explanation} mode="inline" />
                 <ShoppingScoreExplainer
                   explanation={explanation}
-                  triggerLabel="Why this score?"
+                  triggerLabel="Why this score is pending"
                 />
               </div>
             ) : null}
@@ -233,8 +237,42 @@ export default async function ProductPage({
         ) : (
           <ScoreExplainer />
         )}
+        {product ? (
+          <div className="card">
+            <p className="storefront-kicker">Where to buy</p>
+            <h3>Retailer links are source records.</h3>
+            <p>
+              Mishava does not sell this product or provide checkout. These
+              links go to outside retailer or source pages, and they are not
+              sorted by commission.
+            </p>
+            {placesToBuy.length > 0 ? (
+              <div className="simple-list">
+                {placesToBuy.slice(0, 3).map((place) => (
+                  <div className="simple-list-item" key={place.id}>
+                    <div>
+                      <strong>{place.seller_name}</strong>
+                      <p>
+                        {formatPrice(place)} · {place.availability_status ?? "Availability not listed"} ·{" "}
+                        {formatFreshness(place.source_captured_at ?? place.last_checked_at)}
+                      </p>
+                    </div>
+                    {place.url ? (
+                      <Link className="button" href={place.url}>
+                        Open retailer page
+                      </Link>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No reviewed places to buy are attached yet.</p>
+            )}
+          </div>
+        ) : null}
         <div className="card">
-            <h3>{product?.brand_name ?? "Brand or seller context"}</h3>
+          <p className="storefront-kicker">Product summary</p>
+          <h3>{product?.brand_name ?? "Brand or seller context"}</h3>
           {product ? (
             <>
               {product.product_summary ? <p>{product.product_summary}</p> : null}
@@ -259,7 +297,7 @@ export default async function ProductPage({
                 <div className="surface-list compact">
                   {toiletPaperPreview ? (
                     <div>
-                      <h4>Early toilet paper preview</h4>
+                      <h4>What Mishava found</h4>
                       <p>
                         This is an early preview. Mishava is showing reviewed
                         evidence, source context, and evidence gaps so a shopper
@@ -267,8 +305,8 @@ export default async function ProductPage({
                         Scores remain pending when evidence is incomplete.
                       </p>
                       <p>
-                        Your Values Match Preview appears only when Shopping
-                        Priorities and reviewed evidence are both sufficient.
+                        Personal match appears only when Shopping Priorities
+                        and reviewed evidence are both sufficient.
                         This is not medical advice; Mishava does not guarantee
                         that a product is safe or suitable for any medical
                         condition. Comfort, fragrance-free, or
@@ -279,10 +317,10 @@ export default async function ProductPage({
                       <p>{toiletPaperPreview.disclaimer}</p>
                       <div className="status-row">
                         <span className="tag tag-score">
-                          {toiletPaperPreview.evidenceLabel}
+                          Score not ready yet
                         </span>
                         <span className="tag tag-score">
-                          {toiletPaperPreview.valuesLabel}
+                          Personal match is not ready yet
                         </span>
                         <span className="tag tag-source">
                           Not a completed public score
@@ -291,7 +329,7 @@ export default async function ProductPage({
                     </div>
                   ) : null}
                   <div>
-                    <h4>Toilet paper research readiness</h4>
+                    <h4>What Mishava still needs</h4>
                     <p>
                       Recycled content, bamboo/FSC, virgin-fiber reliance,
                       bleaching/process, packaging, and sourcing-policy claims
@@ -308,7 +346,7 @@ export default async function ProductPage({
                     ) : null}
                     {researchReadiness?.missing.length ? (
                       <p>
-                        Current research task status: evidence gap. Missing:{" "}
+                        Still needed before a final score:{" "}
                         {researchReadiness.missing.join(", ")}.
                       </p>
                     ) : null}
@@ -321,7 +359,7 @@ export default async function ProductPage({
                     </div>
                   </div>
                   <div>
-                    <h4>Supplier and manufacturer transparency</h4>
+                    <h4>Company/source information</h4>
                     <p>
                       Mishava shows unknowns as evidence gaps. A retailer or
                       private-label owner is not treated as the manufacturer
@@ -348,7 +386,7 @@ export default async function ProductPage({
                     </div>
                   </div>
                   <div>
-                    <h4>Evidence dimensions</h4>
+                    <h4>What Mishava is checking</h4>
                     <p>
                       These dimensions are preview signals only. They do not
                       create a final score, and unreviewed research tasks do not
@@ -374,7 +412,7 @@ export default async function ProductPage({
                     </table>
                   </div>
                   <div>
-                    <h4>Evidence sources</h4>
+                    <h4>Source details</h4>
                     <p>
                       Mishava separates product, company, supplier, and seller
                       evidence. A source can support one claim while leaving

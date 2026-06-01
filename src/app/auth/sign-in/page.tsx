@@ -4,8 +4,8 @@ export default function SignInPage() {
   return (
     <>
       <PageHeader eyebrow="Account access" title="Sign in to Mishava.">
-        Use your account for Shopping Priorities, saved tools, NGO evidence,
-        reports, and scoped sharing. Payment never changes trust outcomes.
+        Use your account to save Shopping Priorities, return to products, and
+        keep Mishava tools connected. Payment never changes trust outcomes.
       </PageHeader>
       <section className="auth-grid">
         <div className="auth-card">

@@ -29,16 +29,17 @@ export default async function ShoppingPrioritiesPage({
 
   return (
     <>
-      <PageHeader eyebrow="Shopping priorities" title="Your Values Score setup.">
-        Mishava will personalize fit only after a user answers enough priority
-        questions. Users can retake the questionnaire and tighten preferences
-        over time through occasional prompts.
+      <PageHeader eyebrow="Shopping priorities" title="Tell Mishava what matters to you.">
+        Shopping Priorities help Mishava explain personal fit later. You can
+        browse products without an account; sign in only when you want Mishava
+        to remember your preferences.
       </PageHeader>
 
       <div className="notice" role="note">
-        Shopping Priorities help Mishava explain personal fit later. They do not
-        create a final score, do not change the base Evidence Score, and do not
-        make medical suitability claims.{" "}
+        Your priorities do not create a final score, do not change the base
+        Evidence Score, and do not make medical suitability claims. They only
+        help explain what may match your preferences after enough evidence is
+        reviewed.{" "}
         <Link href="/shopping/categories/toilet-paper">
           Return to the toilet paper preview
         </Link>
@@ -75,18 +76,18 @@ export default async function ShoppingPrioritiesPage({
         <h2>How this works</h2>
         <div className="card-grid">
           <div className="card">
-            <h3>Evidence Score</h3>
+            <h3>Product evidence</h3>
             <p>
-              Evidence Score is the base trust score supported by reviewed
-              evidence. Your answers do not change it.
+              Mishava reviews product evidence separately from your personal
+              preferences. Your answers do not change the base evidence review.
             </p>
           </div>
           <div className="card">
-            <h3>Your Values Score</h3>
+            <h3>Your personal fit</h3>
             <p>
-              Your Values Score is a personal fit overlay. It can appear only
-              after priorities are saved and enough evidence-backed scoring data
-              exists.
+              A personal fit preview can appear only after priorities are saved
+              and enough reviewed evidence exists. Until then, Mishava says the
+              match is not ready.
             </p>
           </div>
           <div className="card">

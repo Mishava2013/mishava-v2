@@ -26,13 +26,14 @@ export default async function CategoryPage({
     ? await getShoppingProducts({ category: slug })
     : { products: [], configured: true };
   const isToiletPaper = slug === "toilet-paper";
+  const title = isToiletPaper ? "Toilet paper preview" : label;
 
   return (
     <>
-      <PageHeader eyebrow="Shopping category" title={label}>
+      <PageHeader eyebrow="Shopping category" title={title}>
         {isShoppingPoc
           ? isToiletPaper
-            ? "This early toilet paper preview records real product sources, evidence dimensions, and tissue-sourcing gaps. Scores stay pending until Mishava-reviewed claims and a supported scoring version exist. This is not medical advice."
+            ? "This early preview shows real toilet paper products, where Mishava found source information, and what is still missing. Mishava is not the store, and this is not medical advice."
             : "This is part of the baby products proof of concept. Products appear only after real source records are approved."
           : "Category pages will map product types to evidence needs, shopping filters, local availability, and score explanation. Scores remain unavailable until real evidence exists for each product or business."}
       </PageHeader>
@@ -52,7 +53,9 @@ export default async function CategoryPage({
           <div className="results-heading">
             <div>
               <p className="storefront-kicker">Real data only</p>
-              <h2 id="category-products-title">{label} records</h2>
+              <h2 id="category-products-title">
+                {isToiletPaper ? "Choose a toilet paper product to review" : `${label} records`}
+              </h2>
             </div>
             <Link className="button" href="/shopping">
               Back to shopping
@@ -60,16 +63,14 @@ export default async function CategoryPage({
           </div>
           {isToiletPaper ? (
             <div className="trust-callout">
-              <span className="score-pill">Evidence Score Preview</span>
+              <span className="score-pill">Score not ready yet</span>
               <p>
-                Mishava is showing reviewed evidence, supplier transparency,
-                and evidence gaps for toilet paper. This preview does not make
-                medical claims, does not guarantee suitability for a medical
-                condition, and does not show a completed public score.
+                These are real product records, not products for sale by
+                Mishava. Click a product to see what Mishava found, what is
+                still missing, and why a final score is not shown yet.
               </p>
               <Link href="/app/shopping-priorities">
-                Complete Shopping Priorities to unlock match context when
-                enough reviewed evidence exists.
+                Tell Mishava what matters to you after you look around.
               </Link>
             </div>
           ) : null}
@@ -101,7 +102,11 @@ export default async function CategoryPage({
                     ) : null}
                     <ShoppingScoreExplainer
                       explanation={explanation}
-                      triggerLabel={getProductTrustLabel(product)}
+                      triggerLabel={
+                        product.score_snapshot_id
+                          ? getProductTrustLabel(product)
+                          : "Why this score is pending"
+                      }
                     />
                     <div className="status-row">
                       <span className="tag tag-score">
@@ -141,9 +146,9 @@ export default async function CategoryPage({
           </div>
           {isToiletPaper ? (
             <p className="filter-note">
-              Outside scorecards may be evidence references, but they are not
-              Mishava Scores. Toilet paper records remain score-pending until
-              Mishava review and a supported scoring version are complete.
+              Outside scorecards can help Mishava identify evidence, but they
+              are not Mishava Scores. Toilet paper records stay score-pending
+              until Mishava review and a supported scoring version are complete.
             </p>
           ) : null}
         </section>

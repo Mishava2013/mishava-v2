@@ -100,33 +100,33 @@ function ScoreExplanationBody({
         <div className="score-badge">{explanation.score ?? "--"}</div>
         <p className="score-caption">
           {explanation.score === null
-            ? "No public score value is shown until real reviewed evidence and a published snapshot support it."
+            ? "Score not ready yet. Mishava waits for real reviewed evidence and a published snapshot before showing a number."
             : "This value is the base Evidence Score. It is not a personal values score."}
         </p>
       </div>
 
       <div className="metric-grid">
         <div className="metric">
-          <span>Evidence coverage</span>
+          <span>What Mishava found</span>
           <strong>{explanation.coverage}</strong>
         </div>
         <div className="metric">
-          <span>Evidence recency</span>
+          <span>How fresh the source is</span>
           <strong>{explanation.recency}</strong>
         </div>
         <div className="metric">
-          <span>Verification status</span>
+          <span>Score status</span>
           <strong>{explanation.verification}</strong>
         </div>
         <div className="metric">
-          <span>Confidence</span>
+          <span>Review confidence</span>
           <strong>{explanation.confidence}</strong>
         </div>
       </div>
 
       <div className="score-explanation-grid">
         <section>
-          <h3>What has been checked</h3>
+          <h3>What Mishava found</h3>
           {explanation.checked.length > 0 ? (
             <ul>
               {explanation.checked.map((item) => (
@@ -138,7 +138,7 @@ function ScoreExplanationBody({
           )}
         </section>
         <section>
-          <h3>What is missing</h3>
+          <h3>What Mishava still needs</h3>
           {explanation.missing.length > 0 ? (
             <ul>
               {explanation.missing.map((item) => (
@@ -171,8 +171,8 @@ function ScoreExplanationBody({
       <div className="score-policy-note">
         <strong>Shopping Priorities</strong>
         <p>
-          Shopping Priorities personalize your view but do not change the base
-          Evidence Score. {explanation.valuesMessage}
+          Shopping Priorities tell Mishava what matters to you. They do not
+          change the base Evidence Score. {explanation.valuesMessage}
         </p>
       </div>
       <div className="score-policy-note">

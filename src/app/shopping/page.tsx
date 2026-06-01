@@ -47,9 +47,9 @@ export default async function ShoppingPage({
   return (
     <div className="shopping-storefront">
       <div className="storefront-topline">
-        <span>Preview storefront</span>
+        <span>Early Shopping preview</span>
         <Link className="button ink" href="/app/shopping-priorities">
-          Set shopping priorities
+          Tell Mishava what matters to you
         </Link>
       </div>
 
@@ -58,7 +58,7 @@ export default async function ShoppingPage({
           aria-label="Search products, brands, sellers, or local stores"
           defaultValue={params.q ?? ""}
           name="q"
-          placeholder="Search products, brands, sellers, or local favorites"
+          placeholder="Search products or brands"
         />
         <button className="button primary" type="submit">
           Search
@@ -76,16 +76,20 @@ export default async function ShoppingPage({
       <div className="shopping-masthead">
         <div>
           <p className="storefront-kicker">Shopping</p>
-          <h1>Everyday products, clearer proof.</h1>
+          <h1>Compare products by evidence, not ads.</h1>
           <p>
-            The proof of concept starts with baby diapers, wipes, and toilet
-            paper records from real reviewed source metadata only. Payment
-            never changes placement, and Mishava is not the store.
+            Mishava helps you see what has been found, what is still missing,
+            and why some scores are not ready yet. You can browse toilet paper
+            and baby products without signing in. Mishava is not the store and
+            does not sell these products.
           </p>
         </div>
         <div className="storefront-promise">
-          <strong>Score on demand</strong>
-          <span>Evidence first. Values overlay after priorities are set.</span>
+          <strong>What matters here</strong>
+          <span>
+            No paid ranking. No commission sorting. Missing evidence is shown
+            instead of hidden.
+          </span>
         </div>
       </div>
 
@@ -104,7 +108,7 @@ export default async function ShoppingPage({
             <label>
               Sort
               <select defaultValue={params.sort ?? "evidence"} form="shopping-controls" name="sort">
-                <option value="evidence">Evidence readiness</option>
+                <option value="evidence">Evidence status</option>
                 <option value="price">Price</option>
                 <option value="distance">Distance</option>
               </select>
@@ -126,8 +130,8 @@ export default async function ShoppingPage({
           <div className="filter-note">
             <strong>No paid ranking</strong>
             <span>
-              Tools, hosting, and catalogs can be paid. Placement cannot, and
-              Mishava is not the store.
+              Companies cannot pay to move products higher. Mishava does not
+              earn shopping commissions from these links.
             </span>
           </div>
         </aside>
@@ -136,7 +140,7 @@ export default async function ShoppingPage({
           <div className="results-heading">
             <div>
               <p className="storefront-kicker">Real data only</p>
-              <h2 id="shopping-results-title">Baby diapers, wipes, and toilet paper POC</h2>
+              <h2 id="shopping-results-title">Start with toilet paper or baby products</h2>
             </div>
             <form className="compact-controls" id="shopping-controls">
               <input name="q" type="hidden" value={params.q ?? ""} />
@@ -147,16 +151,14 @@ export default async function ShoppingPage({
           </div>
 
           <div className="trust-callout">
-            <span className="score-pill">Evidence Score Preview</span>
+            <span className="score-pill">Score not ready yet</span>
             <p>
-              Shoppers can click through for trust details. If there is no real
-              published score snapshot, Mishava shows score pending, evidence
-              profile incomplete, or draft trust context instead of a made-up
-              number. Personal match stays unavailable until Shopping
-              Priorities are complete and enough reviewed evidence exists.
+              Some products have source records but no final score yet. That is
+              intentional: Mishava shows what it found and what it still needs
+              instead of making up a number.
             </p>
             <Link href="/app/shopping-priorities">
-              Complete Shopping Priorities to see Your Values Score when it is valid.
+              Want Mishava to remember what matters to you? Set Shopping Priorities.
             </Link>
           </div>
 
@@ -204,7 +206,11 @@ export default async function ShoppingPage({
                     {product.product_summary ? <p>{product.product_summary}</p> : null}
                     <ShoppingScoreExplainer
                       explanation={explanation}
-                      triggerLabel={getProductTrustLabel(product)}
+                      triggerLabel={
+                        product.score_snapshot_id
+                          ? getProductTrustLabel(product)
+                          : "Why this score is pending"
+                      }
                     />
                     <div className="status-row">
                       <span className="tag tag-score">
