@@ -10,7 +10,11 @@ The local repository was confirmed to be the active Mishava V2 codebase and a ne
 
 The existing `origin` remote was not removed or modified.
 
-The push to the new clean repository was attempted, but it did not complete successfully. GitHub returned an HTTP 408 timeout after the local client wrote the object pack. A follow-up GitHub repository check showed the new repository still has no default branch, so the push should be treated as failed.
+The first push attempt to the new clean repository failed with a GitHub HTTP 408 timeout, but a retry completed successfully.
+
+The clean repository now has a `main` branch, and GitHub reports that `main` points to the Mishava V2 result commit:
+
+`054870bf9225af32aab4de6a91dc336a21bea776`
 
 ## Current Branch
 
@@ -52,21 +56,30 @@ New remote added:
 
 ## Push Status
 
-Status: failed / not verified as published
+Status: successful
 
-Attempted command:
+Initial attempted command:
 
 `git push --progress mishava-v2-clean HEAD:main`
 
-Observed result:
+Initial observed result:
 
 - Git enumerated, counted, compressed, and wrote the object pack.
 - GitHub returned `HTTP 408`.
 - Git reported `send-pack: unexpected disconnect while reading sideband packet`.
 - Git reported `fatal: the remote end hung up unexpectedly`.
-- A GitHub repository check afterward showed `Mishava2013/mishava-v2` still has no default branch.
+- A GitHub repository check afterward showed `Mishava2013/mishava-v2` still had no default branch.
 
-Because the remote repository still has no default branch, the current Mishava V2 commit history should not be considered successfully pushed to the clean repo yet.
+Retry command:
+
+`git -c http.version=HTTP/1.1 -c http.postBuffer=524288000 push --progress mishava-v2-clean HEAD:main`
+
+Retry observed result:
+
+- Git enumerated, counted, compressed, and wrote the object pack.
+- GitHub resolved deltas successfully.
+- GitHub created remote branch `main`.
+- Final output included: `[new branch] HEAD -> main`.
 
 ## Verification
 
@@ -75,9 +88,10 @@ GitHub repository check:
 - Repository exists: yes
 - Owner/name: `Mishava2013/mishava-v2`
 - Visibility: public
-- Default branch: missing / empty
+- Default branch: `main`
+- Remote `main` commit: `054870bf9225af32aab4de6a91dc336a21bea776`
 
-This indicates the repository exists but does not yet contain the pushed `main` branch.
+This indicates the clean repository exists and now contains the pushed Mishava V2 history.
 
 ## Secrets / Env Confirmation
 
@@ -107,13 +121,13 @@ This result document is the only intended repository file change.
 
 ## Recommended Next Step
 
-Retry the push from a more reliable Git transport/session, or use GitHub's repository import/transfer tooling manually from the GitHub web UI.
+Use `https://github.com/Mishava2013/mishava-v2` as the clean GitHub repository for Mishava V2 going forward after Jos confirms the repository contents in GitHub.
 
-Recommended manual path:
+Recommended manual follow-up:
 
 1. Open `https://github.com/Mishava2013/mishava-v2`.
-2. Use GitHub's import or repository setup flow to copy from `https://github.com/Mishava2013/dsuupr-am.git`, or retry the push from a local terminal with a stable network session.
-3. After the clean repo has a `main` branch, verify the latest Mishava V2 commit history is present.
-4. Keep the current `origin` remote untouched until Jos confirms the clean repo is complete and safe.
+2. Confirm the `main` branch is visible.
+3. Confirm Mishava V2 files and commit history are present.
+4. Keep the current `origin` remote untouched until Jos explicitly decides whether to switch the default remote.
 
-Codex can safely retry the push if requested, but the first full push attempt timed out at GitHub with HTTP 408.
+Codex did not remove or modify the existing `origin` remote.
