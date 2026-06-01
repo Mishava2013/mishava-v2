@@ -2,9 +2,11 @@
 
 Date: 2026-06-01
 
+Rerun: 2026-06-01 16:08 PDT
+
 ## Summary
 
-Live route availability is healthy, but Release 4 Slice 12 commit `62d096bc449afd462e8b69d26c930ec5839014db` is not currently visible on `https://shopping.mishava.org`.
+Live route availability is healthy, but Release 4 Slice 12 commit `62d096bc449afd462e8b69d26c930ec5839014db` is still not currently visible on `https://shopping.mishava.org`.
 
 Result: not ready to invite the first user for the Slice 12 evidence-source-card experience until the clean `mishava-v2` Vercel project deploys commit `62d096b` or newer.
 
@@ -25,12 +27,12 @@ Live Vercel inspection:
 - Deployment created: 2026-06-01 14:45:37 PDT
 - Status: Ready
 
-The live deployment timestamp is earlier than commit `62d096b`, and the live pages still show pre-Slice-12 content. Content verification therefore indicates commit `62d096b` is not deployed live yet.
+The live deployment timestamp is earlier than commit `62d096b`, and the live pages still show pre-Slice-12 content on the rerun. Content verification therefore indicates commit `62d096b` is not deployed live yet.
 
 Current local HEAD at verification time:
 
-- `80861c525b04c0ba6276a89202b5aba75dfacb0d`
-- Subject: `Plan senior-friendly Shopping usability pass`
+- Initial verification: `80861c525b04c0ba6276a89202b5aba75dfacb0d`, `Plan senior-friendly Shopping usability pass`.
+- Rerun verification: `fd89d30`, prior Slice 12B documentation commit, before updating this result doc.
 
 ## Live Route Status
 
@@ -48,7 +50,7 @@ Current local HEAD at verification time:
 
 ## Evidence Card Visibility
 
-Status: fail for Slice 12 live verification.
+Status: fail for Slice 12 live verification on both the initial run and rerun.
 
 Expected Slice 12 phrases were not found on live toilet paper product detail pages:
 
@@ -65,7 +67,7 @@ Kirkland detail still shows the older product-detail experience with existing no
 
 Status: live route works, but Slice 12 account copy is not deployed.
 
-Live sign-up page still includes pre-Slice-12 NGO-oriented copy:
+Live sign-up page still includes pre-Slice-12 NGO-oriented copy on the rerun:
 
 - `NGO account`
 - `Start with a real account`
@@ -100,7 +102,9 @@ Live pages still pass key safety checks:
 
 ## Screenshots
 
-Screenshots were captured and remain ignored/uncommitted under `screenshots/`:
+Screenshots were captured and remain ignored/uncommitted under `screenshots/`.
+
+Initial run:
 
 - `screenshots/release-4-slice-12b/release-4-slice-12b-shopping-signed-out.png`
 - `screenshots/release-4-slice-12b/release-4-slice-12b-auth-sign-up.png`
@@ -111,14 +115,25 @@ Screenshots were captured and remain ignored/uncommitted under `screenshots/`:
 - `screenshots/release-4-slice-12b/release-4-slice-12b-cashmere-detail.png`
 - `screenshots/release-4-slice-12b/release-4-slice-12b-purex-detail.png`
 
+Rerun:
+
+- `screenshots/release-4-slice-12b/release-4-slice-12b-rerun-20260601-1608-shopping-signed-out.png`
+- `screenshots/release-4-slice-12b/release-4-slice-12b-rerun-20260601-1608-auth-sign-up.png`
+- `screenshots/release-4-slice-12b/release-4-slice-12b-rerun-20260601-1608-auth-sign-in-popup.png`
+- `screenshots/release-4-slice-12b/release-4-slice-12b-rerun-20260601-1608-shopping-priorities-auth-prompt.png`
+- `screenshots/release-4-slice-12b/release-4-slice-12b-rerun-20260601-1608-toilet-paper-category.png`
+- `screenshots/release-4-slice-12b/release-4-slice-12b-rerun-20260601-1608-kirkland-detail.png`
+- `screenshots/release-4-slice-12b/release-4-slice-12b-rerun-20260601-1608-cashmere-detail.png`
+- `screenshots/release-4-slice-12b/release-4-slice-12b-rerun-20260601-1608-purex-detail.png`
+
 The screenshots show the current live deployed state, not the Slice 12 evidence-card implementation.
 
 ## Checks Run
 
-- `npm test` - Pass, `154/154`.
-- `supabase migration list --linked` - Pass; local and remote migrations aligned through `202605260009`.
-- Live route checks - Pass for Shopping, toilet paper, Kirkland, Cashmere, Purex, sign-up, sign-in, and priorities redirect.
-- `vercel inspect https://shopping.mishava.org` - Pass/read-only; confirmed live alias is on `mishava-v2` production deployment.
+- `npm test` - Pass, `154/154` on initial run and rerun.
+- `supabase migration list --linked` - Pass; local and remote migrations aligned through `202605260009` on initial run and rerun.
+- Live route checks - Pass for Shopping, toilet paper, Kirkland, Cashmere, Purex, sign-up, sign-in, and priorities redirect on initial run and rerun.
+- `vercel inspect https://shopping.mishava.org` - Pass/read-only; confirmed live alias is on `mishava-v2` production deployment on initial run and rerun.
 
 Typecheck/lint/build were not requested for this Slice 12B run. No local tooling stall was introduced or investigated in this verification pass.
 
