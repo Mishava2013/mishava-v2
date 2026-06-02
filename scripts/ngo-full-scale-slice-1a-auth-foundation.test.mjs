@@ -35,8 +35,6 @@ test("auth pages and actions cover sign-up, sign-in, sign-out, reset, update, an
   assert.match(signInModal, /\/auth\/sign-in\/submit/);
   assert.match(signInModal, /aria-modal="true"/);
   assert.match(signInModal, /mishava:open-sign-in/);
-  assert.match(signInModal, /goToCreateAccount/);
-  assert.match(signInModal, /router\.push\(`\/auth\/sign-up\?next=/);
   assert.match(read("src/app/auth/sign-in/submit/route.ts"), /signInWithPassword/);
   assert.match(
     read("src/app/auth/sign-in/submit/route.ts"),

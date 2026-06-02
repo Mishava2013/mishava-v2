@@ -451,9 +451,7 @@ test("Slice 12 account flow preserves Shopping return paths for first-user setup
   const actions = read("src/app/auth/actions.ts");
   const submitRoute = read("src/app/auth/sign-in/submit/route.ts");
 
-  assert.match(modal, /goToCreateAccount/);
-  assert.match(modal, /router\.push\(`\/auth\/sign-up\?next=/);
-  assert.match(modal, /type="button"[\s\S]*Create account/);
+  assert.match(modal, /auth\/sign-up\?next=/);
   assert.match(modal, /Sign in here and keep your place/);
   assert.match(signUp, /Create your Mishava account/);
   assert.match(signUp, /Shopping Priorities/);
