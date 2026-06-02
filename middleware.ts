@@ -52,7 +52,7 @@ async function readMiddlewareSupabaseSession(accessToken: string) {
 function redirectWithReason(request: NextRequest, reason: string, nextPath: string) {
   const url = request.nextUrl.clone();
 
-  url.pathname = "/auth/sign-in";
+  url.pathname = "/";
   url.searchParams.set("auth", reason);
   url.searchParams.set("signIn", "1");
   url.searchParams.set("next", `${nextPath}${request.nextUrl.search}`);

@@ -1,21 +1,36 @@
-import { PageHeader } from "@/components/PageHeader";
+import { redirect } from "next/navigation";
 
-export default function SignInPage() {
-  return (
-    <>
-      <PageHeader eyebrow="Account access" title="Sign in to Mishava.">
-        Use your account to save Shopping Priorities, return to products, and
-        keep Mishava tools connected. Payment never changes trust outcomes.
-      </PageHeader>
-      <section className="auth-grid">
-        <div className="auth-card">
-          <p className="form-message">
-            Sign-in now opens as a popup so you can keep your place. The popup
-            should open automatically; use the header sign-in button if it does
-            not.
-          </p>
-        </div>
-      </section>
-    </>
-  );
+function safeQueryValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = (await searchParams) ?? {};
+  const nextPath = safeQueryValue(params.next);
+  const error = safeQueryValue(params.error);
+  const notice = safeQueryValue(params.notice);
+  const auth = safeQueryValue(params.auth);
+  const target = new URLSearchParams({ signIn: "1" });
+
+  if (nextPath?.startsWith("/") && !nextPath.startsWith("//")) {
+    target.set("next", nextPath);
+  }
+
+  if (error) {
+    target.set("error", error);
+  }
+
+  if (notice) {
+    target.set("notice", notice);
+  }
+
+  if (auth) {
+    target.set("auth", auth);
+  }
+
+  redirect(`/?${target.toString()}`);
 }

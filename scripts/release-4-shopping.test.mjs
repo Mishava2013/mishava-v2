@@ -458,7 +458,8 @@ test("Slice 12 account flow preserves Shopping return paths for first-user setup
   assert.match(signUp, /Shopping product evidence remains viewable without\s+inventing scores/);
   assert.match(signUp, /name="next"/);
   assert.match(signUp, /return to Shopping after confirming your email/);
-  assert.match(signIn, /Shopping Priorities/);
+  assert.match(signIn, /redirect\(`\/\?\$\{target\.toString\(\)\}`\)/);
+  assert.doesNotMatch(signIn, /PageHeader|auth-grid|auth-card|Use your account to save Shopping Priorities/);
   assert.match(actions, /safeAuthNextPath/);
   assert.match(actions, /appendAuthNotice/);
   assert.match(actions, /redirect\(nextPath \?\? "\/app"\)/);
@@ -546,7 +547,8 @@ test("Slice 13 senior-friendly Shopping copy keeps the toilet paper path plain",
   assert.match(detail, /Score not ready yet/);
   assert.match(priorities, /Tell Mishava what matters to you/);
   assert.match(priorities, /You can\s+browse products without an account/);
-  assert.match(signIn, /Use your account to save Shopping Priorities/);
+  assert.match(signIn, /signIn: "1"/);
+  assert.doesNotMatch(signIn, /Use your account to save Shopping Priorities/);
   assert.doesNotMatch(signIn, /NGO evidence/);
   assert.match(explainer, /What Mishava found/);
   assert.match(explainer, /What Mishava still needs/);
