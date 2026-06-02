@@ -155,6 +155,12 @@ export function SignInModalController({
     }
   }
 
+  function goToCreateAccount() {
+    setManualOpen(false);
+    setManualNextPath(null);
+    router.push(`/auth/sign-up?next=${encodeURIComponent(nextPath)}`);
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     const form = event.currentTarget;
     const nextInput = form.elements.namedItem("next");
@@ -232,9 +238,9 @@ export function SignInModalController({
         </button>
         <div className="auth-links">
           <Link href="/auth/reset-password">Reset password</Link>
-          <Link href={`/auth/sign-up?next=${encodeURIComponent(nextPath)}`}>
+          <button className="link-button" onClick={goToCreateAccount} type="button">
             Create account
-          </Link>
+          </button>
         </div>
       </form>
     </div>
