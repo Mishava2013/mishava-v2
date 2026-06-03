@@ -14,6 +14,7 @@ export default async function SignInPage({
   const error = safeQueryValue(params.error);
   const notice = safeQueryValue(params.notice);
   const auth = safeQueryValue(params.auth);
+  const surface = safeQueryValue(params.surface);
   const target = new URLSearchParams({ signIn: "1" });
 
   if (nextPath?.startsWith("/") && !nextPath.startsWith("//")) {
@@ -30,6 +31,10 @@ export default async function SignInPage({
 
   if (auth) {
     target.set("auth", auth);
+  }
+
+  if (surface) {
+    target.set("surface", surface);
   }
 
   redirect(`/?${target.toString()}`);

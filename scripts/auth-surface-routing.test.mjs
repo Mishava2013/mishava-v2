@@ -18,11 +18,16 @@ test("all public sign-in entry points use the shared popup and preserve page con
   assert.match(modal, /signInEventName = "mishava:open-sign-in"/);
   assert.match(modal, /stripAuthParams/);
   assert.match(modal, /getCurrentSurfaceRoot/);
+  assert.match(modal, /safeAuthSurface/);
+  assert.match(modal, /inferAuthSurface/);
   assert.match(modal, /shopping: "\/shopping"/);
   assert.match(modal, /ngo: "\/ngo"/);
   assert.match(modal, /business: "\/business"/);
+  assert.match(modal, /local: "\/local"/);
   assert.match(modal, /corporate: "\/corporate"/);
   assert.match(modal, /gov: "\/gov"/);
+  assert.match(modal, /target\.set\("surface", safeSurface\)/);
+  assert.match(modal, /target\.set\("surface", authSurface\)/);
   assert.doesNotMatch(modal, /queryWantsSignIn \? "\/app"/);
   assert.match(signInPage, /redirect\(`\/\?\$\{target\.toString\(\)\}`\)/);
   assert.doesNotMatch(signInPage, /<form|PageHeader|auth-card|NGO/);
@@ -32,11 +37,14 @@ test("all public sign-in entry points use the shared popup and preserve page con
   assert.match(middleware, /url\.searchParams\.set\("next"/);
 });
 
-test("sign-up page chooses product-line copy from the preserved next path", () => {
+test("sign-up page chooses product-line copy from explicit surface before next path", () => {
   const signUp = read("src/app/auth/sign-up/page.tsx");
   const actions = read("src/app/auth/actions.ts");
 
   assert.match(signUp, /function getSignUpContext/);
+  assert.match(signUp, /safeSignUpSurface/);
+  assert.match(signUp, /surface === "shopping"/);
+  assert.match(signUp, /surface === "ngo"/);
   assert.match(signUp, /Create your Mishava Shopping account/);
   assert.match(signUp, /Create your Mishava NGO account/);
   assert.match(signUp, /Create your Mishava Business account/);
@@ -53,6 +61,9 @@ test("sign-up page chooses product-line copy from the preserved next path", () =
   assert.match(signUp, /nextPath\.startsWith\("\/gov"\)/);
   assert.match(signUp, /nextPath\.startsWith\("\/support"\)/);
   assert.match(signUp, /nextPath\.startsWith\("\/methodology"\)/);
+  assert.match(signUp, /name="surface"/);
+  assert.match(actions, /safeAuthSurface/);
+  assert.match(actions, /surfaceQuery/);
   assert.match(actions, /redirect\(nextPath \?\? "\/app"\)/);
   assert.doesNotMatch(actions, /nextPath \?\? "\/ngo\/onboarding/);
 });
@@ -61,8 +72,8 @@ test("password reset sign-in links preserve the same page context", () => {
   const modal = read("src/components/SignInModal.tsx");
   const reset = read("src/app/auth/reset-password/page.tsx");
 
-  assert.match(modal, /\/auth\/reset-password\?next=/);
-  assert.match(modal, /encodeURIComponent\(nextPath\)/);
+  assert.match(modal, /\/auth\/reset-password\?\$\{new URLSearchParams/);
+  assert.match(modal, /surface: authSurface/);
   assert.match(reset, /searchParams: Promise<\{ error\?: string; next\?: string \}>/);
   assert.match(reset, /const nextPath =/);
   assert.match(reset, /nextPath=\{nextPath\}/);

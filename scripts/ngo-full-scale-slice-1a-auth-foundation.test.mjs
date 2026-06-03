@@ -41,6 +41,8 @@ test("auth pages and actions cover sign-up, sign-in, sign-out, reset, update, an
   assert.match(signInModal, /pathname === "\/auth\/sign-up"/);
   assert.match(signInModal, /window\.location\.search/);
   assert.match(signInModal, /ngo: "\/ngo"/);
+  assert.match(signInModal, /safeAuthSurface/);
+  assert.match(signInModal, /target\.set\("surface", safeSurface\)/);
   assert.match(signInModal, /stripAuthParams/);
   assert.match(signInModal, /router\.push\(`\/\?\$\{target\.toString\(\)\}`\)/);
   assert.match(read("src/app/auth/sign-in/submit/route.ts"), /signInWithPassword/);
