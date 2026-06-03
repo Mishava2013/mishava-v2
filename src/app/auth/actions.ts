@@ -60,7 +60,7 @@ export async function signUpAction(formData: FormData) {
       refreshToken: result.refreshToken,
       expiresIn: result.expiresIn,
     });
-    redirect(nextPath ?? "/ngo/onboarding?created=account");
+    redirect(nextPath ?? "/app");
   }
 
   redirect(appendAuthNotice(nextPath ?? "/", "check_email"));

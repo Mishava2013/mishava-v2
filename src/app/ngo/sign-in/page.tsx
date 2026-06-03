@@ -90,7 +90,7 @@ export default function NgoSignInPage() {
           <SignInModalButton className="button primary" nextPath="/app" />
           <div className="auth-links">
             <Link href="/auth/reset-password">Reset password</Link>
-            <Link href="/auth/sign-up">Create account</Link>
+            <Link href="/auth/sign-up?next=/ngo/onboarding">Create NGO account</Link>
           </div>
         </div>
       </section>

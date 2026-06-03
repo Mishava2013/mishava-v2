@@ -456,9 +456,13 @@ test("Slice 12 account flow preserves Shopping return paths for first-user setup
   assert.match(modal, /window\.location\.search/);
   assert.match(modal, /router\.push\(`\/\?\$\{target\.toString\(\)\}`\)/);
   assert.match(modal, /Sign in here and keep your place/);
-  assert.match(signUp, /Create your Mishava account/);
+  assert.match(signUp, /getSignUpContext/);
+  assert.match(signUp, /Create your Mishava Shopping account/);
+  assert.match(signUp, /nextPath === "\/"/);
   assert.match(signUp, /Shopping Priorities/);
-  assert.match(signUp, /Shopping product evidence remains viewable without\s+inventing scores/);
+  assert.match(signUp, /Create Shopping account/);
+  assert.match(signUp, /Already have a Shopping account/);
+  assert.match(signUp, /You can browse Shopping without an account/);
   assert.match(signUp, /name="next"/);
   assert.match(signUp, /return to Shopping after confirming your email/);
   assert.match(signIn, /redirect\(`\/\?\$\{target\.toString\(\)\}`\)/);
@@ -466,6 +470,7 @@ test("Slice 12 account flow preserves Shopping return paths for first-user setup
   assert.match(actions, /safeAuthNextPath/);
   assert.match(actions, /appendAuthNotice/);
   assert.match(actions, /redirect\(nextPath \?\? "\/app"\)/);
+  assert.doesNotMatch(actions, /nextPath \?\? "\/ngo\/onboarding/);
   assert.match(submitRoute, /safeNextPath/);
   assert.match(submitRoute, /new URL\(nextPath, request\.url\)/);
   assert.doesNotMatch(
