@@ -344,6 +344,36 @@ textarea {
   z-index: 1;
 }
 
+.shopping-account-modal {
+  display: grid;
+  gap: 18px;
+  max-height: min(720px, calc(100vh - 48px));
+  max-width: 520px;
+  overflow: auto;
+  position: relative;
+  width: min(100%, 520px);
+  z-index: 1;
+}
+
+.shopping-account-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.shopping-account-actions .button {
+  justify-content: center;
+  text-align: center;
+}
+
+.shopping-account-note {
+  border-top: 1px solid var(--light-border);
+  color: var(--secondary-text);
+  font-size: 13px;
+  line-height: 1.5;
+  padding-top: 14px;
+}
+
 .modal-header {
   align-items: start;
   display: flex;

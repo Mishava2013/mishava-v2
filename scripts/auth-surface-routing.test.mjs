@@ -81,12 +81,14 @@ test("sign-up page chooses product-line copy from page path before host or query
 
 test("shopping auth routes cannot be poisoned by stale NGO surface context", () => {
   const modal = read("src/components/SignInModal.tsx");
+  const shoppingPrompt = read("src/components/ShoppingAccountPrompt.tsx");
   const signUp = read("src/app/auth/sign-up/page.tsx");
   const authActions = read("src/app/auth/actions.ts");
   const middleware = read("middleware.ts");
   const submitRoute = read("src/app/auth/sign-in/submit/route.ts");
   const shoppingPage = read("src/app/shopping/page.tsx");
   const categoryPage = read("src/app/shopping/categories/[slug]/page.tsx");
+  const productPage = read("src/app/shopping/products/[slug]/page.tsx");
 
   assert.match(modal, /currentSurface \?\?\s+querySurface/);
   assert.match(
@@ -100,8 +102,18 @@ test("shopping auth routes cannot be poisoned by stale NGO surface context", () 
   assert.match(submitRoute, /redirectUrl\.searchParams\.set\("surface", surface\)/);
   assert.match(authActions, /const surface = safeAuthSurface\(formData\.get\("surface"\)\)/);
   assert.match(authActions, /surfaceQuery/);
+  assert.match(shoppingPrompt, /surface: "shopping"/);
+  assert.match(shoppingPrompt, /Create free Shopping account/);
+  assert.match(shoppingPrompt, /\/auth\/sign-up\?\$\{new URLSearchParams/);
+  assert.match(shoppingPrompt, /safeShoppingNextPath/);
+  assert.match(shoppingPage, /getCurrentSession/);
+  assert.match(categoryPage, /getCurrentSession/);
+  assert.match(productPage, /getCurrentSession/);
+  assert.match(shoppingPage, /<ShoppingAccountPrompt nextPath="\/shopping" \/>/);
+  assert.match(categoryPage, /<ShoppingAccountPrompt nextPath=\{`\/shopping\/categories\/\$\{slug\}`\} \/>/);
+  assert.match(productPage, /<ShoppingAccountPrompt nextPath=\{`\/shopping\/products\/\$\{slug\}`\} \/>/);
   assert.doesNotMatch(
-    shoppingPage + categoryPage,
+    shoppingPage + categoryPage + productPage,
     /href="\/app\/shopping-priorities"/,
   );
   assert.match(

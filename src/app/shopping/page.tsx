@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
+import { ShoppingAccountPrompt } from "@/components/ShoppingAccountPrompt";
 import { ShoppingProductImage } from "@/components/ShoppingProductImage";
 import { ShoppingScoreExplainer } from "@/components/ShoppingScoreExplainer";
+import { getCurrentSession } from "@/lib/auth-server";
 import {
   buildShoppingScoreExplanation,
   formatFreshness,
@@ -38,6 +40,7 @@ export default async function ShoppingPage({
   searchParams: Promise<{ q?: string; source?: string; sort?: string }>;
 }) {
   const params = await searchParams;
+  const session = await getCurrentSession();
   const { products, configured } = await getShoppingProducts({
     query: params.q,
     category: params.q ? undefined : "baby-products",
@@ -46,6 +49,7 @@ export default async function ShoppingPage({
 
   return (
     <div className="shopping-storefront">
+      {!session ? <ShoppingAccountPrompt nextPath="/shopping" /> : null}
       <div className="storefront-topline">
         <span>Early Shopping preview</span>
         <Link

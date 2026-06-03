@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { ShoppingAccountPrompt } from "@/components/ShoppingAccountPrompt";
 import { ShoppingProductImage } from "@/components/ShoppingProductImage";
 import { ShoppingScoreExplainer } from "@/components/ShoppingScoreExplainer";
+import { getCurrentSession } from "@/lib/auth-server";
 import {
   buildShoppingScoreExplanation,
   formatFreshness,
@@ -20,6 +22,7 @@ export default async function CategoryPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const session = await getCurrentSession();
   const label = slug.replaceAll("-", " ");
   const isShoppingPoc = ["baby-products", "diapers", "wipes", "toilet-paper"].includes(slug);
   const { products, configured } = isShoppingPoc
@@ -30,6 +33,9 @@ export default async function CategoryPage({
 
   return (
     <>
+      {!session && isShoppingPoc ? (
+        <ShoppingAccountPrompt nextPath={`/shopping/categories/${slug}`} />
+      ) : null}
       <PageHeader eyebrow="Shopping category" title={title}>
         {isShoppingPoc
           ? isToiletPaper

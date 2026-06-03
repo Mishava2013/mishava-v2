@@ -506,6 +506,8 @@ test("Slice 12 Shopping Priorities explains preview limits and returns to toilet
   const priorities = read("src/app/app/shopping-priorities/page.tsx");
   const shoppingPage = read("src/app/shopping/page.tsx");
   const categoryPage = read("src/app/shopping/categories/[slug]/page.tsx");
+  const productPage = read("src/app/shopping/products/[slug]/page.tsx");
+  const shoppingPrompt = read("src/components/ShoppingAccountPrompt.tsx");
 
   assert.match(priorities, /Shopping Priorities are the free profile Mishava uses/);
   assert.match(priorities, /free profile Mishava uses to remember what/);
@@ -523,8 +525,15 @@ test("Slice 12 Shopping Priorities explains preview limits and returns to toilet
   assert.match(shoppingPage, /signIn=1&next=%2Fapp%2Fshopping-priorities&surface=shopping/);
   assert.doesNotMatch(shoppingPage, /href="\/app\/shopping-priorities"/);
   assert.doesNotMatch(categoryPage, /href="\/app\/shopping-priorities"/);
+  assert.doesNotMatch(productPage, /href="\/app\/shopping-priorities"/);
   assert.match(shoppingPage, /personal match previews/);
   assert.match(categoryPage, /Create a free Shopping account for personal match previews/);
+  assert.match(shoppingPrompt, /Free Shopping account/);
+  assert.match(shoppingPrompt, /Save your Shopping priorities/);
+  assert.match(shoppingPrompt, /Sign in if you already have a Mishava account/);
+  assert.match(shoppingPrompt, /Create free Shopping account/);
+  assert.match(shoppingPrompt, /surface: "shopping"/);
+  assert.match(shoppingPrompt, /do not create final scores/);
 });
 
 test("Slice 12 product detail shows source-backed evidence cards without final scores", () => {
