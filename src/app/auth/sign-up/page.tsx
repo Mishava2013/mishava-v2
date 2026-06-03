@@ -31,6 +31,20 @@ function surfaceFromHost(host: string | null) {
   return null;
 }
 
+function defaultNextPathForHost(host: string | null) {
+  const surface = surfaceFromHost(host);
+  if (surface === "shopping") return "/shopping";
+  if (surface === "ngo") return "/ngo";
+  if (surface === "business") return "/business";
+  if (surface === "local") return "/local";
+  if (surface === "corporate") return "/corporate";
+  if (surface === "admin") return "/admin";
+  if (surface === "support") return "/support";
+  if (surface === "trust") return "/methodology";
+  if (surface === "gov") return "/gov";
+  return "/shopping";
+}
+
 function surfaceFromNextPath(nextPath: string) {
   if (
     nextPath === "/" ||
@@ -308,13 +322,15 @@ export default async function SignUpPage({
 }) {
   const params = await searchParams;
   const headerStore = await headers();
+  const host = headerStore.get("host");
+  const defaultNextPath = defaultNextPathForHost(host);
   const nextPath =
     params.next && params.next.startsWith("/") && !params.next.startsWith("//")
       ? params.next
-      : "/shopping";
+      : defaultNextPath;
   const signUpSurface =
-    surfaceFromHost(headerStore.get("host")) ??
     surfaceFromNextPath(nextPath) ??
+    surfaceFromHost(host) ??
     safeSignUpSurface(params.surface);
   const signUpContext = getSignUpContext(nextPath, signUpSurface);
 

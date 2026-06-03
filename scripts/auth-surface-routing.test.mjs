@@ -38,15 +38,22 @@ test("all public sign-in entry points use the shared popup and preserve page con
   assert.match(middleware, /url\.searchParams\.set\("next"/);
 });
 
-test("sign-up page chooses product-line copy from explicit surface before next path", () => {
+test("sign-up page chooses product-line copy from page path before host or query surface", () => {
   const signUp = read("src/app/auth/sign-up/page.tsx");
   const actions = read("src/app/auth/actions.ts");
 
   assert.match(signUp, /function getSignUpContext/);
   assert.match(signUp, /safeSignUpSurface/);
   assert.match(signUp, /surfaceFromHost/);
+  assert.match(signUp, /defaultNextPathForHost/);
   assert.match(signUp, /surfaceFromNextPath/);
   assert.match(signUp, /headers\(\)/);
+  assert.match(signUp, /const host = headerStore\.get\("host"\)/);
+  assert.match(signUp, /const defaultNextPath = defaultNextPathForHost\(host\)/);
+  assert.match(
+    signUp,
+    /surfaceFromNextPath\(nextPath\) \?\?\s+surfaceFromHost\(host\) \?\?\s+safeSignUpSurface\(params\.surface\)/,
+  );
   assert.match(signUp, /surface === "shopping"/);
   assert.match(signUp, /surface === "ngo"/);
   assert.match(signUp, /Create your free Mishava Shopping account/);
@@ -82,8 +89,11 @@ test("shopping auth routes cannot be poisoned by stale NGO surface context", () 
   const categoryPage = read("src/app/shopping/categories/[slug]/page.tsx");
 
   assert.match(modal, /currentSurface \?\?\s+querySurface/);
-  assert.match(signUp, /surfaceFromHost\(headerStore\.get\("host"\)\) \?\?/);
-  assert.match(signUp, /surfaceFromNextPath\(nextPath\) \?\?/);
+  assert.match(
+    signUp,
+    /surfaceFromNextPath\(nextPath\) \?\?\s+surfaceFromHost\(host\) \?\?\s+safeSignUpSurface\(params\.surface\)/,
+  );
+  assert.match(signUp, /nextPath\.startsWith\("\/app\/shopping-priorities"\)/);
   assert.match(middleware, /surfaceForNextPath/);
   assert.match(middleware, /url\.searchParams\.set\("surface", surface\)/);
   assert.match(submitRoute, /safeAuthSurface/);
