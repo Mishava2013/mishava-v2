@@ -23,12 +23,12 @@ function getSignUpContext(nextPath: string, surface: string | null) {
   if (surface === "shopping") {
     return {
       eyebrow: "Shopping account access",
-      title: "Create your Mishava Shopping account.",
+      title: "Create your free Mishava Shopping account.",
       body:
-        "Use this account to save Shopping Priorities and return to product evidence previews. You can browse Shopping without an account, and payment never changes scores, ranking, or trust outcomes.",
+        "Use this free preview account to save Shopping Priorities for personal match previews. You can browse Shopping without an account, and payment never changes scores, ranking, or trust outcomes.",
       message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Shopping after confirming your email.",
-      button: "Create Shopping account",
+        "Create the account, confirm your email if prompted, then return to Shopping Priorities so Mishava can remember what matters to you.",
+      button: "Create free Shopping account",
       signInLabel: "Already have a Shopping account?",
     };
   }
@@ -248,12 +248,12 @@ function getSignUpContext(nextPath: string, surface: string | null) {
   ) {
     return {
       eyebrow: "Shopping account access",
-      title: "Create your Mishava Shopping account.",
+      title: "Create your free Mishava Shopping account.",
       body:
-        "Use this account to save Shopping Priorities and return to product evidence previews. You can browse Shopping without an account, and payment never changes scores, ranking, or trust outcomes.",
+        "Use this free preview account to save Shopping Priorities for personal match previews. You can browse Shopping without an account, and payment never changes scores, ranking, or trust outcomes.",
       message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Shopping after confirming your email.",
-      button: "Create Shopping account",
+        "Create the account, confirm your email if prompted, then return to Shopping Priorities so Mishava can remember what matters to you.",
+      button: "Create free Shopping account",
       signInLabel: "Already have a Shopping account?",
     };
   }

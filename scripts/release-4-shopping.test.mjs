@@ -250,7 +250,8 @@ test("shopping display shows pending trust context instead of invented scores", 
   assert.match(shopping, /return "Evidence profile pending"/);
   assert.match(shopping, /More evidence needed/);
   assert.match(explainer, /Score not ready yet/);
-  assert.match(page, /Want Mishava to remember what matters to you/);
+  assert.match(page, /Create a free Shopping account/);
+  assert.match(page, /Mishava to remember your priorities/);
   assert.doesNotMatch(page, /<option value="values">/);
   assert.doesNotMatch(detail, /Evidence Score 90|Evidence Score 92|Score 88/);
 });
@@ -266,7 +267,7 @@ test("Slice 8 toilet paper preview uses conservative score and match language", 
   assert.match(page, /Some products have source records but no final score yet/);
   assert.match(categoryPage, /This early preview shows real toilet paper products/);
   assert.match(categoryPage, /why a final score is not shown yet/);
-  assert.match(categoryPage, /Tell Mishava what matters to you after you look around/);
+  assert.match(categoryPage, /Create a free Shopping account for personal match previews/);
   assert.match(detail, /What Mishava found/);
   assert.match(detail, /Personal match is not ready yet/);
   assert.match(detail, /Not a completed public score/);
@@ -469,10 +470,11 @@ test("Slice 12 account flow preserves Shopping return paths for first-user setup
   assert.match(signUp, /getSignUpContext/);
   assert.match(signUp, /surface === "shopping"/);
   assert.match(signUp, /safeSignUpSurface/);
-  assert.match(signUp, /Create your Mishava Shopping account/);
+  assert.match(signUp, /Create your free Mishava Shopping account/);
   assert.match(signUp, /nextPath === "\/"/);
   assert.match(signUp, /Shopping Priorities/);
-  assert.match(signUp, /Create Shopping account/);
+  assert.match(signUp, /Create free Shopping account/);
+  assert.match(signUp, /free preview account/);
   assert.match(signUp, /Already have a Shopping account/);
   assert.match(signUp, /You can browse Shopping without an account/);
   assert.match(signUp, /Create your Mishava Business account/);
@@ -483,7 +485,7 @@ test("Slice 12 account flow preserves Shopping return paths for first-user setup
   assert.match(signUp, /Create your Mishava Trust account/);
   assert.match(signUp, /name="next"/);
   assert.match(signUp, /name="surface"/);
-  assert.match(signUp, /return to Shopping after confirming your email/);
+  assert.match(signUp, /return to Shopping Priorities/);
   assert.match(signIn, /redirect\(`\/\?\$\{target\.toString\(\)\}`\)/);
   assert.match(signIn, /target\.set\("surface", surface\)/);
   assert.doesNotMatch(signIn, /PageHeader|auth-grid|auth-card|Use your account to save Shopping Priorities/);
@@ -502,8 +504,11 @@ test("Slice 12 account flow preserves Shopping return paths for first-user setup
 
 test("Slice 12 Shopping Priorities explains preview limits and returns to toilet paper", () => {
   const priorities = read("src/app/app/shopping-priorities/page.tsx");
+  const shoppingPage = read("src/app/shopping/page.tsx");
+  const categoryPage = read("src/app/shopping/categories/[slug]/page.tsx");
 
-  assert.match(priorities, /Shopping Priorities help Mishava explain personal fit later/);
+  assert.match(priorities, /Shopping Priorities are the free profile Mishava uses/);
+  assert.match(priorities, /free profile Mishava uses to remember what/);
   assert.match(priorities, /do not\s+create a final score/);
   assert.match(priorities, /do not change the base\s+Evidence Score/);
   assert.match(priorities, /do not\s+make medical suitability claims/);
@@ -511,9 +516,13 @@ test("Slice 12 Shopping Priorities explains preview limits and returns to toilet
   assert.match(priorities, /Back to Shopping/);
   assert.match(priorities, /A personal fit preview can appear only/);
   assert.doesNotMatch(
-    priorities,
+    priorities + shoppingPage + categoryPage,
     /best for Crohn|safe for Crohn|medical-safe|guaranteed non-irritating|medically recommended/i,
   );
+  assert.match(shoppingPage, /Create a free Shopping account/);
+  assert.match(shoppingPage, /next=%2Fapp%2Fshopping-priorities&surface=shopping/);
+  assert.match(shoppingPage, /personal match previews/);
+  assert.match(categoryPage, /Create a free Shopping account for personal match previews/);
 });
 
 test("Slice 12 product detail shows source-backed evidence cards without final scores", () => {
@@ -565,7 +574,8 @@ test("Slice 13 senior-friendly Shopping copy keeps the toilet paper path plain",
   assert.match(page, /Compare products by evidence, not ads/);
   assert.match(page, /Mishava is not the store and\s+does not sell these products/);
   assert.match(page, /Some products have source records but no final score yet/);
-  assert.match(page, /Set Shopping Priorities/);
+  assert.match(page, /Create a free Shopping account/);
+  assert.match(page, /set Shopping Priorities/);
   assert.match(categoryPage, /Choose a toilet paper product to review/);
   assert.match(categoryPage, /Click a product to see what Mishava found/);
   assert.match(detail, /Where to buy/);
@@ -575,7 +585,8 @@ test("Slice 13 senior-friendly Shopping copy keeps the toilet paper path plain",
   assert.match(detail, /Company\/source information/);
   assert.match(detail, /Score not ready yet/);
   assert.match(priorities, /Tell Mishava what matters to you/);
-  assert.match(priorities, /You can\s+browse products without an account/);
+  assert.match(priorities, /You can browse products\s+without an account/);
+  assert.match(priorities, /create a free Shopping account/);
   assert.match(signIn, /signIn: "1"/);
   assert.doesNotMatch(signIn, /Use your account to save Shopping Priorities/);
   assert.doesNotMatch(signIn, /NGO evidence/);

@@ -70,7 +70,10 @@ export default async function CategoryPage({
                 still missing, and why a final score is not shown yet.
               </p>
               <Link href="/app/shopping-priorities">
-                Tell Mishava what matters to you after you look around.
+                Already have an account? Sign in to set Shopping Priorities.
+              </Link>
+              <Link href="/auth/sign-up?next=%2Fapp%2Fshopping-priorities&surface=shopping">
+                Create a free Shopping account for personal match previews.
               </Link>
             </div>
           ) : null}

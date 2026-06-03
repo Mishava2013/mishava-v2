@@ -45,7 +45,7 @@ test("sign-up page chooses product-line copy from explicit surface before next p
   assert.match(signUp, /safeSignUpSurface/);
   assert.match(signUp, /surface === "shopping"/);
   assert.match(signUp, /surface === "ngo"/);
-  assert.match(signUp, /Create your Mishava Shopping account/);
+  assert.match(signUp, /Create your free Mishava Shopping account/);
   assert.match(signUp, /Create your Mishava NGO account/);
   assert.match(signUp, /Create your Mishava Business account/);
   assert.match(signUp, /Create your Mishava Local account/);

@@ -32,7 +32,7 @@ test("auth pages and actions cover sign-up, sign-in, sign-out, reset, update, an
   const signUpPage = read("src/app/auth/sign-up/page.tsx");
   assert.match(signUpPage, /signUpAction/);
   assert.match(signUpPage, /Create your Mishava NGO account/);
-  assert.match(signUpPage, /Create your Mishava Shopping account/);
+  assert.match(signUpPage, /Create your free Mishava Shopping account/);
   assert.match(signInPage, /redirect\(`\/\?\$\{target\.toString\(\)\}`\)/);
   assert.doesNotMatch(signInPage, /PageHeader|auth-grid|auth-card|Sign-in now opens/);
   assert.match(signInModal, /\/auth\/sign-in\/submit/);
