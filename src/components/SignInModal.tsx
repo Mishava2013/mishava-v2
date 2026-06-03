@@ -211,10 +211,11 @@ export function SignInModalController({
   );
   const currentSurface = inferAuthSurface(currentSurfacePath);
   const requestedNextSurface = inferAuthSurface(requestedNextPath);
+  const querySurface = safeAuthSurface(searchParams.get("surface"));
   const authSurface =
     manualSurface ??
-    safeAuthSurface(searchParams.get("surface")) ??
     currentSurface ??
+    querySurface ??
     requestedNextSurface;
   const nextPath =
     authSurface &&

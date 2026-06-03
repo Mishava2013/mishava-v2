@@ -26,11 +26,30 @@ function safeNextPath(value: FormDataEntryValue | null) {
   return path;
 }
 
+const authSurfaces = new Set([
+  "shopping",
+  "ngo",
+  "business",
+  "local",
+  "corporate",
+  "admin",
+  "support",
+  "trust",
+  "gov",
+  "app",
+]);
+
+function safeAuthSurface(value: FormDataEntryValue | null) {
+  const surface = String(value ?? "");
+  return authSurfaces.has(surface) ? surface : null;
+}
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const nextPath = safeNextPath(formData.get("next"));
+  const surface = safeAuthSurface(formData.get("surface"));
   const result = await signInWithPassword({ email, password });
 
   if (!result.ok || !result.accessToken) {
@@ -38,6 +57,9 @@ export async function POST(request: NextRequest) {
     redirectUrl.searchParams.set("signIn", "1");
     redirectUrl.searchParams.set("error", result.message);
     redirectUrl.searchParams.set("next", nextPath);
+    if (surface) {
+      redirectUrl.searchParams.set("surface", surface);
+    }
 
     return NextResponse.redirect(
       redirectUrl,

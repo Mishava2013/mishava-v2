@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { PageHeader } from "@/components/PageHeader";
 import { SignInModalButton } from "@/components/SignInModal";
 import { signUpAction } from "../actions";
@@ -17,6 +18,36 @@ const signUpSurfaces = new Set([
 
 function safeSignUpSurface(value: string | undefined) {
   return value && signUpSurfaces.has(value) ? value : null;
+}
+
+function surfaceFromHost(host: string | null) {
+  const hostname = host?.split(":")[0]?.toLowerCase() ?? "";
+  if (hostname === "mishava.org" || hostname === "www.mishava.org") {
+    return "shopping";
+  }
+  if (hostname.endsWith(".mishava.org")) {
+    return safeSignUpSurface(hostname.slice(0, -1 * ".mishava.org".length).split(".")[0]);
+  }
+  return null;
+}
+
+function surfaceFromNextPath(nextPath: string) {
+  if (
+    nextPath === "/" ||
+    nextPath.startsWith("/shopping") ||
+    nextPath.startsWith("/app/shopping-priorities")
+  ) {
+    return "shopping";
+  }
+  if (nextPath.startsWith("/ngo") || nextPath.startsWith("/org")) return "ngo";
+  if (nextPath.startsWith("/business")) return "business";
+  if (nextPath.startsWith("/local")) return "local";
+  if (nextPath.startsWith("/corporate")) return "corporate";
+  if (nextPath.startsWith("/admin")) return "admin";
+  if (nextPath.startsWith("/support")) return "support";
+  if (nextPath.startsWith("/methodology") || nextPath.startsWith("/legal")) return "trust";
+  if (nextPath.startsWith("/gov")) return "gov";
+  return null;
 }
 
 function getSignUpContext(nextPath: string, surface: string | null) {
@@ -276,17 +307,15 @@ export default async function SignUpPage({
   searchParams: Promise<{ error?: string; next?: string; surface?: string }>;
 }) {
   const params = await searchParams;
+  const headerStore = await headers();
   const nextPath =
     params.next && params.next.startsWith("/") && !params.next.startsWith("//")
       ? params.next
       : "/shopping";
   const signUpSurface =
-    safeSignUpSurface(params.surface) ??
-    (nextPath === "/" ||
-    nextPath.startsWith("/shopping") ||
-    nextPath.startsWith("/app/shopping-priorities")
-      ? "shopping"
-      : null);
+    surfaceFromHost(headerStore.get("host")) ??
+    surfaceFromNextPath(nextPath) ??
+    safeSignUpSurface(params.surface);
   const signUpContext = getSignUpContext(nextPath, signUpSurface);
 
   return (

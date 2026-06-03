@@ -69,7 +69,7 @@ export default async function CategoryPage({
                 Mishava. Click a product to see what Mishava found, what is
                 still missing, and why a final score is not shown yet.
               </p>
-              <Link href="/app/shopping-priorities">
+              <Link href="/?signIn=1&next=%2Fapp%2Fshopping-priorities&surface=shopping">
                 Already have an account? Sign in to set Shopping Priorities.
               </Link>
               <Link href="/auth/sign-up?next=%2Fapp%2Fshopping-priorities&surface=shopping">

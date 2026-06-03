@@ -520,7 +520,9 @@ test("Slice 12 Shopping Priorities explains preview limits and returns to toilet
     /best for Crohn|safe for Crohn|medical-safe|guaranteed non-irritating|medically recommended/i,
   );
   assert.match(shoppingPage, /Create a free Shopping account/);
-  assert.match(shoppingPage, /next=%2Fapp%2Fshopping-priorities&surface=shopping/);
+  assert.match(shoppingPage, /signIn=1&next=%2Fapp%2Fshopping-priorities&surface=shopping/);
+  assert.doesNotMatch(shoppingPage, /href="\/app\/shopping-priorities"/);
+  assert.doesNotMatch(categoryPage, /href="\/app\/shopping-priorities"/);
   assert.match(shoppingPage, /personal match previews/);
   assert.match(categoryPage, /Create a free Shopping account for personal match previews/);
 });

@@ -162,7 +162,7 @@ export default async function ShoppingPage({
               intentional: Mishava shows what it found and what it still needs
               instead of making up a number.
             </p>
-            <Link href="/app/shopping-priorities">
+            <Link href="/?signIn=1&next=%2Fapp%2Fshopping-priorities&surface=shopping">
               Already have an account? Sign in to set Shopping Priorities.
             </Link>
             <Link href="/auth/sign-up?next=%2Fapp%2Fshopping-priorities&surface=shopping">

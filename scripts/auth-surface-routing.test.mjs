@@ -20,6 +20,7 @@ test("all public sign-in entry points use the shared popup and preserve page con
   assert.match(modal, /getCurrentSurfaceRoot/);
   assert.match(modal, /safeAuthSurface/);
   assert.match(modal, /inferAuthSurface/);
+  assert.match(modal, /currentSurface \?\?/);
   assert.match(modal, /shopping: "\/shopping"/);
   assert.match(modal, /ngo: "\/ngo"/);
   assert.match(modal, /business: "\/business"/);
@@ -43,6 +44,9 @@ test("sign-up page chooses product-line copy from explicit surface before next p
 
   assert.match(signUp, /function getSignUpContext/);
   assert.match(signUp, /safeSignUpSurface/);
+  assert.match(signUp, /surfaceFromHost/);
+  assert.match(signUp, /surfaceFromNextPath/);
+  assert.match(signUp, /headers\(\)/);
   assert.match(signUp, /surface === "shopping"/);
   assert.match(signUp, /surface === "ngo"/);
   assert.match(signUp, /Create your free Mishava Shopping account/);
@@ -66,6 +70,31 @@ test("sign-up page chooses product-line copy from explicit surface before next p
   assert.match(actions, /surfaceQuery/);
   assert.match(actions, /redirect\(nextPath \?\? "\/app"\)/);
   assert.doesNotMatch(actions, /nextPath \?\? "\/ngo\/onboarding/);
+});
+
+test("shopping auth routes cannot be poisoned by stale NGO surface context", () => {
+  const modal = read("src/components/SignInModal.tsx");
+  const signUp = read("src/app/auth/sign-up/page.tsx");
+  const middleware = read("middleware.ts");
+  const submitRoute = read("src/app/auth/sign-in/submit/route.ts");
+  const shoppingPage = read("src/app/shopping/page.tsx");
+  const categoryPage = read("src/app/shopping/categories/[slug]/page.tsx");
+
+  assert.match(modal, /currentSurface \?\?\s+querySurface/);
+  assert.match(signUp, /surfaceFromHost\(headerStore\.get\("host"\)\) \?\?/);
+  assert.match(signUp, /surfaceFromNextPath\(nextPath\) \?\?/);
+  assert.match(middleware, /surfaceForNextPath/);
+  assert.match(middleware, /url\.searchParams\.set\("surface", surface\)/);
+  assert.match(submitRoute, /safeAuthSurface/);
+  assert.match(submitRoute, /redirectUrl\.searchParams\.set\("surface", surface\)/);
+  assert.doesNotMatch(
+    shoppingPage + categoryPage,
+    /href="\/app\/shopping-priorities"/,
+  );
+  assert.match(
+    shoppingPage + categoryPage,
+    /signIn=1&next=%2Fapp%2Fshopping-priorities&surface=shopping/,
+  );
 });
 
 test("password reset sign-in links preserve the same page context", () => {
