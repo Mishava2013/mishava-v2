@@ -92,12 +92,16 @@ export async function signInAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const nextPath = safeAuthNextPath(formData.get("next"));
+  const surface = safeAuthSurface(formData.get("surface"));
 
   const result = await signInWithPassword({ email, password });
 
   if (!result.ok || !result.accessToken) {
     const nextQuery = nextPath ? `&next=${encodeURIComponent(nextPath)}` : "";
-    redirect(`/?signIn=1&error=${encodeURIComponent(result.message)}${nextQuery}`);
+    const surfaceQuery = surface ? `&surface=${encodeURIComponent(surface)}` : "";
+    redirect(
+      `/?signIn=1&error=${encodeURIComponent(result.message)}${nextQuery}${surfaceQuery}`,
+    );
   }
 
   await setSupabaseAuthCookies({

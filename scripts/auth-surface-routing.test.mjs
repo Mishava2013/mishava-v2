@@ -75,6 +75,7 @@ test("sign-up page chooses product-line copy from explicit surface before next p
 test("shopping auth routes cannot be poisoned by stale NGO surface context", () => {
   const modal = read("src/components/SignInModal.tsx");
   const signUp = read("src/app/auth/sign-up/page.tsx");
+  const authActions = read("src/app/auth/actions.ts");
   const middleware = read("middleware.ts");
   const submitRoute = read("src/app/auth/sign-in/submit/route.ts");
   const shoppingPage = read("src/app/shopping/page.tsx");
@@ -87,6 +88,8 @@ test("shopping auth routes cannot be poisoned by stale NGO surface context", () 
   assert.match(middleware, /url\.searchParams\.set\("surface", surface\)/);
   assert.match(submitRoute, /safeAuthSurface/);
   assert.match(submitRoute, /redirectUrl\.searchParams\.set\("surface", surface\)/);
+  assert.match(authActions, /const surface = safeAuthSurface\(formData\.get\("surface"\)\)/);
+  assert.match(authActions, /surfaceQuery/);
   assert.doesNotMatch(
     shoppingPage + categoryPage,
     /href="\/app\/shopping-priorities"/,
