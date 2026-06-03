@@ -64,10 +64,22 @@ export function SignInModalButton({
   nextPath,
   ...buttonProps
 }: SignInModalButtonProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   return (
     <button
       className={className}
       onClick={() => {
+        if (pathname === "/auth/sign-up") {
+          const target = new URLSearchParams({ signIn: "1" });
+          const safeNext = safeNextPath(nextPath ?? searchParams.get("next"), "/app");
+          target.set("next", safeNext);
+          router.push(`/?${target.toString()}`);
+          return;
+        }
+
         window.dispatchEvent(
           new CustomEvent<OpenDetail>(signInEventName, {
             detail: { nextPath },
