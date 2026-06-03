@@ -22,6 +22,21 @@ type OpenDetail = {
 };
 
 const signInEventName = "mishava:open-sign-in";
+const authQueryKeys = ["signIn", "auth", "error", "notice", "next"];
+const hostRootSurfacePaths: Record<string, string> = {
+  shopping: "/shopping",
+  ngo: "/ngo",
+  business: "/business",
+  corporate: "/corporate",
+  app: "/app",
+  support: "/support",
+  trust: "/methodology",
+  admin: "/admin",
+  api: "/api",
+  gov: "/gov",
+  research: "/research",
+  media: "/media",
+};
 
 function safeNextPath(value: string | null | undefined, fallback: string) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
@@ -56,6 +71,27 @@ function statusMessage(error?: string | null, notice?: string | null) {
   }
 
   return null;
+}
+
+function getCurrentSurfaceRoot(pathname: string) {
+  if (pathname !== "/" || typeof window === "undefined") {
+    return pathname;
+  }
+
+  const hostname = window.location.hostname.toLowerCase();
+  const subdomain = hostname.endsWith(".mishava.org")
+    ? hostname.slice(0, -1 * ".mishava.org".length).split(".")[0]
+    : null;
+
+  return (subdomain ? hostRootSurfacePaths[subdomain] : null) ?? pathname;
+}
+
+function stripAuthParams(searchParams: URLSearchParams) {
+  const params = new URLSearchParams(searchParams.toString());
+  for (const key of authQueryKeys) {
+    params.delete(key);
+  }
+  return params;
 }
 
 export function SignInModalButton({
@@ -111,22 +147,25 @@ export function SignInModalController({
     pathname === "/auth/sign-in" ||
     searchParams.has("signIn") ||
     searchParams.has("auth");
-  const currentQuery = searchParams.toString();
-  const currentPathWithQuery = currentQuery ? `${pathname}?${currentQuery}` : pathname;
+  const pageParams = stripAuthParams(searchParams);
+  const pageQuery = pageParams.toString();
+  const currentSurfacePath =
+    pathname === "/auth/sign-in" ? fallbackPath : getCurrentSurfaceRoot(pathname);
+  const currentPathWithQuery = pageQuery
+    ? `${currentSurfacePath}?${pageQuery}`
+    : currentSurfacePath;
   const open = manualOpen || queryWantsSignIn;
   const nextPath = safeNextPath(
     manualNextPath ?? searchParams.get("next"),
-    queryWantsSignIn ? "/app" : currentPathWithQuery,
+    currentPathWithQuery,
   );
   const message = statusMessage(searchParams.get("error"), searchParams.get("notice"));
 
   const cleanedUrl = useMemo(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    for (const key of ["signIn", "auth", "error", "notice", "next"]) {
-      params.delete(key);
-    }
+    const params = stripAuthParams(searchParams);
     const query = params.toString();
-    const targetPath = pathname === "/auth/sign-in" ? fallbackPath : pathname;
+    const targetPath =
+      pathname === "/auth/sign-in" ? fallbackPath : getCurrentSurfaceRoot(pathname);
     return query ? `${targetPath}?${query}` : targetPath;
   }, [fallbackPath, pathname, searchParams]);
 
@@ -249,7 +288,9 @@ export function SignInModalController({
           Sign in
         </button>
         <div className="auth-links">
-          <Link href="/auth/reset-password">Reset password</Link>
+          <Link href={`/auth/reset-password?next=${encodeURIComponent(nextPath)}`}>
+            Reset password
+          </Link>
           <button className="link-button" onClick={goToCreateAccount} type="button">
             Create account
           </button>

@@ -6,9 +6,13 @@ import { requestPasswordResetAction } from "../actions";
 export default async function ResetPasswordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const params = await searchParams;
+  const nextPath =
+    params.next && params.next.startsWith("/") && !params.next.startsWith("//")
+      ? params.next
+      : "/app";
 
   return (
     <>
@@ -32,7 +36,7 @@ export default async function ResetPasswordPage({
             <SignInModalButton
               aria-label="Back to sign in"
               className="link-button"
-              nextPath="/app"
+              nextPath={nextPath}
             >
               Back to sign in
             </SignInModalButton>

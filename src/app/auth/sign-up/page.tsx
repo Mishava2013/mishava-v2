@@ -3,6 +3,19 @@ import { SignInModalButton } from "@/components/SignInModal";
 import { signUpAction } from "../actions";
 
 function getSignUpContext(nextPath: string) {
+  if (nextPath.startsWith("/admin")) {
+    return {
+      eyebrow: "Internal account access",
+      title: "Create your Mishava internal account.",
+      body:
+        "Use this account only for approved Mishava internal tools. Admin access still requires separate authorization.",
+      message:
+        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to your internal Mishava tools after confirming your email.",
+      button: "Create internal account",
+      signInLabel: "Already approved? Sign in",
+    };
+  }
+
   if (nextPath.startsWith("/ngo") || nextPath.startsWith("/org")) {
     return {
       eyebrow: "NGO account access",
@@ -13,6 +26,84 @@ function getSignUpContext(nextPath: string) {
         "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to the NGO workspace after confirming your email.",
       button: "Create NGO account",
       signInLabel: "Already approved? Sign in",
+    };
+  }
+
+  if (nextPath.startsWith("/business")) {
+    return {
+      eyebrow: "Business account access",
+      title: "Create your Mishava Business account.",
+      body:
+        "Use this account for business profile tools and future catalog workflows. Payment never changes trust outcomes, ranking, verification, or credibility labels.",
+      message:
+        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Business after confirming your email.",
+      button: "Create Business account",
+      signInLabel: "Already have a Business account?",
+    };
+  }
+
+  if (nextPath.startsWith("/local")) {
+    return {
+      eyebrow: "Local account access",
+      title: "Create your Mishava Local account.",
+      body:
+        "Use this account for local profile tools when they become available. Mishava does not sell ranking, visibility, or trust outcomes.",
+      message:
+        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Local after confirming your email.",
+      button: "Create Local account",
+      signInLabel: "Already have a Local account?",
+    };
+  }
+
+  if (nextPath.startsWith("/corporate")) {
+    return {
+      eyebrow: "Corporate account access",
+      title: "Create your Mishava Corporate account.",
+      body:
+        "Use this account for institutional review tools when available. Evidence, supplier transparency, and audit context stay separate from payment.",
+      message:
+        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Corporate after confirming your email.",
+      button: "Create Corporate account",
+      signInLabel: "Already have a Corporate account?",
+    };
+  }
+
+  if (nextPath.startsWith("/gov")) {
+    return {
+      eyebrow: "Government account access",
+      title: "Create your Mishava Government account.",
+      body:
+        "Use this account only for future public-sector workflows when they are ready. Mishava does not claim government authorization or compliance certification.",
+      message:
+        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Government after confirming your email.",
+      button: "Create Government account",
+      signInLabel: "Already have a Government account?",
+    };
+  }
+
+  if (nextPath.startsWith("/support")) {
+    return {
+      eyebrow: "Support account access",
+      title: "Create your Mishava Support account.",
+      body:
+        "Use this account for support-related workflows when account access is needed. Support access does not change trust outcomes.",
+      message:
+        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Support after confirming your email.",
+      button: "Create Support account",
+      signInLabel: "Already have a Support account?",
+    };
+  }
+
+  if (nextPath.startsWith("/methodology") || nextPath.startsWith("/legal")) {
+    return {
+      eyebrow: "Trust account access",
+      title: "Create your Mishava Trust account.",
+      body:
+        "Use this account for saved Mishava tools while trust, methodology, legal, and transparency pages remain publicly readable.",
+      message:
+        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Mishava Trust after confirming your email.",
+      button: "Create Trust account",
+      signInLabel: "Already have a Mishava account?",
     };
   }
 

@@ -454,6 +454,11 @@ test("Slice 12 account flow preserves Shopping return paths for first-user setup
   assert.match(modal, /auth\/sign-up\?next=/);
   assert.match(modal, /pathname === "\/auth\/sign-up"/);
   assert.match(modal, /window\.location\.search/);
+  assert.match(modal, /getCurrentSurfaceRoot/);
+  assert.match(modal, /hostRootSurfacePaths/);
+  assert.match(modal, /shopping: "\/shopping"/);
+  assert.match(modal, /stripAuthParams/);
+  assert.doesNotMatch(modal, /queryWantsSignIn \? "\/app"/);
   assert.match(modal, /router\.push\(`\/\?\$\{target\.toString\(\)\}`\)/);
   assert.match(modal, /Sign in here and keep your place/);
   assert.match(signUp, /getSignUpContext/);
@@ -463,6 +468,12 @@ test("Slice 12 account flow preserves Shopping return paths for first-user setup
   assert.match(signUp, /Create Shopping account/);
   assert.match(signUp, /Already have a Shopping account/);
   assert.match(signUp, /You can browse Shopping without an account/);
+  assert.match(signUp, /Create your Mishava Business account/);
+  assert.match(signUp, /Create your Mishava Local account/);
+  assert.match(signUp, /Create your Mishava Corporate account/);
+  assert.match(signUp, /Create your Mishava Government account/);
+  assert.match(signUp, /Create your Mishava Support account/);
+  assert.match(signUp, /Create your Mishava Trust account/);
   assert.match(signUp, /name="next"/);
   assert.match(signUp, /return to Shopping after confirming your email/);
   assert.match(signIn, /redirect\(`\/\?\$\{target\.toString\(\)\}`\)/);

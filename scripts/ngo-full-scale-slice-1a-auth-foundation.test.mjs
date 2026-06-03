@@ -40,6 +40,8 @@ test("auth pages and actions cover sign-up, sign-in, sign-out, reset, update, an
   assert.match(signInModal, /mishava:open-sign-in/);
   assert.match(signInModal, /pathname === "\/auth\/sign-up"/);
   assert.match(signInModal, /window\.location\.search/);
+  assert.match(signInModal, /ngo: "\/ngo"/);
+  assert.match(signInModal, /stripAuthParams/);
   assert.match(signInModal, /router\.push\(`\/\?\$\{target\.toString\(\)\}`\)/);
   assert.match(read("src/app/auth/sign-in/submit/route.ts"), /signInWithPassword/);
   assert.match(
@@ -53,13 +55,8 @@ test("auth pages and actions cover sign-up, sign-in, sign-out, reset, update, an
   assert.match(actions, /setSupabaseAuthCookies/);
   assert.match(actions, /clearAuthCookies/);
   assert.doesNotMatch(read("src/components/SiteShell.tsx"), /href="\/auth\/sign-in"/);
-  assert.match(ngoSignIn, /Inside the workspace/);
-  assert.match(ngoSignIn, /Keep the reporting picture in one place/);
-  assert.match(ngoSignIn, /SignInModalButton/);
-  assert.match(ngoSignIn, /\/auth\/sign-up\?next=\/ngo\/onboarding/);
-  assert.match(ngoSignIn, /Create NGO account/);
-  assert.match(ngoSignIn, /<h3>\{step\.title\}<\/h3>/);
-  assert.doesNotMatch(ngoSignIn, /\{step\.number\}\. \{step\.title\}/);
+  assert.match(ngoSignIn, /redirect\("\/ngo\?signIn=1&next=\/ngo"\)/);
+  assert.doesNotMatch(ngoSignIn, /Mishava for NGOs|Inside the workspace|SignInModalButton|Create NGO account/);
 });
 
 test("route protection bridges Supabase Auth tokens before falling back to temporary cookie sessions", () => {
