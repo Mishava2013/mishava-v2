@@ -66,7 +66,6 @@ export function SignInModalButton({
 }: SignInModalButtonProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   return (
     <button
@@ -74,7 +73,8 @@ export function SignInModalButton({
       onClick={() => {
         if (pathname === "/auth/sign-up") {
           const target = new URLSearchParams({ signIn: "1" });
-          const safeNext = safeNextPath(nextPath ?? searchParams.get("next"), "/app");
+          const currentParams = new URLSearchParams(window.location.search);
+          const safeNext = safeNextPath(nextPath ?? currentParams.get("next"), "/app");
           target.set("next", safeNext);
           router.push(`/?${target.toString()}`);
           return;

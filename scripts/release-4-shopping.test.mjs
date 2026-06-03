@@ -453,6 +453,7 @@ test("Slice 12 account flow preserves Shopping return paths for first-user setup
 
   assert.match(modal, /auth\/sign-up\?next=/);
   assert.match(modal, /pathname === "\/auth\/sign-up"/);
+  assert.match(modal, /window\.location\.search/);
   assert.match(modal, /router\.push\(`\/\?\$\{target\.toString\(\)\}`\)/);
   assert.match(modal, /Sign in here and keep your place/);
   assert.match(signUp, /Create your Mishava account/);
