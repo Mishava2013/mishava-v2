@@ -1,3 +1,4 @@
+import { AuthHashSessionBridge } from "@/components/AuthHashSessionBridge";
 import { PageHeader } from "@/components/PageHeader";
 import { updatePasswordAction } from "../actions";
 
@@ -11,11 +12,12 @@ export default async function UpdatePasswordPage({
   return (
     <>
       <PageHeader eyebrow="Account recovery" title="Choose a new password.">
-        This page uses the current verified Supabase Auth session. If your reset
-        link did not create a session, sign in again and request a new link.
+        If you opened this from your email, Mishava will check the link first.
+        Then choose a new password with at least 6 characters.
       </PageHeader>
       <section className="auth-grid">
         <form action={updatePasswordAction} className="auth-card">
+          <AuthHashSessionBridge readyMessage="Your reset link is ready. Choose a new password." />
           {params.error ? (
             <p className="form-message error">{decodeURIComponent(params.error)}</p>
           ) : null}

@@ -50,14 +50,19 @@ export async function signUpWithPassword({
   password: string;
   redirectTo?: string;
 }): Promise<SupabaseAuthResult> {
-  const response = await authRequest<SupabaseAuthResponse>("/signup", {
-    method: "POST",
-    body: JSON.stringify({
-      email,
-      password,
-      options: redirectTo ? { email_redirect_to: redirectTo } : undefined,
-    }),
-  });
+  if (!isSupabaseAuthConfigured()) return authNotConfiguredResult();
+
+  const response = await authRequest<SupabaseAuthResponse>(
+    withRedirectTo("/signup", redirectTo),
+    {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        password,
+        options: redirectTo ? { email_redirect_to: redirectTo } : undefined,
+      }),
+    },
+  );
 
   return normalizeAuthResponse(response, "Sign-up request submitted.");
 }
@@ -69,6 +74,8 @@ export async function signInWithPassword({
   email: string;
   password: string;
 }): Promise<SupabaseAuthResult> {
+  if (!isSupabaseAuthConfigured()) return authNotConfiguredResult();
+
   const response = await authRequest<SupabaseAuthResponse>(
     "/token?grant_type=password",
     {
@@ -87,13 +94,17 @@ export async function requestPasswordReset({
   email: string;
   redirectTo?: string;
 }): Promise<SupabaseAuthResult> {
-  const response = await authRequest<SupabaseAuthResponse>("/recover", {
-    method: "POST",
-    body: JSON.stringify({
-      email,
-      gotrue_meta_security: redirectTo ? { redirect_to: redirectTo } : undefined,
-    }),
-  });
+  if (!isSupabaseAuthConfigured()) return authNotConfiguredResult();
+
+  const response = await authRequest<SupabaseAuthResponse>(
+    withRedirectTo("/recover", redirectTo),
+    {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+      }),
+    },
+  );
 
   return normalizeAuthResponse(response, "Password reset requested.");
 }
@@ -105,6 +116,8 @@ export async function updatePasswordWithToken({
   accessToken: string;
   password: string;
 }): Promise<SupabaseAuthResult> {
+  if (!isSupabaseAuthConfigured()) return authNotConfiguredResult();
+
   const response = await authRequest<SupabaseAuthResponse>(
     "/user",
     {
@@ -115,6 +128,21 @@ export async function updatePasswordWithToken({
   );
 
   return normalizeAuthResponse(response, "Password updated.");
+}
+
+function withRedirectTo(path: string, redirectTo?: string) {
+  if (!redirectTo) return path;
+
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}redirect_to=${encodeURIComponent(redirectTo)}`;
+}
+
+function authNotConfiguredResult(): SupabaseAuthResult {
+  return {
+    ok: false,
+    message:
+      "Account email is not fully configured yet. Please contact support@mishava.org for help.",
+  };
 }
 
 export async function signOutAccessToken(accessToken?: string | null) {

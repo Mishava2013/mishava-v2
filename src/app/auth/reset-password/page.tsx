@@ -13,8 +13,8 @@ export default async function ResetPasswordPage({
   return (
     <>
       <PageHeader eyebrow="Account recovery" title="Reset your password.">
-        Enter the email for your Mishava account. If the account exists,
-        Supabase Auth will send password reset instructions.
+        Enter the email for your Mishava account. If the account exists, Mishava
+        will send password reset instructions.
       </PageHeader>
       <section className="auth-grid">
         <form action={requestPasswordResetAction} className="auth-card">

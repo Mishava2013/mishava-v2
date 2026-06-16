@@ -27,9 +27,11 @@ test("auth pages and actions cover sign-up, sign-in, sign-out, reset, update, an
   const actions = read("src/app/auth/actions.ts");
   const ngoSignIn = read("src/app/ngo/sign-in/page.tsx");
   const signInModal = read("src/components/SignInModal.tsx");
+  const signInPage = read("src/app/auth/sign-in/page.tsx");
 
   assert.match(read("src/app/auth/sign-up/page.tsx"), /signUpAction/);
-  assert.match(read("src/app/auth/sign-in/page.tsx"), /popup/);
+  assert.match(signInPage, /redirect\(`\/\?\$\{target\.toString\(\)\}`\)/);
+  assert.doesNotMatch(signInPage, /PageHeader|auth-grid|auth-card|Sign-in now opens/);
   assert.match(signInModal, /\/auth\/sign-in\/submit/);
   assert.match(signInModal, /aria-modal="true"/);
   assert.match(signInModal, /mishava:open-sign-in/);
@@ -38,12 +40,23 @@ test("auth pages and actions cover sign-up, sign-in, sign-out, reset, update, an
     read("src/app/auth/sign-in/submit/route.ts"),
     /supabaseAccessTokenCookieName/,
   );
+  assert.match(read("src/app/auth/session/route.ts"), /supabaseAccessTokenCookieName/);
+  assert.match(read("src/app/auth/session/route.ts"), /supabaseRefreshTokenCookieName/);
+  assert.match(read("src/components/AuthHashSessionBridge.tsx"), /window\.location\.hash/);
+  assert.match(read("src/components/AuthHashSessionBridge.tsx"), /\/auth\/session/);
   assert.match(read("src/app/auth/sign-out/page.tsx"), /signOutAction/);
   assert.match(read("src/app/auth/reset-password/page.tsx"), /requestPasswordResetAction/);
+  assert.doesNotMatch(read("src/app/auth/reset-password/page.tsx"), /Supabase Auth will send/);
   assert.match(read("src/app/auth/update-password/page.tsx"), /updatePasswordAction/);
+  assert.match(read("src/app/auth/update-password/page.tsx"), /AuthHashSessionBridge/);
   assert.match(read("src/app/auth/callback/page.tsx"), /Email verification/);
+  assert.match(read("src/app/auth/callback/page.tsx"), /AuthHashSessionBridge/);
+  assert.doesNotMatch(read("src/app/auth/callback/page.tsx"), /Slice 1A|later auth/);
   assert.match(actions, /setSupabaseAuthCookies/);
   assert.match(actions, /clearAuthCookies/);
+  assert.match(read("src/lib/supabase/auth.ts"), /withRedirectTo\("\/recover", redirectTo\)/);
+  assert.match(read("src/lib/supabase/auth.ts"), /redirect_to=\$\{encodeURIComponent\(redirectTo\)\}/);
+  assert.match(read("src/lib/supabase/auth.ts"), /authNotConfiguredResult/);
   assert.doesNotMatch(read("src/components/SiteShell.tsx"), /href="\/auth\/sign-in"/);
   assert.match(ngoSignIn, /Inside the workspace/);
   assert.match(ngoSignIn, /Keep the reporting picture in one place/);
@@ -60,6 +73,8 @@ test("route protection bridges Supabase Auth tokens before falling back to tempo
   assert.match(middleware, /readMiddlewareSupabaseSession/);
   assert.match(middleware, /parseSessionCookieValue/);
   assert.match(middleware, /isAdminSession\(session\)/);
+  assert.match(middleware, /url\.pathname = "\/"/);
+  assert.doesNotMatch(middleware, /url\.pathname = "\/auth\/sign-in"/);
   assert.match(authServer, /getAuthSessionFromAccessToken/);
   assert.match(authServer, /parseSessionCookieValue/);
   assert.match(authServer, /currentOrganizationCookieName/);
