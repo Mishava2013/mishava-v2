@@ -19,7 +19,7 @@ test("report owner can create scoped share grant and non-members are blocked by 
   assert.match(helper, /Share grants can only be created for private reports owned by this organization/);
   assert.match(helper, /visibility: "approved_viewer"/);
   assert.match(helper, /status: "active"/);
-  assert.match(page, /Create scoped share grant/);
+  assert.match(page, /Create share link/);
 });
 
 test("share grant migration stores organization, recipient name, and status", () => {
@@ -81,8 +81,8 @@ test("private reports remain private unless grant exists and no public report li
   assert.match(orgPage, /Private to your organization/);
   assert.match(orgPage, /Not shared/);
   assert.match(orgPage, /Shared/);
-  assert.match(orgPage, /Revoked/);
-  assert.match(orgPage, /Expires/);
+  assert.match(orgPage, /That link no longer works/);
+  assert.match(orgPage, /Link stops working on/);
   assert.match(orgPage, /Raw files are private by default/);
   assert.throws(() => read("src/app/reports/page.tsx"));
   assert.throws(() => read("src/app/shared/ngo-reports/page.tsx"));

@@ -82,9 +82,9 @@ test("report creation writes audit event and does not expose reports publicly by
   assert.match(helper, /subjectTable: "ngo_reports"/);
   assert.match(reportsPage, /Raw evidence remains private/);
   assert.match(reportsPage, /Reports are private by default/);
-  assert.match(reportsPage, /No score\s+is invented/);
-  assert.match(reportsPage, /Exports\/sharing/);
-  assert.match(reportsPage, /Not enabled/);
+  assert.match(reportsPage, /does not invent a score/);
+  assert.match(reportsPage, /Sharing/);
+  assert.match(reportsPage, /Open report to share/);
 });
 
 test("Slice 3 does not add fake scores, AI workflows, or shopping scope", () => {

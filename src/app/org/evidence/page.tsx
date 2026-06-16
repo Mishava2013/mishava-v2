@@ -34,9 +34,10 @@ export default async function OrgEvidencePage({
 
   return (
     <>
-      <PageHeader eyebrow="Evidence" title="Evidence intake and source tracking.">
-        Organizations will upload documents, photos, references, attestations, and
-        public records. AI may parse facts, but humans confirm review outcomes.
+      <PageHeader eyebrow="Evidence" title="Add evidence and source notes.">
+        Add documents, links, photos, and notes that support your NGO reports.
+        AI may help draft notes later, but a person must review anything before
+        it supports a report.
       </PageHeader>
 
       {params.created ? (
@@ -59,15 +60,12 @@ export default async function OrgEvidencePage({
       <section className="section">
         <h2>Evidence library</h2>
         <p className="section-intro">
-          Draft evidence appears here with its visibility, review status, linked
-          structured claims, and audit trail indicator. This is still a beta
-          workflow: evidence can support reports only after claims are reviewed.
-          Raw files are private to your organization and are not shared by
-          default. New uploads are pending/not scanned until a scanner or
-          authorized review clears them; quarantined or rejected files are
-          blocked from new reports, exports, and sharing by default. AI
-          suggestions, when present, are private draft assistance only and do
-          not become verified facts or trust outcomes without human review.
+          Evidence is private to your organization unless you choose to share a
+          report. New files are held for review until a scanner or authorized
+          person clears them. Files that are still being checked or rejected are
+          blocked from new reports, downloads, and sharing by default. AI
+          suggestions, when present, are private draft help only and do not
+          become verified facts or trust outcomes without human review.
         </p>
 
         {evidenceLibrary.length === 0 ? (
@@ -108,8 +106,12 @@ export default async function OrgEvidencePage({
                     <strong>{item.reviewLabel}</strong>
                   </div>
                   <div className="metric">
-                    <span>Lifecycle</span>
-                    <strong>{item.lifecycle_status}</strong>
+                    <span>Use status</span>
+                    <strong>
+                      {item.lifecycle_status === "archived"
+                        ? "Hidden from active evidence"
+                        : item.lifecycle_status}
+                    </strong>
                   </div>
                   <div className="metric">
                     <span>Files</span>
@@ -168,7 +170,11 @@ export default async function OrgEvidencePage({
                       {item.fileSummaries.map((file) => (
                         <li key={file.id}>
                           {file.original_filename} · v{file.version_number} ·{" "}
-                          {file.status} · {file.scan_status} ·{" "}
+                          {file.status} ·{" "}
+                          {file.scan_status === "quarantined"
+                            ? "held for review"
+                            : file.scan_status}{" "}
+                          ·{" "}
                           {Math.round(file.file_size_bytes / 1024)} KB
                           {file.quarantine_reason
                             ? ` · ${file.quarantine_reason}`
@@ -235,7 +241,7 @@ export default async function OrgEvidencePage({
 
                 {canManageEvidence && item.lifecycle_status !== "archived" ? (
                   <details className="inline-workflow">
-                    <summary>Edit evidence metadata</summary>
+                    <summary>Edit evidence details</summary>
                     <form action={updateEvidenceMetadataAction} className="form-grid compact-form">
                       <input name="evidenceItemId" type="hidden" value={item.id} />
                       <div className="field">
@@ -251,7 +257,7 @@ export default async function OrgEvidencePage({
                         <input id={`edit-type-${item.id}`} name="sourceType" defaultValue={item.source_type} required />
                       </div>
                       <div className="field">
-                        <label htmlFor={`edit-lifecycle-${item.id}`}>Lifecycle</label>
+                        <label htmlFor={`edit-lifecycle-${item.id}`}>Use status</label>
                         <select id={`edit-lifecycle-${item.id}`} name="lifecycleStatus" defaultValue={item.lifecycle_status}>
                           <option value="draft">Draft</option>
                           <option value="submitted">Submitted</option>
@@ -428,7 +434,7 @@ export default async function OrgEvidencePage({
             </select>
           </div>
           <div className="field">
-            <label htmlFor="lifecycle-status">Lifecycle status</label>
+            <label htmlFor="lifecycle-status">Use status</label>
             <select id="lifecycle-status" name="lifecycleStatus" defaultValue="draft">
               <option value="draft">Draft</option>
               <option value="submitted">Submitted</option>
@@ -452,7 +458,7 @@ export default async function OrgEvidencePage({
               up to 10 MB. Shared reports expose selected summaries unless a
               future explicit raw-file sharing control is added and used.
               Upload acceptance does not mean a file is malware-free, reviewed,
-              or accepted for trust context.
+              or accepted for a report.
             </p>
           </div>
           <div className="field full">
@@ -478,8 +484,8 @@ export default async function OrgEvidencePage({
           <div className="card" key={type}>
             <h3>{type}</h3>
             <p>
-              Each item stores source, submitter, confidence, visibility,
-              review state, and whether AI extraction needs human confirmation.
+              Each item stores the source, who submitted it, who can see it,
+              review state, and whether AI help needs human confirmation.
             </p>
           </div>
         ))}

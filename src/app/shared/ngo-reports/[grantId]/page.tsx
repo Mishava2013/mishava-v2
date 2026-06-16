@@ -173,7 +173,7 @@ export default async function SharedNgoReportPage({
                 </p>
                 <dl className="detail-list">
                   <div>
-                    <dt>Lifecycle</dt>
+                    <dt>Use status</dt>
                     <dd>{item.lifecycle_status}</dd>
                   </div>
                   <div>

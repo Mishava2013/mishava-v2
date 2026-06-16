@@ -137,6 +137,26 @@ export default async function ProductPage({
         })),
       ].filter(Boolean) as EvidenceSourceCard[])
     : [];
+  const reportProblemHref = product
+    ? `mailto:support@mishava.org?subject=${encodeURIComponent(
+        `Shopping product issue: ${product.name}`,
+      )}&body=${encodeURIComponent(
+        [
+          `Product: ${product.name}`,
+          `Page: /shopping/products/${product.slug}`,
+          "",
+          "What looks wrong?",
+          "- Wrong product details",
+          "- Missing company, manufacturer, or supplier information",
+          "- Broken source or retailer link",
+          "- Outdated source",
+          "- Bad or confusing image",
+          "- Confusing evidence or score-pending language",
+          "",
+          "Please describe the problem:",
+        ].join("\n"),
+      )}`
+    : "/support";
 
   return (
     <>
@@ -212,12 +232,20 @@ export default async function ProductPage({
                 <strong>{product.source_name ?? "Not listed"}</strong>
               </div>
               <div className="metric">
-                <span>Manufacturer info</span>
-                <strong>{product.manufacturer_confidence}</strong>
+                <span>Maker information</span>
+                <strong>
+                  {product.manufacturer_confidence === "unknown"
+                    ? "Not found yet"
+                    : product.manufacturer_confidence}
+                </strong>
               </div>
               <div className="metric">
-                <span>Supplier info</span>
-                <strong>{product.supplier_confidence}</strong>
+                <span>Supplier information</span>
+                <strong>
+                  {product.supplier_confidence === "unknown"
+                    ? "Not found yet"
+                    : product.supplier_confidence}
+                </strong>
               </div>
               <div className="metric">
                 <span>Freshness</span>
@@ -242,9 +270,9 @@ export default async function ProductPage({
             <p className="storefront-kicker">Where to buy</p>
             <h3>Retailer links are source records.</h3>
             <p>
-              Mishava does not sell this product or provide checkout. These
-              links go to outside retailer or source pages, and they are not
-              sorted by commission.
+              Mishava does not sell this product. These links go to outside
+              retailer or source pages. Companies cannot pay Mishava to move a
+              product higher.
             </p>
             {placesToBuy.length > 0 ? (
               <div className="simple-list">
@@ -388,16 +416,16 @@ export default async function ProductPage({
                   <div>
                     <h4>What Mishava is checking</h4>
                     <p>
-                      These dimensions are preview signals only. They do not
-                      create a final score, and unreviewed research tasks do not
-                      become score facts.
+                      These checks are early notes only. They do not create a
+                      final score, and unreviewed research notes do not become
+                      score facts.
                     </p>
                     <table className="table">
                       <thead>
                         <tr>
-                          <th>Dimension</th>
+                          <th>Question</th>
                           <th>Status</th>
-                          <th>Evidence context</th>
+                          <th>What this means</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -414,9 +442,9 @@ export default async function ProductPage({
                   <div>
                     <h4>Source details</h4>
                     <p>
-                      Mishava separates product, company, supplier, and seller
-                      evidence. A source can support one claim while leaving
-                      other claims unproven.
+                      A source can prove one thing and leave other things
+                      unanswered. Mishava keeps product, company, maker,
+                      supplier, and seller information separate.
                     </p>
                     <div className="card-grid">
                       {evidenceSources.map((source) => (
@@ -565,6 +593,28 @@ export default async function ProductPage({
           </>
         )}
       </section>
+      {product ? (
+        <section className="section">
+          <div className="card">
+            <p className="storefront-kicker">Help us fix mistakes</p>
+            <h2>Report a problem with this product</h2>
+            <p>
+              Tell us if a product detail looks wrong, a source link is broken,
+              a supplier is missing, an image looks misleading, or the evidence
+              is confusing. Reporting a problem does not change scores or
+              ranking; it starts a review.
+            </p>
+            <div className="status-row">
+              <Link className="button primary" href={reportProblemHref}>
+                Report a problem
+              </Link>
+              <Link className="button" href="/legal/corrections">
+                How corrections work
+              </Link>
+            </div>
+          </div>
+        </section>
+      ) : null}
     </>
   );
 }

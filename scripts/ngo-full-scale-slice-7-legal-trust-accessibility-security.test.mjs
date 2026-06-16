@@ -92,8 +92,8 @@ test("NGO evidence, report, shared report, and billing disclaimers render", () =
 
   assert.match(report, /This report is based on selected evidence and may not represent a\s+complete record/);
   assert.match(report, /does not\s+guarantee funding/);
-  assert.match(report, /selected summaries/);
-  assert.match(report, /raw evidence by\s+default/);
+  assert.match(report, /raw files by default/);
+  assert.match(report, /Raw files are private by default/);
 
   assert.match(shared, /does not provide\s+full workspace access/);
   assert.match(shared, /does not\s+guarantee funding/);

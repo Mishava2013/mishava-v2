@@ -63,7 +63,7 @@ test("team invite creation records email status and supports resend action", () 
   assert.match(actions, /email=\$\{result\.emailDeliveryStatus/);
   assert.match(page, /emailStatusMessage/);
   assert.match(page, /Resend email/);
-  assert.match(page, /Email not configured/);
+  assert.match(page, /Email setup needed/);
   assert.match(page, /Email failed/);
 });
 

@@ -26,9 +26,9 @@ export default async function SignUpPage({
             <p className="form-message error">{decodeURIComponent(params.error)}</p>
           ) : (
             <p className="form-message">
-              Supabase Auth powers this foundation. Email confirmation behavior
-              depends on the project dashboard settings. If confirmation is
-              required, return to Shopping after confirming your email.
+              Enter your email and choose a password with at least 6 characters.
+              If Mishava asks you to confirm your email, open the email first,
+              then come back to continue.
             </p>
           )}
           <input name="next" type="hidden" value={nextPath} />
@@ -37,7 +37,7 @@ export default async function SignUpPage({
             <input autoComplete="email" name="email" required type="email" />
           </label>
           <label>
-            Password
+            Password, at least 6 characters
             <input
               autoComplete="new-password"
               minLength={6}

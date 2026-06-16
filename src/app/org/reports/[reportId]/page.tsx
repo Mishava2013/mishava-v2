@@ -81,14 +81,14 @@ export default async function OrgReportDetailPage({
 
       {query.shared ? (
         <div className="notice" role="status">
-          Share grant created. The report remains private by default and raw
+          Share link created. The report remains private by default and raw
           evidence is not shared.
         </div>
       ) : null}
 
       {query.revoked ? (
         <div className="notice" role="status">
-          Share grant revoked and access blocked.
+          Share link turned off. That link no longer works.
         </div>
       ) : null}
 
@@ -195,7 +195,7 @@ export default async function OrgReportDetailPage({
             <span className="tag">No public score has been created</span>
             <span className="tag">Not publicly scored</span>
             <span className="tag">
-              {hasActiveGrant ? "Scoped sharing enabled" : "Not shared"}
+              {hasActiveGrant ? "Share link active" : "Not shared"}
             </span>
           </div>
         </div>
@@ -215,13 +215,11 @@ export default async function OrgReportDetailPage({
       </section>
 
       <section className="section report-actions">
-        <h2>Scoped sharing</h2>
+        <h2>Share this report</h2>
         <p className="section-intro">
-          Share grants are scoped to this report only. They do not expose the
-          full organization workspace, unrelated reports, or raw evidence by
-          default. Shared, Revoked, and Expires labels show the current access
-          state for each grant. Shared reports expose selected summaries unless
-          explicitly expanded by a future approved sharing control.
+          Share links are limited to this report only. They do not open the
+          full workspace, unrelated reports, or raw files by default. The labels
+          show whether each link works and when it ends.
         </p>
 
         <form action={createShareGrantAction} className="form-grid">
@@ -244,29 +242,29 @@ export default async function OrgReportDetailPage({
             />
           </div>
           <div className="field">
-            <label htmlFor="expiresAt">Expires</label>
+            <label htmlFor="expiresAt">Link stops working on</label>
             <input id="expiresAt" name="expiresAt" type="date" />
           </div>
           <div className="field full">
-            <label htmlFor="purpose">Purpose / note</label>
+            <label htmlFor="purpose">Why are you sharing this?</label>
             <textarea
               id="purpose"
               name="purpose"
-              placeholder="Why this recipient is being granted report-summary access"
+              placeholder="Why this person needs to see this report summary"
               required
             />
           </div>
           <div className="field full">
             <button className="button primary" type="submit">
-              Create scoped share grant
+              Create share link
             </button>
           </div>
         </form>
 
         {detail.shareGrants.length === 0 ? (
           <EmptyState title="Not shared">
-            This report has no share grants. Private reports remain private
-            unless a valid active grant exists.
+            This report has no share links. Private reports stay private unless
+            you create an active link.
           </EmptyState>
         ) : (
           <div className="evidence-library">
@@ -292,17 +290,17 @@ export default async function OrgReportDetailPage({
                     </span>
                   </div>
                   <p className="record-note">
-                    Purpose: {grant.purpose}. Raw files are private by default
-                    and this grant exposes only the selected report summary.
+                    Purpose: {grant.purpose}. Raw files are private by default,
+                    and this link shows only the selected report summary.
                   </p>
                   <div className="status-row">
                     <Link className="button" href={`/shared/ngo-reports/${grant.id}`}>
-                      Preview shared summary
+                      Preview shared report
                     </Link>
                     {grant.isRevocable ? (
                       <form action={revokeAction}>
                         <button className="button danger" type="submit">
-                          Revoke
+                          Turn off link
                         </button>
                       </form>
                     ) : null}
@@ -343,7 +341,7 @@ export default async function OrgReportDetailPage({
                 </p>
                 <dl className="detail-list">
                   <div>
-                    <dt>Lifecycle</dt>
+                    <dt>Use status</dt>
                     <dd>
                       {item.lifecycle_status}
                       {item.archived_at

@@ -14,10 +14,9 @@ export default async function NgoOnboardingPage({
 
   return (
     <>
-      <PageHeader eyebrow="NGO onboarding" title="Set up an NGO trust profile.">
-        Release 2 starts the NGO setup path with identity, evidence, AI-cost
-        controls, approval gates, and scoped sharing. Nothing becomes public
-        without the organization approval flow.
+      <PageHeader eyebrow="NGO setup" title="Create your NGO profile.">
+        Start with basic organization details. Nothing becomes public unless
+        your organization chooses to share or approve it later.
       </PageHeader>
 
       {params.error ? (
@@ -31,7 +30,7 @@ export default async function NgoOnboardingPage({
       <WorkflowList items={ngoOnboardingSteps} />
 
       <section className="section">
-        <h2>Profile setup draft</h2>
+        <h2>Basic profile</h2>
         <form action={createNgoOnboardingAction} className="form-grid">
           <div className="field">
             <label htmlFor="public-name">Public organization name</label>
@@ -63,14 +62,14 @@ export default async function NgoOnboardingPage({
             <input id="website-url" name="websiteUrl" placeholder="https://example.org" />
           </div>
           <div className="field">
-            <label htmlFor="registration-id">Registration identifier</label>
+            <label htmlFor="registration-id">Registration ID, if you have one</label>
             <input id="registration-id" name="registrationIdentifier" placeholder="Optional public registration ID" />
           </div>
           <div className="field">
-            <label htmlFor="visibility">Default visibility</label>
+            <label htmlFor="visibility">Who can see this at first?</label>
             <select id="visibility" name="defaultVisibility" defaultValue="private">
               <option value="private">Private until approved</option>
-              <option value="approved_viewer">Approved viewers only</option>
+              <option value="approved_viewer">Only approved viewers</option>
               <option value="public_summary">Public summary</option>
             </select>
           </div>
@@ -87,14 +86,14 @@ export default async function NgoOnboardingPage({
       </section>
 
       <section className="section">
-        <h2>Evidence accepted first</h2>
+        <h2>What you can add later</h2>
         <div className="card-grid">
           {evidenceIntakeTypes.map((type) => (
             <div className="card" key={type}>
               <h3>{type}</h3>
               <p>
-                Intake records require source type, visibility, submitter, and
-                approval status before they support any public report.
+                These records need a source, a review state, and clear privacy
+                settings before they can support a shared report.
               </p>
             </div>
           ))}

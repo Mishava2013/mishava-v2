@@ -34,10 +34,9 @@ export default async function OrgReportsPage({
 
   return (
     <>
-      <PageHeader eyebrow="Reports" title="Report builder and scoped sharing.">
-        Reports can begin from real evidence and accepted claims. Exports, AI
-        rebuilding, and public sharing remain intentionally out of scope for this
-        slice.
+      <PageHeader eyebrow="Reports" title="Build private NGO reports.">
+        Build a private report from evidence your organization chooses. Reports
+        stay private until you share them.
       </PageHeader>
 
       {params.created ? (
@@ -55,9 +54,9 @@ export default async function OrgReportsPage({
       <section className="section">
         <h2>Create draft report</h2>
         <p className="section-intro">
-          Reports are private by default. They can reference selected evidence,
-          accepted claims, and an optional private draft score snapshot. No score
-          is invented when scoring output is incomplete.
+          Reports are private by default. Choose the evidence and reviewed facts
+          you want to include. Mishava does not invent a score when scoring is
+          incomplete.
         </p>
 
         {!canManageReports ? (
@@ -67,8 +66,8 @@ export default async function OrgReportsPage({
           </EmptyState>
         ) : workspace.templates.length === 0 || workspace.evidence.length === 0 ? (
           <EmptyState title="Evidence and templates are required">
-            Add real evidence before creating report drafts. Active templates
-            must also exist in the database.
+            Add evidence first. A report template must also be available before
+            you can create a report.
           </EmptyState>
         ) : (
           <form action={createNgoReportDraftAction} className="form-grid">
@@ -138,12 +137,12 @@ export default async function OrgReportsPage({
             </fieldset>
 
             <div className="field full">
-              <label htmlFor="scoreSnapshotId">Draft score snapshot</label>
+              <label htmlFor="scoreSnapshotId">Draft score note</label>
               <select id="scoreSnapshotId" name="scoreSnapshotId" defaultValue="">
                 <option value="">No snapshot attached</option>
                 {workspace.draftSnapshots.map((snapshot) => (
                   <option key={snapshot.id} value={snapshot.id}>
-                    Draft snapshot {String(snapshot.id).slice(0, 8)} · score pending
+                    Draft score note {String(snapshot.id).slice(0, 8)} · score pending
                   </option>
                 ))}
               </select>
@@ -162,8 +161,8 @@ export default async function OrgReportsPage({
         <h2>Draft reports</h2>
         {workspace.reports.length === 0 ? (
           <EmptyState title="No report drafts yet">
-            Report drafts will be created from selected evidence and accepted
-            claims. AI-generated text and exports are not part of this slice.
+            Report drafts will appear here after you choose evidence and save a
+            report.
           </EmptyState>
         ) : (
           <div className="evidence-library">
@@ -198,8 +197,8 @@ export default async function OrgReportsPage({
                     </strong>
                   </div>
                   <div className="metric">
-                    <span>Exports/sharing</span>
-                    <strong>Not enabled</strong>
+                    <span>Sharing</span>
+                    <strong>Open report to share</strong>
                   </div>
                 </div>
                 <p className="record-note">
