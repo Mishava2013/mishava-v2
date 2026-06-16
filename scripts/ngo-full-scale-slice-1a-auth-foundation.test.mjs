@@ -29,12 +29,22 @@ test("auth pages and actions cover sign-up, sign-in, sign-out, reset, update, an
   const signInModal = read("src/components/SignInModal.tsx");
   const signInPage = read("src/app/auth/sign-in/page.tsx");
 
-  assert.match(read("src/app/auth/sign-up/page.tsx"), /signUpAction/);
+  const signUpPage = read("src/app/auth/sign-up/page.tsx");
+  assert.match(signUpPage, /signUpAction/);
+  assert.match(signUpPage, /Create your Mishava NGO account/);
+  assert.match(signUpPage, /Create your free Mishava Shopping account/);
   assert.match(signInPage, /redirect\(`\/\?\$\{target\.toString\(\)\}`\)/);
   assert.doesNotMatch(signInPage, /PageHeader|auth-grid|auth-card|Sign-in now opens/);
   assert.match(signInModal, /\/auth\/sign-in\/submit/);
   assert.match(signInModal, /aria-modal="true"/);
   assert.match(signInModal, /mishava:open-sign-in/);
+  assert.match(signInModal, /pathname === "\/auth\/sign-up"/);
+  assert.match(signInModal, /window\.location\.search/);
+  assert.match(signInModal, /ngo: "\/ngo"/);
+  assert.match(signInModal, /safeAuthSurface/);
+  assert.match(signInModal, /target\.set\("surface", safeSurface\)/);
+  assert.match(signInModal, /stripAuthParams/);
+  assert.match(signInModal, /router\.push\(`\/\?\$\{target\.toString\(\)\}`\)/);
   assert.match(read("src/app/auth/sign-in/submit/route.ts"), /signInWithPassword/);
   assert.match(
     read("src/app/auth/sign-in/submit/route.ts"),
@@ -58,11 +68,8 @@ test("auth pages and actions cover sign-up, sign-in, sign-out, reset, update, an
   assert.match(read("src/lib/supabase/auth.ts"), /redirect_to=\$\{encodeURIComponent\(redirectTo\)\}/);
   assert.match(read("src/lib/supabase/auth.ts"), /authNotConfiguredResult/);
   assert.doesNotMatch(read("src/components/SiteShell.tsx"), /href="\/auth\/sign-in"/);
-  assert.match(ngoSignIn, /Inside the workspace/);
-  assert.match(ngoSignIn, /Keep the reporting picture in one place/);
-  assert.match(ngoSignIn, /SignInModalButton/);
-  assert.match(ngoSignIn, /<h3>\{step\.title\}<\/h3>/);
-  assert.doesNotMatch(ngoSignIn, /\{step\.number\}\. \{step\.title\}/);
+  assert.match(ngoSignIn, /redirect\("\/ngo\?signIn=1&next=\/ngo"\)/);
+  assert.doesNotMatch(ngoSignIn, /Mishava for NGOs|Inside the workspace|SignInModalButton|Create NGO account/);
 });
 
 test("route protection bridges Supabase Auth tokens before falling back to temporary cookie sessions", () => {

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
+import { ShoppingAccountPrompt } from "@/components/ShoppingAccountPrompt";
 import { ShoppingProductImage } from "@/components/ShoppingProductImage";
 import { ShoppingScoreExplainer } from "@/components/ShoppingScoreExplainer";
+import { getCurrentSession } from "@/lib/auth-server";
 import {
   buildShoppingScoreExplanation,
   formatFreshness,
@@ -38,6 +40,7 @@ export default async function ShoppingPage({
   searchParams: Promise<{ q?: string; source?: string; sort?: string }>;
 }) {
   const params = await searchParams;
+  const session = await getCurrentSession();
   const { products, configured } = await getShoppingProducts({
     query: params.q,
     category: params.q ? undefined : "baby-products",
@@ -46,10 +49,14 @@ export default async function ShoppingPage({
 
   return (
     <div className="shopping-storefront">
+      {!session ? <ShoppingAccountPrompt nextPath="/shopping" /> : null}
       <div className="storefront-topline">
         <span>Early Shopping preview</span>
-        <Link className="button ink" href="/app/shopping-priorities">
-          Tell Mishava what matters to you
+        <Link
+          className="button ink"
+          href="/auth/sign-up?next=%2Fapp%2Fshopping-priorities&surface=shopping"
+        >
+          Create a free Shopping account
         </Link>
       </div>
 
@@ -81,7 +88,9 @@ export default async function ShoppingPage({
             Mishava helps you see what has been found, what is still missing,
             and why some scores are not ready yet. You can browse toilet paper
             and baby products without signing in. Mishava is not the store and
-            does not sell these products.
+            does not sell these products. Create a free Shopping account when
+            you want Mishava to remember your priorities for personal match
+            previews.
           </p>
         </div>
         <div className="storefront-promise">
@@ -157,8 +166,11 @@ export default async function ShoppingPage({
               intentional: Mishava shows what it found and what it still needs
               instead of making up a number.
             </p>
-            <Link href="/app/shopping-priorities">
-              Want Mishava to remember what matters to you? Set Shopping Priorities.
+            <Link href="/?signIn=1&next=%2Fapp%2Fshopping-priorities&surface=shopping">
+              Already have an account? Sign in to set Shopping Priorities.
+            </Link>
+            <Link href="/auth/sign-up?next=%2Fapp%2Fshopping-priorities&surface=shopping">
+              New here? Create a free Shopping account for personal match previews.
             </Link>
           </div>
 

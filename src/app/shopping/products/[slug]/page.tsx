@@ -2,8 +2,10 @@ import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { ScoreExplainer } from "@/components/ScoreExplainer";
+import { ShoppingAccountPrompt } from "@/components/ShoppingAccountPrompt";
 import { ShoppingProductImage } from "@/components/ShoppingProductImage";
 import { ShoppingScoreExplainer } from "@/components/ShoppingScoreExplainer";
+import { getCurrentSession } from "@/lib/auth-server";
 import {
   buildShoppingScoreExplanation,
   formatFreshness,
@@ -39,6 +41,7 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const session = await getCurrentSession();
   const { product, placesToBuy, configured } = await getShoppingProductBySlug(slug);
   const explanation = product ? buildShoppingScoreExplanation({ product }) : null;
   const evidenceReadiness = product ? getEvidenceReadinessLabels(product) : [];
@@ -160,6 +163,9 @@ export default async function ProductPage({
 
   return (
     <>
+      {!session && product ? (
+        <ShoppingAccountPrompt nextPath={`/shopping/products/${slug}`} />
+      ) : null}
       <PageHeader eyebrow="Product profile" title={product?.name ?? "Product not available"}>
         Product pages show real source records, what Mishava found, and what is
         still missing. If evidence is not ready, Mishava says the score is not

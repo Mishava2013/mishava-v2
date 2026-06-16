@@ -15,13 +15,37 @@ type SignInModalButtonProps = {
   children?: string;
   className?: string;
   nextPath?: string;
+  surface?: AuthSurface;
 } & Pick<ButtonHTMLAttributes<HTMLButtonElement>, "aria-label">;
 
 type OpenDetail = {
   nextPath?: string;
+  surface?: AuthSurface;
 };
 
 const signInEventName = "mishava:open-sign-in";
+const authQueryKeys = ["signIn", "auth", "error", "notice", "next", "surface"];
+const hostRootSurfacePaths: Record<string, string> = {
+  shopping: "/shopping",
+  ngo: "/ngo",
+  business: "/business",
+  local: "/local",
+  corporate: "/corporate",
+  app: "/app",
+  support: "/support",
+  trust: "/methodology",
+  admin: "/admin",
+  api: "/api",
+  gov: "/gov",
+  research: "/research",
+  media: "/media",
+};
+type AuthSurface = keyof typeof hostRootSurfacePaths;
+const authSurfaces = new Set<string>(Object.keys(hostRootSurfacePaths));
+
+function safeAuthSurface(value: string | null | undefined): AuthSurface | null {
+  return value && authSurfaces.has(value) ? (value as AuthSurface) : null;
+}
 
 function safeNextPath(value: string | null | undefined, fallback: string) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
@@ -58,19 +82,92 @@ function statusMessage(error?: string | null, notice?: string | null) {
   return null;
 }
 
+function getCurrentSurfaceRoot(pathname: string) {
+  if (pathname !== "/" || typeof window === "undefined") {
+    return pathname;
+  }
+
+  const hostname = window.location.hostname.toLowerCase();
+  if (hostname === "mishava.org" || hostname === "www.mishava.org") {
+    return "/shopping";
+  }
+
+  const subdomain = hostname.endsWith(".mishava.org")
+    ? hostname.slice(0, -1 * ".mishava.org".length).split(".")[0]
+    : null;
+
+  return (subdomain ? hostRootSurfacePaths[subdomain] : null) ?? pathname;
+}
+
+function inferAuthSurface(pathname: string): AuthSurface | null {
+  if (
+    pathname === "/" ||
+    pathname.startsWith("/shopping") ||
+    pathname.startsWith("/app/shopping-priorities")
+  ) {
+    return "shopping";
+  }
+
+  if (pathname.startsWith("/ngo") || pathname.startsWith("/org")) {
+    return "ngo";
+  }
+
+  if (pathname.startsWith("/business")) return "business";
+  if (pathname.startsWith("/local")) return "local";
+  if (pathname.startsWith("/corporate")) return "corporate";
+  if (pathname.startsWith("/app")) return "app";
+  if (pathname.startsWith("/support")) return "support";
+  if (pathname.startsWith("/methodology") || pathname.startsWith("/legal")) {
+    return "trust";
+  }
+  if (pathname.startsWith("/admin")) return "admin";
+  if (pathname.startsWith("/api")) return "api";
+  if (pathname.startsWith("/gov")) return "gov";
+  if (pathname.startsWith("/research")) return "research";
+  if (pathname.startsWith("/media")) return "media";
+
+  return null;
+}
+
+function stripAuthParams(searchParams: URLSearchParams) {
+  const params = new URLSearchParams(searchParams.toString());
+  for (const key of authQueryKeys) {
+    params.delete(key);
+  }
+  return params;
+}
+
 export function SignInModalButton({
   children = "Sign in",
   className = "button",
   nextPath,
+  surface,
   ...buttonProps
 }: SignInModalButtonProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+
   return (
     <button
       className={className}
       onClick={() => {
+        if (pathname === "/auth/sign-up") {
+          const target = new URLSearchParams({ signIn: "1" });
+          const currentParams = new URLSearchParams(window.location.search);
+          const safeNext = safeNextPath(nextPath ?? currentParams.get("next"), "/app");
+          const safeSurface =
+            surface ?? safeAuthSurface(currentParams.get("surface")) ?? inferAuthSurface(safeNext);
+          target.set("next", safeNext);
+          if (safeSurface) {
+            target.set("surface", safeSurface);
+          }
+          router.push(`/?${target.toString()}`);
+          return;
+        }
+
         window.dispatchEvent(
           new CustomEvent<OpenDetail>(signInEventName, {
-            detail: { nextPath },
+            detail: { nextPath, surface },
           }),
         );
       }}
@@ -94,27 +191,46 @@ export function SignInModalController({
   const descriptionId = useId();
   const [manualOpen, setManualOpen] = useState(false);
   const [manualNextPath, setManualNextPath] = useState<string | null>(null);
+  const [manualSurface, setManualSurface] = useState<AuthSurface | null>(null);
 
   const queryWantsSignIn =
     pathname === "/auth/sign-in" ||
     searchParams.has("signIn") ||
     searchParams.has("auth");
-  const currentQuery = searchParams.toString();
-  const currentPathWithQuery = currentQuery ? `${pathname}?${currentQuery}` : pathname;
+  const pageParams = stripAuthParams(searchParams);
+  const pageQuery = pageParams.toString();
+  const currentSurfacePath =
+    pathname === "/auth/sign-in" ? fallbackPath : getCurrentSurfaceRoot(pathname);
+  const currentPathWithQuery = pageQuery
+    ? `${currentSurfacePath}?${pageQuery}`
+    : currentSurfacePath;
   const open = manualOpen || queryWantsSignIn;
-  const nextPath = safeNextPath(
+  const requestedNextPath = safeNextPath(
     manualNextPath ?? searchParams.get("next"),
-    queryWantsSignIn ? "/app" : currentPathWithQuery,
+    currentPathWithQuery,
   );
+  const currentSurface = inferAuthSurface(currentSurfacePath);
+  const requestedNextSurface = inferAuthSurface(requestedNextPath);
+  const querySurface = safeAuthSurface(searchParams.get("surface"));
+  const authSurface =
+    manualSurface ??
+    currentSurface ??
+    querySurface ??
+    requestedNextSurface;
+  const nextPath =
+    authSurface &&
+    currentSurface === authSurface &&
+    requestedNextSurface &&
+    requestedNextSurface !== authSurface
+      ? currentPathWithQuery
+      : requestedNextPath;
   const message = statusMessage(searchParams.get("error"), searchParams.get("notice"));
 
   const cleanedUrl = useMemo(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    for (const key of ["signIn", "auth", "error", "notice", "next"]) {
-      params.delete(key);
-    }
+    const params = stripAuthParams(searchParams);
     const query = params.toString();
-    const targetPath = pathname === "/auth/sign-in" ? fallbackPath : pathname;
+    const targetPath =
+      pathname === "/auth/sign-in" ? fallbackPath : getCurrentSurfaceRoot(pathname);
     return query ? `${targetPath}?${query}` : targetPath;
   }, [fallbackPath, pathname, searchParams]);
 
@@ -122,6 +238,7 @@ export function SignInModalController({
     const handleOpen = (event: Event) => {
       const detail = (event as CustomEvent<OpenDetail>).detail;
       setManualNextPath(detail?.nextPath ?? null);
+      setManualSurface(detail?.surface ?? null);
       setManualOpen(true);
     };
 
@@ -150,9 +267,21 @@ export function SignInModalController({
   function closeModal() {
     setManualOpen(false);
     setManualNextPath(null);
+    setManualSurface(null);
     if (queryWantsSignIn) {
       router.replace(cleanedUrl, { scroll: false });
     }
+  }
+
+  function goToCreateAccount() {
+    setManualOpen(false);
+    setManualNextPath(null);
+    setManualSurface(null);
+    const target = new URLSearchParams({ next: nextPath });
+    if (authSurface) {
+      target.set("surface", authSurface);
+    }
+    router.push(`/auth/sign-up?${target.toString()}`);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -213,6 +342,7 @@ export function SignInModalController({
           </p>
         ) : null}
         <input name="next" type="hidden" value={nextPath} />
+        {authSurface ? <input name="surface" type="hidden" value={authSurface} /> : null}
         <label>
           Email
           <input autoComplete="email" name="email" required type="email" />
@@ -231,10 +361,17 @@ export function SignInModalController({
           Sign in
         </button>
         <div className="auth-links">
-          <Link href="/auth/reset-password">Reset password</Link>
-          <Link href={`/auth/sign-up?next=${encodeURIComponent(nextPath)}`}>
-            Create account
+          <Link
+            href={`/auth/reset-password?${new URLSearchParams({
+              next: nextPath,
+              ...(authSurface ? { surface: authSurface } : {}),
+            }).toString()}`}
+          >
+            Reset password
           </Link>
+          <button className="link-button" onClick={goToCreateAccount} type="button">
+            Create account
+          </button>
         </div>
       </form>
     </div>

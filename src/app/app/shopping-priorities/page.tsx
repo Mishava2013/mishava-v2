@@ -30,9 +30,10 @@ export default async function ShoppingPrioritiesPage({
   return (
     <>
       <PageHeader eyebrow="Shopping priorities" title="Tell Mishava what matters to you.">
-        Shopping Priorities help Mishava explain personal fit later. You can
-        browse products without an account; sign in only when you want Mishava
-        to remember your preferences.
+        Shopping Priorities are the free profile Mishava uses to remember what
+        matters to you for personal match previews. You can browse products
+        without an account; sign in or create a free Shopping account when you
+        want Mishava to save your preferences.
       </PageHeader>
 
       <div className="notice" role="note">

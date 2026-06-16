@@ -83,9 +83,10 @@ export default async function OrgTeamPage({
       <section className="section">
         <h2>Members</h2>
         <p className="section-intro">
-          Members can see or edit different parts of this workspace based on
-          their role. Removed or suspended members lose access, even if an old
-          browser tab still shows this organization.
+          Active members are governed by a central permission matrix. Removed
+          or suspended members lose access through server-side membership
+          checks, and the current organization selector cannot restore access by
+          itself.
         </p>
 
         {workspace.members.length === 0 ? (
@@ -221,7 +222,7 @@ export default async function OrgTeamPage({
           </form>
         ) : (
           <EmptyState title="Team management requires owner or admin access">
-            Your current role can view this workspace, but cannot
+            Your current role can view allowed workspace information, but cannot
             invite, revoke, remove, or change roles for team members.
           </EmptyState>
         )}
@@ -233,7 +234,7 @@ export default async function OrgTeamPage({
           <EmptyState title="No invites yet">
             Pending invites will appear here after you invite a teammate. Email
             delivery status will show whether the invite was sent, failed, or
-            needs the backup link.
+            needs the fallback link.
           </EmptyState>
         ) : (
           <table className="table">
@@ -244,7 +245,7 @@ export default async function OrgTeamPage({
                 <th>Status</th>
                 <th>Dates</th>
                 <th>Email delivery</th>
-                <th>Backup invite link</th>
+                <th>Invite link fallback</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -277,9 +278,6 @@ export default async function OrgTeamPage({
                   </td>
                   <td>
                     <code>{`/app/team-invites/${invite.id}`}</code>
-                    <p className="record-note">
-                      Use this only if the email did not arrive.
-                    </p>
                   </td>
                   <td>
                     {workspace.canManageTeam && invite.status === "pending" ? (
@@ -293,7 +291,7 @@ export default async function OrgTeamPage({
                         <form action={revokeTeamInviteAction}>
                           <input name="inviteId" type="hidden" value={invite.id} />
                           <button className="button" type="submit">
-                            Cancel invite
+                            Revoke
                           </button>
                         </form>
                       </div>
@@ -327,9 +325,9 @@ function emailStatusMessage(status?: string) {
     case "sent":
       return "Email sent to the invited address.";
     case "failed":
-      return "Email did not send. The backup invite link is still available.";
+      return "Email delivery failed. The invite link fallback remains available.";
     default:
-      return "Email is not configured yet; copy the backup invite link below.";
+      return "Email is not configured yet; copy the invite link fallback below.";
   }
 }
 
@@ -340,7 +338,7 @@ function emailDeliveryLabel(status: string) {
     case "failed":
       return "Email failed";
     default:
-      return "Email setup needed";
+      return "Email not configured";
   }
 }
 
@@ -349,8 +347,8 @@ function emailDeliveryHelp(status: string) {
     case "sent":
       return "The recipient was emailed and still must sign in with the invited address.";
     case "failed":
-      return "The invite is still valid; use the backup link or retry later.";
+      return "The invite is still valid; use the fallback link or retry later.";
     default:
-      return "Use the backup link until live email is configured.";
+      return "Use the fallback link until Resend is configured for this environment.";
   }
 }

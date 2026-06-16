@@ -56,7 +56,40 @@ function redirectWithReason(request: NextRequest, reason: string, nextPath: stri
   url.searchParams.set("auth", reason);
   url.searchParams.set("signIn", "1");
   url.searchParams.set("next", `${nextPath}${request.nextUrl.search}`);
+  const surface = surfaceForNextPath(nextPath, request.headers.get("host"));
+  if (surface) {
+    url.searchParams.set("surface", surface);
+  }
   return NextResponse.redirect(url);
+}
+
+function surfaceForNextPath(nextPath: string, host: string | null) {
+  const hostname = host?.split(":")[0]?.toLowerCase() ?? "";
+  if (
+    hostname === "shopping.mishava.org" ||
+    hostname === "mishava.org" ||
+    hostname === "www.mishava.org" ||
+    nextPath.startsWith("/shopping") ||
+    nextPath.startsWith("/app/shopping-priorities")
+  ) {
+    return "shopping";
+  }
+  if (
+    hostname === "ngo.mishava.org" ||
+    nextPath.startsWith("/ngo") ||
+    nextPath.startsWith("/org")
+  ) {
+    return "ngo";
+  }
+  if (hostname === "business.mishava.org" || nextPath.startsWith("/business")) return "business";
+  if (hostname === "corporate.mishava.org" || nextPath.startsWith("/corporate")) return "corporate";
+  if (hostname === "support.mishava.org" || nextPath.startsWith("/support")) return "support";
+  if (hostname === "trust.mishava.org" || nextPath.startsWith("/methodology") || nextPath.startsWith("/legal")) {
+    return "trust";
+  }
+  if (hostname === "admin.mishava.org" || nextPath.startsWith("/admin")) return "admin";
+  if (hostname === "gov.mishava.org" || nextPath.startsWith("/gov")) return "gov";
+  return null;
 }
 
 function rewriteIfNeeded(request: NextRequest, targetPath: string | null) {
