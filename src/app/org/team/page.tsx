@@ -232,8 +232,9 @@ export default async function OrgTeamPage({
         <h2>Invites</h2>
         {workspace.invites.length === 0 ? (
           <EmptyState title="No invites yet">
-            Pending invites will appear here. Real email delivery is not enabled
-            in this slice.
+            Pending invites will appear here after you invite a teammate. Email
+            delivery status will show whether the invite was sent, failed, or
+            needs the fallback link.
           </EmptyState>
         ) : (
           <table className="table">
