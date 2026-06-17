@@ -171,7 +171,7 @@ export default async function OrgEvidencePage({
                         <li key={file.id}>
                           {file.original_filename} · v{file.version_number} ·{" "}
                           {file.status} ·{" "}
-                          {file.scan_status === "quarantined"
+                          {file.status === "quarantined"
                             ? "held for review"
                             : file.scan_status}{" "}
                           ·{" "}
