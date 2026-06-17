@@ -37,6 +37,7 @@ test("NGO evidence and report flows prefer plain-language pilot wording", () => 
   const reports = read("src/app/org/reports/page.tsx");
   const reportDetail = read("src/app/org/reports/[reportId]/page.tsx");
   const team = read("src/app/org/team/page.tsx");
+  const ngoPublic = read("src/app/ngo/page.tsx");
   const onboarding = read("src/app/ngo/onboarding/page.tsx");
 
   assert.match(evidence, /held for review/);
@@ -57,8 +58,21 @@ test("NGO evidence and report flows prefer plain-language pilot wording", () => 
   assert.match(team, /Email not configured/);
   assert.match(team, /Revoke/);
 
+  assert.match(ngoPublic, /Start an NGO profile, then build clearer funder reports/);
+  assert.match(ngoPublic, /Create an account first/);
+  assert.match(ngoPublic, /Create account to start/);
+  assert.match(ngoPublic, /\/auth\/sign-up\?next=%2Fngo%2Fonboarding&surface=ngo/);
+  assert.doesNotMatch(ngoPublic, /Start a free NGO profile/);
+
   assert.match(onboarding, /Create your NGO profile/);
+  assert.match(onboarding, /First sign in or create a free Mishava account/);
+  assert.match(onboarding, /Mishava needs an account before it can save your NGO profile/);
+  assert.match(onboarding, /Create free NGO account/);
+  assert.match(onboarding, /nextPath="\/ngo\/onboarding"/);
+  assert.match(onboarding, /surface="ngo"/);
+  assert.match(onboarding, /getCurrentSession/);
   assert.match(onboarding, /Who can see this at first/);
+  assert.doesNotMatch(onboarding, /Sign in is required before an NGO profile can be saved/);
 });
 
 test("Sign-up copy avoids internal auth-provider language", () => {

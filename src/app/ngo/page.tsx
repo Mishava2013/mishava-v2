@@ -24,21 +24,26 @@ const valueCards = [
 const workflowSteps = [
   {
     step: "1",
-    title: "Create your NGO profile",
-    body: "Start with the organization details funders and partners need to understand who you are.",
+    title: "Create an account",
+    body: "Use your email and password so Mishava can save your NGO profile privately.",
   },
   {
     step: "2",
-    title: "Add evidence and documents",
-    body: "Attach source links, files, notes, and context so claims can be reviewed instead of simply asserted.",
+    title: "Save your NGO profile",
+    body: "Add the basic organization details funders and partners need to understand who you are.",
   },
   {
     step: "3",
+    title: "Add evidence later",
+    body: "Attach source links, files, notes, and context so claims can be reviewed instead of simply asserted.",
+  },
+  {
+    step: "4",
     title: "Build a report from reviewed evidence",
     body: "Turn selected evidence and accepted facts into a clearer report preview with limitations visible.",
   },
   {
-    step: "4",
+    step: "5",
     title: "Share a scoped report",
     body: "Share only the report a recipient needs, without exposing the whole workspace or raw files by default.",
   },
@@ -53,29 +58,31 @@ const planGuidance: Record<string, string> = {
 };
 
 export default function NgoPage() {
+  const ngoSignUpHref = "/auth/sign-up?next=%2Fngo%2Fonboarding&surface=ngo";
+
   return (
     <>
       <PageHeader
         eyebrow="NGO"
-        title="Turn scattered evidence into funder-ready trust reports."
+        title="Start an NGO profile, then build clearer funder reports."
       >
-        Mishava helps NGOs organize documents, claims, outcomes, and evidence
-        into clearer reports that show what is known, what is missing, and what
-        is still being reviewed.
+        Create an account first so your organization profile and evidence stay
+        private. Then Mishava helps you organize documents, claims, outcomes,
+        and reports in one place.
       </PageHeader>
 
       <section className="ngo-public-hero">
         <div className="hero-actions">
-          <Link className="button primary" href="/ngo/onboarding">
-            Start a free NGO profile
+          <Link className="button primary" href={ngoSignUpHref}>
+            Create account to start
           </Link>
           <Link className="button" href="/ngo/reports">
             See how reports work
           </Link>
         </div>
         <p className="ngo-trust-line">
-          No paid trust outcomes. Evidence stays reviewable. Reports stay
-          private until shared.
+          First step: create or sign in to your Mishava account. No paid trust
+          outcomes. Reports stay private until shared.
         </p>
       </section>
 
@@ -112,8 +119,8 @@ export default function NgoPage() {
           ))}
         </div>
         <div className="hero-actions">
-          <Link className="button primary" href="/ngo/onboarding">
-            Start a free NGO profile
+          <Link className="button primary" href={ngoSignUpHref}>
+            Create account to start
           </Link>
           <Link className="button" href="/ngo/sharing">
             See scoped sharing
@@ -151,8 +158,9 @@ export default function NgoPage() {
       <section className="section ngo-pricing-section">
         <h2>Choose your starting point</h2>
         <p className="section-intro">
-          Start with a free NGO profile, then add capacity when your team needs
-          more evidence, reports, sharing, or setup support.
+          Create a free account and start with a basic NGO profile. Add capacity
+          later only when your team needs more evidence, reports, sharing, or
+          setup support.
         </p>
         <div className="table-scroll" role="region" aria-label="NGO access model">
           <table className="table">
@@ -188,8 +196,8 @@ export default function NgoPage() {
 
       <section className="section">
         <div className="hero-actions">
-          <Link className="button primary" href="/ngo/onboarding">
-            Start a free NGO profile
+          <Link className="button primary" href={ngoSignUpHref}>
+            Create account to start
           </Link>
           <Link className="button" href="/ngo/reports">
             Review report tools
