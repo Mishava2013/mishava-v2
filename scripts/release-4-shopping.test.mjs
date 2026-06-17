@@ -16,7 +16,9 @@ test("shopping results read from database and do not use placeholder product dat
   assert.match(page, /Start with toilet paper or baby products/);
   assert.doesNotMatch(page, /products from "@\/lib\/sample-data"/);
   assert.doesNotMatch(sampleData, /diaper-review-placeholder/);
-  assert.match(page, /No real Shopping POC product records found/);
+  assert.match(page, /No matching products found/);
+  assert.doesNotMatch(page, /Shopping not publicly available|Open Mishava NGO|Request access/);
+  assert.doesNotMatch(page, /Pickup nearby|Ships today|Evidence checked|Small business|Family owned/);
 });
 
 test("product detail reads places to buy from database", () => {
@@ -188,8 +190,8 @@ test("shopping supplier transparency helpers expose unknowns as evidence gaps", 
   assert.match(shopping, /verified supplier source/);
   assert.match(detail, /Company\/source information/);
   assert.match(detail, /retailer or\s+private-label owner is not treated as the manufacturer/);
-  assert.match(page, /Manufacturer\/supplier gap/);
-  assert.match(categoryPage, /Manufacturer\/supplier gap/);
+  assert.match(page, /Why Mishava is still reviewing/);
+  assert.match(categoryPage, /Why Mishava is still reviewing/);
 });
 
 test("Slice 7 research task model tracks reusable Shopping research workflow status", () => {
@@ -242,14 +244,14 @@ test("shopping display shows pending trust context instead of invented scores", 
 
   assert.match(page, /getProductTrustLabel/);
   assert.match(page, /formatFreshness/);
-  assert.match(page, /Evidence profile pending/);
+  assert.match(page, /Mishava is still reviewing this product/);
   assert.match(detail, /No final score is shown/);
   assert.match(detail, /Outside scorecards may be evidence references,\s+but they are not Mishava Scores/);
   assert.match(shopping, /return "Score pending"/);
   assert.match(shopping, /return "Draft trust context"/);
   assert.match(shopping, /return "Evidence profile pending"/);
   assert.match(shopping, /More evidence needed/);
-  assert.match(explainer, /Score not ready yet/);
+  assert.match(explainer, /Mishava is still reviewing this product/);
   assert.match(page, /Create a free Shopping account/);
   assert.match(page, /Mishava to remember your priorities/);
   assert.doesNotMatch(page, /<option value="values">/);
@@ -262,10 +264,10 @@ test("Slice 8 toilet paper preview uses conservative score and match language", 
   const detail = read("src/app/shopping/products/[slug]/page.tsx");
   const shopping = read("src/lib/shopping.ts");
 
-  assert.match(page, /Score not ready yet/);
-  assert.match(page, /Evidence status/);
+  assert.match(page, /Mishava is reviewing/);
+  assert.doesNotMatch(page, /Evidence status/);
   assert.match(page, /Some products have source records but no final score yet/);
-  assert.match(categoryPage, /This early preview shows real toilet paper products/);
+  assert.match(categoryPage, /Compare real toilet paper products/);
   assert.match(categoryPage, /why a final score is not shown yet/);
   assert.match(categoryPage, /Create a free Shopping account for personal match previews/);
   assert.match(detail, /What Mishava found/);
@@ -323,7 +325,7 @@ test("shopping product images use approved metadata or a non-photo fallback", ()
   assert.match(categoryPage, /ShoppingProductImage/);
   assert.match(detail, /ShoppingProductImage/);
   assert.match(component, /hasApprovedProductImage/);
-  assert.match(shopping, /Product image pending rights review|Product image not available yet/);
+  assert.match(shopping, /Image rights being reviewed|Not a product photo/);
   assert.match(component, /role="img"/);
   assert.match(component, /aria-label/);
   assert.match(shopping, /image_review_status === "approved"/);
@@ -400,7 +402,7 @@ test("shopping category pages render real product records for baby, diaper, wipe
   assert.match(categoryPage, /getShoppingProducts/);
   assert.match(categoryPage, /ShoppingScoreExplainer/);
   assert.match(categoryPage, /formatFreshness/);
-  assert.match(categoryPage, /Reviewed products remain hidden/);
+  assert.match(categoryPage, /Mishava only shows products with real source records/);
   assert.match(shopping, /isProductInCategory/);
   assert.match(shopping, /category === "baby-products"/);
   assert.match(shopping, /normalizedSubcategory === "diapers"/);
@@ -594,7 +596,7 @@ test("Slice 13 senior-friendly Shopping copy keeps the toilet paper path plain",
   assert.match(detail, /What Mishava found/);
   assert.match(detail, /What Mishava still needs/);
   assert.match(detail, /Company\/source information/);
-  assert.match(detail, /Score not ready yet/);
+  assert.match(detail, /Mishava is still reviewing this product/);
   assert.match(priorities, /Tell Mishava what matters to you/);
   assert.match(priorities, /You can browse products\s+without an account/);
   assert.match(priorities, /create a free Shopping account/);

@@ -1063,7 +1063,7 @@ textarea {
 
 .shopping-layout {
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   gap: 22px;
   align-items: start;
 }
@@ -1205,7 +1205,8 @@ textarea {
   aspect-ratio: 1 / 1;
   display: grid;
   place-items: center;
-  background: #eef4f8;
+  background:
+    linear-gradient(180deg, rgba(247, 250, 252, 0.96), rgba(232, 240, 248, 0.96));
   padding: 10px;
 }
 
@@ -1228,10 +1229,12 @@ textarea {
 .product-image-fallback {
   align-content: center;
   background:
-    linear-gradient(135deg, rgba(52, 101, 127, 0.12), rgba(89, 154, 139, 0.14)),
+    radial-gradient(circle at 25% 18%, rgba(255, 255, 255, 0.78), transparent 32%),
+    linear-gradient(145deg, rgba(248, 252, 255, 0.98), rgba(219, 233, 246, 0.98)),
     var(--white);
-  border: 1px dashed rgba(52, 101, 127, 0.32);
+  border: 1px solid rgba(129, 153, 179, 0.34);
   border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.58);
   color: var(--brand-navy);
   display: grid;
   gap: 8px;
@@ -1244,15 +1247,18 @@ textarea {
 
 .product-image-initials {
   align-items: center;
-  background: var(--brand-navy);
-  border-radius: 999px;
-  color: var(--white);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(235, 243, 250, 0.96));
+  border: 1px solid rgba(60, 96, 130, 0.26);
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(36, 57, 83, 0.12);
+  color: var(--brand-navy);
   display: inline-flex;
   font-size: 24px;
   font-weight: 840;
-  height: 62px;
+  height: 74px;
   justify-content: center;
-  width: 62px;
+  width: 56px;
 }
 
 .product-image-label {
@@ -1279,6 +1285,19 @@ textarea {
 .product-meta {
   color: var(--muted-text);
   font-size: 13px;
+}
+
+.product-card-summary {
+  color: var(--secondary-text);
+  font-size: 14px;
+  line-height: 1.45;
+  margin-top: 8px;
+}
+
+.product-card-link {
+  justify-content: center;
+  margin-top: 12px;
+  width: 100%;
 }
 
 .score-chip {

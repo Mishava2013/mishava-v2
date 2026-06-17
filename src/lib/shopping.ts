@@ -172,7 +172,7 @@ export type ShoppingScoreExplanation = {
     | "Evidence review preview"
     | "Draft trust context"
     | "Score pending"
-    | "Score not ready yet"
+    | "Mishava is still reviewing this product"
     | "Your Values Score unavailable"
     | "Your Values Match Preview"
     | "Your Values Match Preview unavailable"
@@ -208,7 +208,9 @@ export type ToiletPaperEvidenceDimension = {
 };
 
 export type ToiletPaperPreview = {
-  evidenceLabel: "Evidence review preview" | "Score not ready yet";
+  evidenceLabel:
+    | "Evidence review preview"
+    | "Mishava is still reviewing this product";
   valuesLabel: "Personal match preview" | "Personal match is not ready yet";
   confidenceLabel: "Evidence profile incomplete" | "Mishava review not finalized";
   disclaimer: string;
@@ -488,12 +490,12 @@ export function getProductImageFallback(product: ShoppingProduct) {
           : product.category,
     reason:
       product.image_review_status === "rejected"
-        ? "Product image rejected during rights review"
+        ? "Image not shown"
         : product.image_review_status === "stale"
-          ? "Product image rights need review"
+          ? "Image rights need review"
           : product.image_review_status === "pending_review"
-            ? "Product image pending rights review"
-            : "Product image not available yet",
+            ? "Image rights being reviewed"
+            : "Not a product photo",
   };
 }
 
@@ -680,7 +682,9 @@ export function getToiletPaperPreview(product: ShoppingProduct): ToiletPaperPrev
   const scoreReady = product.mishava_evidence_review_status === "score_ready";
 
   return {
-    evidenceLabel: hasEvidenceScore ? "Evidence review preview" : "Score not ready yet",
+    evidenceLabel: hasEvidenceScore
+      ? "Evidence review preview"
+      : "Mishava is still reviewing this product",
     valuesLabel:
       hasEvidenceScore && scoreReady
         ? "Personal match preview"

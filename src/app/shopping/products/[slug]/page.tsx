@@ -168,8 +168,8 @@ export default async function ProductPage({
       ) : null}
       <PageHeader eyebrow="Product profile" title={product?.name ?? "Product not available"}>
         Product pages show real source records, what Mishava found, and what is
-        still missing. If evidence is not ready, Mishava says the score is not
-        ready instead of inventing a number.
+        still missing. If review is not complete, Mishava says it is still
+        reviewing the product instead of inventing a score.
       </PageHeader>
       <div className="surface-list">
         {product ? (
@@ -181,7 +181,7 @@ export default async function ProductPage({
                 <h2 className="panel-title">
                   {hasPublishedEvidenceScore(product)
                     ? getProductTrustLabel(product)
-                    : "Score not ready yet"}
+                    : "Mishava is still reviewing this product"}
                 </h2>
                 <div className="score-row">
                   <div className="score-badge">
@@ -192,7 +192,7 @@ export default async function ProductPage({
                       ? `${toiletPaperPreview.summary} ${toiletPaperPreview.disclaimer}`
                       : hasPublishedEvidenceScore(product)
                       ? "This score is backed by a published score snapshot."
-                      : "No final score is shown until real reviewed evidence and a published score snapshot exist."}
+                      : "No final score is shown until reviewed evidence and a supported scoring method exist."}
                   </p>
                 </div>
                 <div className="status-row">
@@ -263,7 +263,7 @@ export default async function ProductPage({
                 <ShoppingScoreExplainer explanation={explanation} mode="inline" />
                 <ShoppingScoreExplainer
                   explanation={explanation}
-                  triggerLabel="Why this score is pending"
+                  triggerLabel="Why Mishava is still reviewing"
                 />
               </div>
             ) : null}
@@ -351,7 +351,7 @@ export default async function ProductPage({
                       <p>{toiletPaperPreview.disclaimer}</p>
                       <div className="status-row">
                         <span className="tag tag-score">
-                          Score not ready yet
+                          Mishava is still reviewing this product
                         </span>
                         <span className="tag tag-score">
                           Personal match is not ready yet
@@ -528,9 +528,9 @@ export default async function ProductPage({
       <section className="section">
         <h2>Places to buy</h2>
         {!configured ? (
-          <EmptyState title="Shopping database is not configured yet">
-            Add Supabase environment variables before Mishava can read product
-            and seller records.
+          <EmptyState title="Shopping is getting product records ready">
+            Mishava shows real product and seller records only after source
+            metadata is connected.
           </EmptyState>
         ) : !product ? (
           <EmptyState title="No product record found">

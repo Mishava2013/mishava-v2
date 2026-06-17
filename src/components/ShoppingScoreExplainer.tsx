@@ -100,7 +100,7 @@ function ScoreExplanationBody({
         <div className="score-badge">{explanation.score ?? "--"}</div>
         <p className="score-caption">
           {explanation.score === null
-            ? "Score not ready yet. Mishava waits for real reviewed evidence and a published snapshot before showing a number."
+            ? "Mishava is still reviewing this product. A number appears only after reviewed evidence and a supported score snapshot exist."
             : "This value is the base Evidence Score. It is not a personal values score."}
         </p>
       </div>

@@ -7,12 +7,9 @@ import { getCurrentSession } from "@/lib/auth-server";
 import {
   buildShoppingScoreExplanation,
   formatFreshness,
-  getEvidenceReadinessLabels,
   getProductTrustLabel,
   getShoppingProducts,
-  getSupplierTransparencyLabels,
   getToiletPaperPreview,
-  hasSupplierEvidenceGap,
 } from "@/lib/shopping";
 
 const departmentLinks = [
@@ -24,14 +21,6 @@ const departmentLinks = [
   { label: "Personal care", href: "/shopping?q=Personal%20care" },
   { label: "Toys", href: "/shopping?q=Toys" },
   { label: "Local picks", href: "/shopping?q=Local%20picks" },
-];
-
-const quickFilters = [
-  "Pickup nearby",
-  "Ships today",
-  "Evidence checked",
-  "Small business",
-  "Family owned",
 ];
 
 export default async function ShoppingPage({
@@ -51,7 +40,7 @@ export default async function ShoppingPage({
     <div className="shopping-storefront">
       {!session ? <ShoppingAccountPrompt nextPath="/shopping" /> : null}
       <div className="storefront-topline">
-        <span>Early Shopping preview</span>
+        <span>Free Shopping account available</span>
         <Link
           className="button ink"
           href="/auth/sign-up?next=%2Fapp%2Fshopping-priorities&surface=shopping"
@@ -86,7 +75,7 @@ export default async function ShoppingPage({
           <h1>Compare products by evidence, not ads.</h1>
           <p>
             Mishava helps you see what has been found, what is still missing,
-            and why some scores are not ready yet. You can browse toilet paper
+            and why some products are still being reviewed. You can browse toilet paper
             and baby products without signing in. Mishava is not the store and
             does not sell these products. Create a free Shopping account when
             you want Mishava to remember your priorities for personal match
@@ -103,39 +92,21 @@ export default async function ShoppingPage({
       </div>
 
       <div className="shopping-layout">
-        <aside className="shopping-filters" aria-label="Shopping filters">
-          <div className="filter-block">
-            <h2>Shop by</h2>
-            <label>
-              Source
-              <select defaultValue={params.source ?? "all"} form="shopping-controls" name="source">
-                <option value="all">All sources</option>
-                <option value="online">Online</option>
-                <option value="local">Local radius</option>
-              </select>
-            </label>
-            <label>
-              Sort
-              <select defaultValue={params.sort ?? "evidence"} form="shopping-controls" name="sort">
-                <option value="evidence">Evidence status</option>
-                <option value="price">Price</option>
-                <option value="distance">Distance</option>
-              </select>
-            </label>
+        <aside className="shopping-filters" aria-label="Shopping guide">
+          <div className="filter-note">
+            <strong>How to use Shopping</strong>
+            <span>
+              Start with Toilet paper, open a product, and compare what
+              Mishava found with what still needs review.
+            </span>
           </div>
-
-          <div className="filter-block">
-            <h2>Quick filters</h2>
-            <div className="filter-stack">
-              {quickFilters.map((filter) => (
-                <label className="check-row" key={filter}>
-                  <input type="checkbox" />
-                  <span>{filter}</span>
-                </label>
-              ))}
-            </div>
+          <div className="filter-note">
+            <strong>Free account</strong>
+            <span>
+              Browse first. Create a free Shopping account when you want
+              Mishava to remember your priorities.
+            </span>
           </div>
-
           <div className="filter-note">
             <strong>No paid ranking</strong>
             <span>
@@ -151,16 +122,10 @@ export default async function ShoppingPage({
               <p className="storefront-kicker">Real data only</p>
               <h2 id="shopping-results-title">Start with toilet paper or baby products</h2>
             </div>
-            <form className="compact-controls" id="shopping-controls">
-              <input name="q" type="hidden" value={params.q ?? ""} />
-              <button className="button" type="submit">
-                Apply
-              </button>
-            </form>
           </div>
 
           <div className="trust-callout">
-            <span className="score-pill">Score not ready yet</span>
+            <span className="score-pill">Mishava is reviewing</span>
             <p>
               Some products have source records but no final score yet. That is
               intentional: Mishava shows what it found and what it still needs
@@ -175,22 +140,19 @@ export default async function ShoppingPage({
           </div>
 
         {!configured ? (
-          <EmptyState title="Shopping database is not configured yet">
-            Add Supabase environment variables and real product records before
-            Mishava displays product results.
+          <EmptyState title="Shopping is getting product records ready">
+            Mishava shows real product records only after source metadata is
+            connected. Please check back shortly.
           </EmptyState>
         ) : products.length === 0 ? (
-          <EmptyState title="No real Shopping POC product records found">
-            Mishava is adding reviewed baby diapers, wipes, and toilet paper records here.
-            Products stay hidden until real source metadata is approved, and
-            scores stay pending until evidence supports them.
+          <EmptyState title="No matching products found">
+            Try Toilet paper, Diapers, or Wipes. Mishava only shows products
+            with real source records.
           </EmptyState>
         ) : (
           <div className="product-grid">
             {products.map((product) => {
               const explanation = buildShoppingScoreExplanation({ product });
-              const readinessLabels = getEvidenceReadinessLabels(product);
-              const supplierLabels = getSupplierTransparencyLabels(product);
               const toiletPaperPreview =
                 product.product_subcategory === "toilet-paper"
                   ? getToiletPaperPreview(product)
@@ -215,56 +177,39 @@ export default async function ShoppingPage({
                     {product.package_details ? (
                       <p className="product-meta">{product.package_details}</p>
                     ) : null}
-                    {product.product_summary ? <p>{product.product_summary}</p> : null}
+                    <p className="product-card-summary">
+                      {product.retailer_name ?? product.source_name ?? "Source listed"}
+                      {product.source_captured_at
+                        ? ` · ${formatFreshness(product.source_captured_at)}`
+                        : ""}
+                    </p>
                     <ShoppingScoreExplainer
                       explanation={explanation}
                       triggerLabel={
                         product.score_snapshot_id
                           ? getProductTrustLabel(product)
-                          : "Why this score is pending"
+                          : "Why Mishava is still reviewing"
                       }
                     />
                     <div className="status-row">
                       <span className="tag tag-score">
-                        {toiletPaperPreview?.confidenceLabel ??
-                          product.evidence_coverage ??
-                          "Evidence profile pending"}
+                        {product.score_snapshot_id
+                          ? getProductTrustLabel(product)
+                          : "Mishava is still reviewing this product"}
                       </span>
                       {toiletPaperPreview ? (
                         <span className="tag tag-score">
-                          {toiletPaperPreview.evidenceLabel}
+                          {toiletPaperPreview.valuesLabel}
                         </span>
                       ) : null}
-                      <span className="tag">
-                        {product.product_subcategory ?? product.category}
-                      </span>
                       <span className="tag tag-source">
                         Source {product.source_review_status}
                       </span>
-                      <span className="tag">
-                        {formatFreshness(product.source_captured_at)}
-                      </span>
-                      <span className="tag tag-score">
-                        {product.score_snapshot_id ? "Snapshot linked" : "Score pending"}
-                      </span>
-                      {readinessLabels.slice(0, 2).map((label) => (
-                        <span className="tag tag-source" key={label}>
-                          {label}
-                        </span>
-                      ))}
-                      {hasSupplierEvidenceGap(product) ? (
-                        <span className="tag tag-source">
-                          Manufacturer/supplier gap
-                        </span>
-                      ) : (
-                        supplierLabels.slice(4, 5).map((label) => (
-                          <span className="tag tag-source" key={label}>
-                            {label}
-                          </span>
-                        ))
-                      )}
                       <span className="tag tag-commerce">No commission</span>
                     </div>
+                    <Link className="button product-card-link" href={`/shopping/products/${product.slug}`}>
+                      View product details
+                    </Link>
                   </div>
                 </article>
               );
