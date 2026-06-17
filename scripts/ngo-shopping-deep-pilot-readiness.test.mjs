@@ -53,9 +53,9 @@ test("NGO evidence and report flows prefer plain-language pilot wording", () => 
   assert.doesNotMatch(reportDetail, /Create scoped share grant/);
   assert.doesNotMatch(reportDetail, /Share grant revoked and access blocked/);
 
-  assert.match(team, /backup link/);
-  assert.match(team, /Email setup needed/);
-  assert.match(team, /Cancel invite/);
+  assert.match(team, /fallback link/);
+  assert.match(team, /Email not configured/);
+  assert.match(team, /Revoke/);
 
   assert.match(onboarding, /Create your NGO profile/);
   assert.match(onboarding, /Who can see this at first/);
@@ -64,8 +64,8 @@ test("NGO evidence and report flows prefer plain-language pilot wording", () => 
 test("Sign-up copy avoids internal auth-provider language", () => {
   const signUp = read("src/app/auth/sign-up/page.tsx");
 
-  assert.match(signUp, /Create your Mishava account/);
-  assert.match(signUp, /Password, at least 6 characters/);
-  assert.match(signUp, /open the email first/);
+  assert.match(signUp, /Create your free Mishava Shopping account/);
+  assert.match(signUp, /confirmationMessage/);
+  assert.match(signUp, /confirm your email if prompted/);
   assert.doesNotMatch(signUp, /Supabase Auth powers this foundation/);
 });

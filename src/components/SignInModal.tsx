@@ -237,14 +237,19 @@ export function SignInModalController({
   useEffect(() => {
     const handleOpen = (event: Event) => {
       const detail = (event as CustomEvent<OpenDetail>).detail;
-      setManualNextPath(detail?.nextPath ?? null);
-      setManualSurface(detail?.surface ?? null);
+      const currentSurfacePath = getCurrentSurfaceRoot(pathname);
+      const safeManualNextPath = safeNextPath(
+        detail?.nextPath,
+        currentSurfacePath,
+      );
+      setManualNextPath(safeManualNextPath);
+      setManualSurface(detail?.surface ?? inferAuthSurface(safeManualNextPath));
       setManualOpen(true);
     };
 
     window.addEventListener(signInEventName, handleOpen);
     return () => window.removeEventListener(signInEventName, handleOpen);
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     if (!open) return;

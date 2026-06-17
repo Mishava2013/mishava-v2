@@ -44,12 +44,33 @@ function safeAuthSurface(value: FormDataEntryValue | null) {
   return authSurfaces.has(surface) ? surface : null;
 }
 
+function normalizeNextPathForSurface(nextPath: string, surface: string | null) {
+  if (surface === "shopping") {
+    return nextPath === "/" ||
+      nextPath.startsWith("/shopping") ||
+      nextPath.startsWith("/app/shopping-priorities")
+      ? nextPath
+      : "/shopping";
+  }
+
+  if (surface === "ngo") {
+    return nextPath.startsWith("/ngo") || nextPath.startsWith("/org")
+      ? nextPath
+      : "/ngo";
+  }
+
+  return nextPath;
+}
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  const nextPath = safeNextPath(formData.get("next"));
   const surface = safeAuthSurface(formData.get("surface"));
+  const nextPath = normalizeNextPathForSurface(
+    safeNextPath(formData.get("next")),
+    surface,
+  );
   const result = await signInWithPassword({ email, password });
 
   if (!result.ok || !result.accessToken) {

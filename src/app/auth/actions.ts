@@ -52,6 +52,27 @@ function safeAuthSurface(value: FormDataEntryValue | null) {
   return authSurfaces.has(surface) ? surface : null;
 }
 
+function normalizeAuthNextPathForSurface(
+  nextPath: string | null,
+  surface: string | null,
+) {
+  if (surface === "shopping") {
+    return nextPath === "/" ||
+      nextPath?.startsWith("/shopping") ||
+      nextPath?.startsWith("/app/shopping-priorities")
+      ? nextPath
+      : "/shopping";
+  }
+
+  if (surface === "ngo") {
+    return nextPath?.startsWith("/ngo") || nextPath?.startsWith("/org")
+      ? nextPath
+      : "/ngo";
+  }
+
+  return nextPath;
+}
+
 function appendAuthNotice(path: string, notice: string) {
   const separator = path.includes("?") ? "&" : "?";
   return `${path}${separator}signIn=1&notice=${notice}`;
@@ -60,8 +81,11 @@ function appendAuthNotice(path: string, notice: string) {
 export async function signUpAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  const nextPath = safeAuthNextPath(formData.get("next"));
   const surface = safeAuthSurface(formData.get("surface"));
+  const nextPath = normalizeAuthNextPathForSurface(
+    safeAuthNextPath(formData.get("next")),
+    surface,
+  );
 
   const result = await signUpWithPassword({
     email,
@@ -92,8 +116,11 @@ export async function signUpAction(formData: FormData) {
 export async function signInAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  const nextPath = safeAuthNextPath(formData.get("next"));
   const surface = safeAuthSurface(formData.get("surface"));
+  const nextPath = normalizeAuthNextPathForSurface(
+    safeAuthNextPath(formData.get("next")),
+    surface,
+  );
 
   const result = await signInWithPassword({ email, password });
 

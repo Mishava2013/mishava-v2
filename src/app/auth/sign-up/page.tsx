@@ -64,6 +64,28 @@ function surfaceFromNextPath(nextPath: string) {
   return null;
 }
 
+function normalizeNextPathForSurface(nextPath: string, surface: string | null) {
+  if (surface === "shopping") {
+    return nextPath === "/" ||
+      nextPath.startsWith("/shopping") ||
+      nextPath.startsWith("/app/shopping-priorities")
+      ? nextPath
+      : "/shopping";
+  }
+
+  if (surface === "ngo") {
+    return nextPath.startsWith("/ngo") || nextPath.startsWith("/org")
+      ? nextPath
+      : "/ngo";
+  }
+
+  return nextPath;
+}
+
+function confirmationMessage(destination: string) {
+  return `Create the account, confirm your email if prompted, then return to ${destination}.`;
+}
+
 function getSignUpContext(nextPath: string, surface: string | null) {
   if (surface === "shopping") {
     return {
@@ -84,8 +106,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       title: "Create your Mishava NGO account.",
       body:
         "Use this account for NGO workspace access, evidence files, reports, and scoped sharing. Shopping product evidence remains separate, and payment never changes trust outcomes.",
-      message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to the NGO workspace after confirming your email.",
+      message: confirmationMessage("the NGO workspace"),
       button: "Create NGO account",
       signInLabel: "Already approved? Sign in",
     };
@@ -97,8 +118,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       title: "Create your Mishava Business account.",
       body:
         "Use this account for business profile tools and future catalog workflows. Payment never changes trust outcomes, ranking, verification, or credibility labels.",
-      message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Business after confirming your email.",
+      message: confirmationMessage("Business"),
       button: "Create Business account",
       signInLabel: "Already have a Business account?",
     };
@@ -110,8 +130,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       title: "Create your Mishava Local account.",
       body:
         "Use this account for local profile tools when they become available. Mishava does not sell ranking, visibility, or trust outcomes.",
-      message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Local after confirming your email.",
+      message: confirmationMessage("Local"),
       button: "Create Local account",
       signInLabel: "Already have a Local account?",
     };
@@ -123,8 +142,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       title: "Create your Mishava Corporate account.",
       body:
         "Use this account for institutional review tools when available. Evidence, supplier transparency, and audit context stay separate from payment.",
-      message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Corporate after confirming your email.",
+      message: confirmationMessage("Corporate"),
       button: "Create Corporate account",
       signInLabel: "Already have a Corporate account?",
     };
@@ -136,8 +154,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       title: "Create your Mishava internal account.",
       body:
         "Use this account only for approved Mishava internal tools. Admin access still requires separate authorization.",
-      message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to your internal Mishava tools after confirming your email.",
+      message: confirmationMessage("your internal Mishava tools"),
       button: "Create internal account",
       signInLabel: "Already approved? Sign in",
     };
@@ -149,8 +166,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       title: "Create your Mishava Support account.",
       body:
         "Use this account for support-related workflows when account access is needed. Support access does not change trust outcomes.",
-      message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Support after confirming your email.",
+      message: confirmationMessage("Support"),
       button: "Create Support account",
       signInLabel: "Already have a Support account?",
     };
@@ -162,8 +178,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       title: "Create your Mishava Trust account.",
       body:
         "Use this account for saved Mishava tools while trust, methodology, legal, and transparency pages remain publicly readable.",
-      message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Mishava Trust after confirming your email.",
+      message: confirmationMessage("Mishava Trust"),
       button: "Create Trust account",
       signInLabel: "Already have a Mishava account?",
     };
@@ -175,8 +190,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       title: "Create your Mishava Government account.",
       body:
         "Use this account only for future public-sector workflows when they are ready. Mishava does not claim government authorization or compliance certification.",
-      message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Government after confirming your email.",
+      message: confirmationMessage("Government"),
       button: "Create Government account",
       signInLabel: "Already have a Government account?",
     };
@@ -188,8 +202,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       title: "Create your Mishava internal account.",
       body:
         "Use this account only for approved Mishava internal tools. Admin access still requires separate authorization.",
-      message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to your internal Mishava tools after confirming your email.",
+      message: confirmationMessage("your internal Mishava tools"),
       button: "Create internal account",
       signInLabel: "Already approved? Sign in",
     };
@@ -201,8 +214,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       title: "Create your Mishava NGO account.",
       body:
         "Use this account for NGO workspace access, evidence files, reports, and scoped sharing. Shopping product evidence remains separate, and payment never changes trust outcomes.",
-      message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to the NGO workspace after confirming your email.",
+      message: confirmationMessage("the NGO workspace"),
       button: "Create NGO account",
       signInLabel: "Already approved? Sign in",
     };
@@ -214,8 +226,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       title: "Create your Mishava Business account.",
       body:
         "Use this account for business profile tools and future catalog workflows. Payment never changes trust outcomes, ranking, verification, or credibility labels.",
-      message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Business after confirming your email.",
+      message: confirmationMessage("Business"),
       button: "Create Business account",
       signInLabel: "Already have a Business account?",
     };
@@ -227,8 +238,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       title: "Create your Mishava Local account.",
       body:
         "Use this account for local profile tools when they become available. Mishava does not sell ranking, visibility, or trust outcomes.",
-      message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Local after confirming your email.",
+      message: confirmationMessage("Local"),
       button: "Create Local account",
       signInLabel: "Already have a Local account?",
     };
@@ -240,8 +250,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       title: "Create your Mishava Corporate account.",
       body:
         "Use this account for institutional review tools when available. Evidence, supplier transparency, and audit context stay separate from payment.",
-      message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Corporate after confirming your email.",
+      message: confirmationMessage("Corporate"),
       button: "Create Corporate account",
       signInLabel: "Already have a Corporate account?",
     };
@@ -253,8 +262,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       title: "Create your Mishava Government account.",
       body:
         "Use this account only for future public-sector workflows when they are ready. Mishava does not claim government authorization or compliance certification.",
-      message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Government after confirming your email.",
+      message: confirmationMessage("Government"),
       button: "Create Government account",
       signInLabel: "Already have a Government account?",
     };
@@ -266,8 +274,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       title: "Create your Mishava Support account.",
       body:
         "Use this account for support-related workflows when account access is needed. Support access does not change trust outcomes.",
-      message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Support after confirming your email.",
+      message: confirmationMessage("Support"),
       button: "Create Support account",
       signInLabel: "Already have a Support account?",
     };
@@ -279,8 +286,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       title: "Create your Mishava Trust account.",
       body:
         "Use this account for saved Mishava tools while trust, methodology, legal, and transparency pages remain publicly readable.",
-      message:
-        "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Mishava Trust after confirming your email.",
+      message: confirmationMessage("Mishava Trust"),
       button: "Create Trust account",
       signInLabel: "Already have a Mishava account?",
     };
@@ -308,8 +314,7 @@ function getSignUpContext(nextPath: string, surface: string | null) {
     title: "Create your Mishava account.",
     body:
       "Use one Mishava account for Shopping Priorities, NGO workspaces, and other saved tools. Shopping product evidence remains viewable without inventing scores, and payment never changes trust outcomes.",
-    message:
-      "Supabase Auth powers this foundation. Email confirmation behavior depends on the project dashboard settings. If confirmation is required, return to Mishava after confirming your email.",
+    message: confirmationMessage("Mishava"),
     button: "Create account",
     signInLabel: "Already have an account?",
   };
@@ -324,14 +329,15 @@ export default async function SignUpPage({
   const headerStore = await headers();
   const host = headerStore.get("host");
   const defaultNextPath = defaultNextPathForHost(host);
-  const nextPath =
+  const requestedNextPath =
     params.next && params.next.startsWith("/") && !params.next.startsWith("//")
       ? params.next
       : defaultNextPath;
   const signUpSurface =
-    surfaceFromNextPath(nextPath) ??
+    safeSignUpSurface(params.surface) ??
     surfaceFromHost(host) ??
-    safeSignUpSurface(params.surface);
+    surfaceFromNextPath(requestedNextPath);
+  const nextPath = normalizeNextPathForSurface(requestedNextPath, signUpSurface);
   const signUpContext = getSignUpContext(nextPath, signUpSurface);
 
   return (
