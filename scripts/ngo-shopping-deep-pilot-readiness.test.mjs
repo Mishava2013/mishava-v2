@@ -39,6 +39,7 @@ test("NGO evidence and report flows prefer plain-language pilot wording", () => 
   const team = read("src/app/org/team/page.tsx");
   const ngoPublic = read("src/app/ngo/page.tsx");
   const onboarding = read("src/app/ngo/onboarding/page.tsx");
+  const signInModal = read("src/components/SignInModal.tsx");
 
   assert.match(evidence, /held for review/);
   assert.match(evidence, /Edit evidence details/);
@@ -59,27 +60,37 @@ test("NGO evidence and report flows prefer plain-language pilot wording", () => 
   assert.match(team, /Revoke/);
 
   assert.match(ngoPublic, /Start an NGO profile, then build clearer funder reports/);
-  assert.match(ngoPublic, /Create an account first/);
-  assert.match(ngoPublic, /Create account to start/);
+  assert.match(ngoPublic, /Create your account and NGO profile/);
+  assert.match(ngoPublic, /What happens next/);
+  assert.match(ngoPublic, /Add your NGO name/);
+  assert.match(ngoPublic, /Create your account/);
+  assert.match(ngoPublic, /Upload or list evidence/);
   assert.match(ngoPublic, /\/auth\/sign-up\?next=%2Fngo%2Fonboarding&surface=ngo/);
   assert.doesNotMatch(ngoPublic, /Start a free NGO profile/);
 
   assert.match(onboarding, /Create your NGO profile/);
-  assert.match(onboarding, /First sign in or create a free Mishava account/);
-  assert.match(onboarding, /Mishava needs an account before it can save your NGO profile/);
+  assert.match(onboarding, /First, create your free Mishava account/);
+  assert.match(onboarding, /This lets us save your NGO\s+profile privately/);
   assert.match(onboarding, /Create free NGO account/);
   assert.match(onboarding, /nextPath="\/ngo\/onboarding"/);
   assert.match(onboarding, /surface="ngo"/);
   assert.match(onboarding, /getCurrentSession/);
   assert.match(onboarding, /Who can see this at first/);
   assert.doesNotMatch(onboarding, /Sign in is required before an NGO profile can be saved/);
+
+  assert.match(signInModal, /function createAccountNextPath/);
+  assert.match(signInModal, /surface === "ngo" && nextPath === "\/ngo"/);
+  assert.match(signInModal, /return "\/ngo\/onboarding"/);
 });
 
 test("Sign-up copy avoids internal auth-provider language", () => {
   const signUp = read("src/app/auth/sign-up/page.tsx");
 
   assert.match(signUp, /Create your free Mishava Shopping account/);
+  assert.match(signUp, /Use this account to save your NGO profile and keep your evidence work private/);
+  assert.match(signUp, /Already have an account\? Sign in/);
   assert.match(signUp, /confirmationMessage/);
   assert.match(signUp, /confirm your email if prompted/);
+  assert.doesNotMatch(signUp, /Shopping product evidence remains separate/);
   assert.doesNotMatch(signUp, /Supabase Auth powers this foundation/);
 });

@@ -4,48 +4,39 @@ import { ngoTiers } from "@/lib/ngo";
 
 const valueCards = [
   {
-    title: "Stop rebuilding the same funder packet",
-    body: "Keep reports, source notes, outcomes, and supporting evidence connected so each new request starts from organized work.",
+    title: "Create account",
+    body: "Save your work privately.",
   },
   {
-    title: "Keep evidence organized and reviewable",
-    body: "Track documents, claims, links, and report context in one workspace instead of scattered folders and last-minute searches.",
+    title: "Add NGO profile",
+    body: "Add your NGO name and basic details.",
   },
   {
-    title: "Show what is verified, pending, and missing",
-    body: "Make the state of evidence clear before a report is shared, including gaps that still need review or stronger support.",
+    title: "Organize evidence",
+    body: "Keep files, links, and notes together.",
   },
   {
-    title: "Share limited reports without opening your workspace",
-    body: "Give funders, donors, and partners scoped report access while raw files and unrelated organization data stay private by default.",
+    title: "Share reports later",
+    body: "Share only what someone needs to see.",
   },
 ];
 
-const workflowSteps = [
+const nextSteps = [
   {
     step: "1",
-    title: "Create an account",
-    body: "Use your email and password so Mishava can save your NGO profile privately.",
+    title: "Create your account",
   },
   {
     step: "2",
-    title: "Save your NGO profile",
-    body: "Add the basic organization details funders and partners need to understand who you are.",
+    title: "Add your NGO name",
   },
   {
     step: "3",
-    title: "Add evidence later",
-    body: "Attach source links, files, notes, and context so claims can be reviewed instead of simply asserted.",
+    title: "Upload or list evidence",
   },
   {
     step: "4",
-    title: "Build a report from reviewed evidence",
-    body: "Turn selected evidence and accepted facts into a clearer report preview with limitations visible.",
-  },
-  {
-    step: "5",
-    title: "Share a scoped report",
-    body: "Share only the report a recipient needs, without exposing the whole workspace or raw files by default.",
+    title: "Build a report when ready",
   },
 ];
 
@@ -66,32 +57,42 @@ export default function NgoPage() {
         eyebrow="NGO"
         title="Start an NGO profile, then build clearer funder reports."
       >
-        Create an account first so your organization profile and evidence stay
-        private. Then Mishava helps you organize documents, claims, outcomes,
-        and reports in one place.
+        Create your account, add your NGO name, and keep important proof in one
+        private place.
       </PageHeader>
 
       <section className="ngo-public-hero">
         <div className="hero-actions">
           <Link className="button primary" href={ngoSignUpHref}>
-            Create account to start
+            Create your account and NGO profile
           </Link>
           <Link className="button" href="/ngo/reports">
             See how reports work
           </Link>
         </div>
         <p className="ngo-trust-line">
-          First step: create or sign in to your Mishava account. No paid trust
-          outcomes. Reports stay private until shared.
+          Reports stay private until shared. Payment never changes trust
+          outcomes.
         </p>
+      </section>
+
+      <section className="section">
+        <h2>What happens next</h2>
+        <div className="ngo-flow-grid">
+          {nextSteps.map((item) => (
+            <div className="card ngo-step-card" key={item.step}>
+              <span className="ngo-step-number">{item.step}</span>
+              <h3>{item.title}</h3>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="section">
         <h2>Why NGOs need this</h2>
         <p className="section-intro">
-          Reporting gets harder when evidence lives across folders, email
-          threads, public links, and old board packets. Mishava gives teams a
-          calmer way to prepare credible, limited, evidence-based reports.
+          Mishava helps your team stop digging through folders and emails when
+          someone asks for proof.
         </p>
         <div className="card-grid ngo-value-grid">
           {valueCards.map((card) => (
@@ -100,31 +101,6 @@ export default function NgoPage() {
               <p>{card.body}</p>
             </div>
           ))}
-        </div>
-      </section>
-
-      <section className="section">
-        <h2>How Mishava works for NGOs</h2>
-        <p className="section-intro">
-          Start small, build a reviewable evidence base, and share only the
-          report context a recipient needs.
-        </p>
-        <div className="ngo-flow-grid">
-          {workflowSteps.map((item) => (
-            <div className="card ngo-step-card" key={item.step}>
-              <span className="ngo-step-number">{item.step}</span>
-              <h3>{item.title}</h3>
-              <p>{item.body}</p>
-            </div>
-          ))}
-        </div>
-        <div className="hero-actions">
-          <Link className="button primary" href={ngoSignUpHref}>
-            Create account to start
-          </Link>
-          <Link className="button" href="/ngo/sharing">
-            See scoped sharing
-          </Link>
         </div>
       </section>
 
@@ -197,7 +173,7 @@ export default function NgoPage() {
       <section className="section">
         <div className="hero-actions">
           <Link className="button primary" href={ngoSignUpHref}>
-            Create account to start
+            Create your account and NGO profile
           </Link>
           <Link className="button" href="/ngo/reports">
             Review report tools

@@ -105,10 +105,11 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       eyebrow: "NGO account access",
       title: "Create your Mishava NGO account.",
       body:
-        "Use this account for NGO workspace access, evidence files, reports, and scoped sharing. Shopping product evidence remains separate, and payment never changes trust outcomes.",
-      message: confirmationMessage("the NGO workspace"),
+        "Use this account to save your NGO profile and keep your evidence work private.",
+      message:
+        "Create the account, confirm your email if prompted, then add your NGO name and basic details.",
       button: "Create NGO account",
-      signInLabel: "Already approved? Sign in",
+      signInLabel: "Already have an account? Sign in",
     };
   }
 
@@ -213,10 +214,11 @@ function getSignUpContext(nextPath: string, surface: string | null) {
       eyebrow: "NGO account access",
       title: "Create your Mishava NGO account.",
       body:
-        "Use this account for NGO workspace access, evidence files, reports, and scoped sharing. Shopping product evidence remains separate, and payment never changes trust outcomes.",
-      message: confirmationMessage("the NGO workspace"),
+        "Use this account to save your NGO profile and keep your evidence work private.",
+      message:
+        "Create the account, confirm your email if prompted, then add your NGO name and basic details.",
       button: "Create NGO account",
-      signInLabel: "Already approved? Sign in",
+      signInLabel: "Already have an account? Sign in",
     };
   }
 

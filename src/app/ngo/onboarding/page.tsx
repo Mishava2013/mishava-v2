@@ -18,8 +18,8 @@ export default async function NgoOnboardingPage({
   return (
     <>
       <PageHeader eyebrow="NGO setup" title="Create your NGO profile.">
-        First sign in or create a free Mishava account. Then save your
-        organization name, mission area, and privacy setting.
+        First, create your free Mishava account. This lets us save your NGO
+        profile privately.
       </PageHeader>
 
       {params.error ? (
@@ -37,9 +37,8 @@ export default async function NgoOnboardingPage({
               <p className="eyebrow">Step 1</p>
               <h2>Create or sign in to your account</h2>
               <p className="form-message">
-                Mishava needs an account before it can save your NGO profile.
-                This keeps your organization details private until you decide
-                what to share.
+                First, create your free Mishava account. This lets us save your
+                NGO profile privately.
               </p>
               <div className="hero-actions">
                 <Link
@@ -63,15 +62,15 @@ export default async function NgoOnboardingPage({
             <h2>What happens next</h2>
             <div className="simple-list">
               <div className="simple-list-item">
-                <strong>1. Create or sign in.</strong>
+                <strong>1. Create your account.</strong>
                 <p>Use your email and password so Mishava can save your work.</p>
               </div>
               <div className="simple-list-item">
-                <strong>2. Save your NGO profile.</strong>
+                <strong>2. Add your NGO name and basic details.</strong>
                 <p>Add your organization name, country, mission area, and privacy choice.</p>
               </div>
               <div className="simple-list-item">
-                <strong>3. Add evidence later.</strong>
+                <strong>3. Upload or list evidence later.</strong>
                 <p>Reports and evidence stay private unless your organization shares them.</p>
               </div>
             </div>
@@ -84,7 +83,7 @@ export default async function NgoOnboardingPage({
           <WorkflowList items={ngoOnboardingSteps} />
 
           <section className="section">
-            <h2>Basic profile</h2>
+            <h2>Add your NGO name and basic details</h2>
             <form action={createNgoOnboardingAction} className="form-grid">
               <div className="field">
                 <label htmlFor="public-name">Public organization name</label>
@@ -144,8 +143,8 @@ export default async function NgoOnboardingPage({
               <div className="field">
                 <label htmlFor="visibility">Who can see this at first?</label>
                 <select id="visibility" name="defaultVisibility" defaultValue="private">
-                  <option value="private">Private until approved</option>
-                  <option value="approved_viewer">Only approved viewers</option>
+                  <option value="private">Private until you share it</option>
+                  <option value="approved_viewer">Only people you approve</option>
                   <option value="public_summary">Public summary</option>
                 </select>
               </div>

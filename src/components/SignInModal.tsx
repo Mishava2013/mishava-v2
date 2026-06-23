@@ -137,6 +137,14 @@ function stripAuthParams(searchParams: URLSearchParams) {
   return params;
 }
 
+function createAccountNextPath(nextPath: string, surface: AuthSurface | null) {
+  if (surface === "ngo" && nextPath === "/ngo") {
+    return "/ngo/onboarding";
+  }
+
+  return nextPath;
+}
+
 export function SignInModalButton({
   children = "Sign in",
   className = "button",
@@ -282,7 +290,9 @@ export function SignInModalController({
     setManualOpen(false);
     setManualNextPath(null);
     setManualSurface(null);
-    const target = new URLSearchParams({ next: nextPath });
+    const target = new URLSearchParams({
+      next: createAccountNextPath(nextPath, authSurface),
+    });
     if (authSurface) {
       target.set("surface", authSurface);
     }
