@@ -7,15 +7,14 @@ export default function NgoReportsPage() {
   return (
     <>
       <PageHeader eyebrow="NGO reports" title="Reports that NGOs can control and share.">
-        NGOs can use Mishava templates, build custom reports, upload an existing
-        report for AI-assisted rebuilding, and require manager approval before
-        publication or sharing.
+        Mishava helps organize evidence into clearer reports. You stay in
+        control of what is included, what is still missing, and when a report is
+        ready to share.
       </PageHeader>
 
       <div className="notice">
-        AI report rebuilding is a paid or credit-based workflow. Free NGO access
-        keeps AI limited so product revenue covers AI cost instead of making the
-        system financially unstable.
+        Early NGO partners can use this flow to review report structure and give
+        feedback. Reports can be built when your information is ready.
       </div>
 
       <section className="section">
@@ -46,4 +45,3 @@ export default function NgoReportsPage() {
     </>
   );
 }
-

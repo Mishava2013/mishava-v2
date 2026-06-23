@@ -39,6 +39,7 @@ test("NGO evidence and report flows prefer plain-language pilot wording", () => 
   const team = read("src/app/org/team/page.tsx");
   const ngoPublic = read("src/app/ngo/page.tsx");
   const onboarding = read("src/app/ngo/onboarding/page.tsx");
+  const ngoReportsInfo = read("src/app/ngo/reports/page.tsx");
   const signInModal = read("src/components/SignInModal.tsx");
 
   assert.match(evidence, /held for review/);
@@ -69,14 +70,23 @@ test("NGO evidence and report flows prefer plain-language pilot wording", () => 
   assert.doesNotMatch(ngoPublic, /Start a free NGO profile/);
 
   assert.match(onboarding, /Create your NGO profile/);
-  assert.match(onboarding, /First, create your free Mishava account/);
-  assert.match(onboarding, /This lets us save your NGO\s+profile privately/);
-  assert.match(onboarding, /Create free NGO account/);
+  assert.match(onboarding, /Create your free account first/);
+  assert.match(onboarding, /This lets Mishava save your NGO profile privately/);
+  assert.match(onboarding, /Create free account/);
+  assert.match(onboarding, /Already have an account\? Sign in/);
+  assert.match(onboarding, /Build a report when ready/);
   assert.match(onboarding, /nextPath="\/ngo\/onboarding"/);
   assert.match(onboarding, /surface="ngo"/);
   assert.match(onboarding, /getCurrentSession/);
   assert.match(onboarding, /Who can see this at first/);
   assert.doesNotMatch(onboarding, /Sign in is required before an NGO profile can be saved/);
+
+  assert.match(ngoReportsInfo, /Mishava helps organize evidence into clearer reports/);
+  assert.match(ngoReportsInfo, /You stay in\s+control of what is included/);
+  assert.match(ngoReportsInfo, /Early NGO partners can use this flow/);
+  assert.doesNotMatch(ngoReportsInfo, /AI-assisted rebuilding/);
+  assert.doesNotMatch(ngoReportsInfo, /paid or credit-based workflow/);
+  assert.doesNotMatch(ngoReportsInfo, /product revenue covers AI cost/);
 
   assert.match(signInModal, /function createAccountNextPath/);
   assert.match(signInModal, /surface === "ngo" && nextPath === "\/ngo"/);

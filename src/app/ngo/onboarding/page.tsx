@@ -18,8 +18,8 @@ export default async function NgoOnboardingPage({
   return (
     <>
       <PageHeader eyebrow="NGO setup" title="Create your NGO profile.">
-        First, create your free Mishava account. This lets us save your NGO
-        profile privately.
+        Create your free account first. Then add your NGO name and basic
+        details.
       </PageHeader>
 
       {params.error ? (
@@ -35,24 +35,23 @@ export default async function NgoOnboardingPage({
           <section className="section">
             <div className="auth-card">
               <p className="eyebrow">Step 1</p>
-              <h2>Create or sign in to your account</h2>
+              <h2>Create your free account</h2>
               <p className="form-message">
-                First, create your free Mishava account. This lets us save your
-                NGO profile privately.
+                This lets Mishava save your NGO profile privately.
               </p>
               <div className="hero-actions">
                 <Link
                   className="button primary"
                   href="/auth/sign-up?next=%2Fngo%2Fonboarding&surface=ngo"
                 >
-                  Create free NGO account
+                  Create free account
                 </Link>
                 <SignInModalButton
                   className="button"
                   nextPath="/ngo/onboarding"
                   surface="ngo"
                 >
-                  Sign in
+                  Already have an account? Sign in
                 </SignInModalButton>
               </div>
             </div>
@@ -72,6 +71,10 @@ export default async function NgoOnboardingPage({
               <div className="simple-list-item">
                 <strong>3. Upload or list evidence later.</strong>
                 <p>Reports and evidence stay private unless your organization shares them.</p>
+              </div>
+              <div className="simple-list-item">
+                <strong>4. Build a report when ready.</strong>
+                <p>Use reviewed information to prepare clearer reports later.</p>
               </div>
             </div>
           </section>
