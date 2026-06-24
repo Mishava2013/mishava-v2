@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 
 const adminLinks = [
+  { href: "/admin/research", label: "Research and source review" },
   { href: "/admin/support", label: "NGO support operations" },
   { href: "/admin/pricing", label: "Pricing configuration" },
   { href: "/admin/categories", label: "Categories" },

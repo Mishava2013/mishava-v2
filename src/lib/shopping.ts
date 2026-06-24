@@ -90,6 +90,12 @@ export type ShoppingResearchQuestion = {
 };
 
 export type ShoppingResearchTaskStatus =
+  | "new"
+  | "researching"
+  | "needs_source_review"
+  | "blocked"
+  | "completed"
+  | "closed_no_reliable_sources"
   | "research_needed"
   | "source_found"
   | "claim_drafted"
@@ -224,6 +230,12 @@ const shoppingProductColumns =
   "id,slug,name,brand_name,category,product_subcategory,product_summary,package_details,product_url,image_url,image_alt_text,image_source_url,image_source_type,image_review_status,image_last_reviewed_at,image_rights_notes,recycled_content_claim,post_consumer_recycled_content_claim,bamboo_fsc_claim,virgin_fiber_claim,bleaching_process_claim,packaging_claim,brand_sourcing_policy_url,external_evidence_reference_url,external_evidence_reference_notes,retailer_name,brand_display_name,private_label_owner,parent_company,manufacturer_name,supplier_name,supplier_role,supplier_region,manufacturer_source_url,supplier_source_url,manufacturer_confidence,supplier_confidence,evidence_gap_notes,supplier_reviewed_at,mishava_evidence_review_status,evidence_score,score_label,evidence_coverage,evidence_recency,verification_confidence,score_snapshot_id,score_published_at,source_name,source_url,source_captured_at,source_review_status,data_origin,active";
 
 export const shoppingResearchTaskStatuses: ShoppingResearchTaskStatus[] = [
+  "new",
+  "researching",
+  "needs_source_review",
+  "blocked",
+  "completed",
+  "closed_no_reliable_sources",
   "research_needed",
   "source_found",
   "claim_drafted",

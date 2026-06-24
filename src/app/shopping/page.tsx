@@ -3,6 +3,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ShoppingAccountPrompt } from "@/components/ShoppingAccountPrompt";
 import { ShoppingProductImage } from "@/components/ShoppingProductImage";
 import { ShoppingScoreExplainer } from "@/components/ShoppingScoreExplainer";
+import { createProductResearchRequestAction } from "./actions";
 import { getCurrentSession } from "@/lib/auth-server";
 import {
   buildShoppingScoreExplanation,
@@ -26,7 +27,13 @@ const departmentLinks = [
 export default async function ShoppingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; source?: string; sort?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    source?: string;
+    sort?: string;
+    research?: string;
+    message?: string;
+  }>;
 }) {
   const params = await searchParams;
   const session = await getCurrentSession();
@@ -139,16 +146,80 @@ export default async function ShoppingPage({
             </Link>
           </div>
 
+          {params.research === "requested" ? (
+            <div className="notice" role="status">
+              Research request received. Mishava staff can review sources for
+              this product, but no score or completion date is promised.
+            </div>
+          ) : null}
+
         {!configured ? (
           <EmptyState title="Shopping is getting product records ready">
             Mishava shows real product records only after source metadata is
             connected. Please check back shortly.
           </EmptyState>
         ) : products.length === 0 ? (
-          <EmptyState title="No matching products found">
-            Try Toilet paper, Diapers, or Wipes. Mishava only shows products
-            with real source records.
-          </EmptyState>
+          <div className="evidence-panel">
+            <EmptyState title="No matching products found">
+              Mishava only shows products with real source records. You can ask
+              Mishava to research this product, and staff will review sources
+              before anything can affect evidence, claims, or scores.
+            </EmptyState>
+            <form action={createProductResearchRequestAction} className="form-grid">
+              <div className="field full">
+                <label htmlFor="research-product-name">Product name</label>
+                <input
+                  id="research-product-name"
+                  name="productName"
+                  placeholder="Example: Kirkland bath tissue"
+                  required
+                  defaultValue={params.q ?? ""}
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="research-brand">Brand, if you know it</label>
+                <input id="research-brand" name="brand" placeholder="Brand name" />
+              </div>
+              <div className="field">
+                <label htmlFor="research-category">Category</label>
+                <input
+                  id="research-category"
+                  name="category"
+                  placeholder="Toilet paper, wipes, diapers..."
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="research-upc">Barcode/UPC, optional</label>
+                <input id="research-upc" name="upc" placeholder="Numbers under barcode" />
+              </div>
+              <div className="field">
+                <label htmlFor="research-retailer-url">Retailer link, optional</label>
+                <input
+                  id="research-retailer-url"
+                  name="retailerUrl"
+                  placeholder="https://..."
+                  type="url"
+                />
+              </div>
+              <div className="field full">
+                <label htmlFor="research-notes">Anything else Mishava should know?</label>
+                <textarea
+                  id="research-notes"
+                  name="notes"
+                  placeholder="Package size, where you saw it, or what you want Mishava to check."
+                />
+              </div>
+              <div className="field full">
+                <button className="button primary" type="submit">
+                  Ask Mishava to research this product
+                </button>
+                <p className="form-help">
+                  This creates a private internal research task. Pending sources
+                  do not create public evidence, claims, scores, or rankings.
+                </p>
+              </div>
+            </form>
+          </div>
         ) : (
           <div className="product-grid">
             {products.map((product) => {
