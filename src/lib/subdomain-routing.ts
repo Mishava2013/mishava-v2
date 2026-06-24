@@ -56,6 +56,7 @@ const globalPathPrefixes = [
   "/app",
   "/auth",
   "/business",
+  "/intake",
   "/legal",
   "/media",
   "/ngo",

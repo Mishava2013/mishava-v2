@@ -32,6 +32,7 @@ test("subdomain routing maps requested Mishava hosts to existing surfaces", () =
   }
 
   assert.match(routing, /mishava\.org/);
+  assert.match(routing, /"\/intake"/);
   assert.match(middleware, /resolveMishavaSubdomainRoute/);
   assert.match(middleware, /NextResponse\.rewrite/);
 });
