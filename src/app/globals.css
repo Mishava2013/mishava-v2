@@ -1413,6 +1413,13 @@ textarea {
   font-size: 12px;
 }
 
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
 .tag-score {
   background: #eef6f5;
   border-color: rgba(57, 123, 109, 0.26);

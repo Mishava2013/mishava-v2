@@ -67,8 +67,8 @@ test("evidence UI labels AI suggestions as private draft assistance", () => {
   const actions = read("src/app/org/evidence/actions.ts");
   const reports = read("src/lib/ngo-evidence-reports.ts");
 
-  assert.match(page, /AI-assisted suggestions/);
-  assert.match(page, /Human review is required/);
+  assert.match(page, /Draft suggestions/);
+  assert.match(page, /A\s+person must review them/);
   assert.match(page, /does not affect score, ranking, verification, or\s+report trust context by itself/);
   assert.match(page, /Accept as reviewed draft claim/);
   assert.match(page, /Reject suggestion/);

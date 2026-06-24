@@ -1,9 +1,15 @@
+import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { canManageNgoEvidence } from "@/lib/auth";
 import { requireCurrentOrganizationMembership } from "@/lib/auth-server";
 import { getNgoEvidenceLibrary } from "@/lib/ngo-evidence-reports";
-import { evidenceIntakeTypes } from "@/lib/ngo";
+import {
+  evidenceIntakeTypes,
+  workerRightsActorTypes,
+  workerRightsIndustryTags,
+  workerRightsIssueCategories,
+} from "@/lib/ngo";
 import {
   archiveEvidenceAction,
   createEvidenceAction,
@@ -35,9 +41,8 @@ export default async function OrgEvidencePage({
   return (
     <>
       <PageHeader eyebrow="Evidence" title="Add evidence and source notes.">
-        Add documents, links, photos, and notes that support your NGO reports.
-        AI may help draft notes later, but a person must review anything before
-        it supports a report.
+        Add proof, links, photos, and notes for a case, worksite, issue, packet,
+        or report. It is okay if you do not have every item.
       </PageHeader>
 
       {params.created ? (
@@ -58,14 +63,26 @@ export default async function OrgEvidencePage({
       ) : null}
 
       <section className="section">
+        <h2>Safe intake links</h2>
+        <p className="section-intro">
+          Create a private link a worker or client can open without a Mishava
+          account. Submissions stay private until your organization reviews
+          them.
+        </p>
+        <Link className="button" href="/org/intake">
+          Open safe intake links
+        </Link>
+      </section>
+
+      <section className="section">
         <h2>Evidence library</h2>
         <p className="section-intro">
           Evidence is private to your organization unless you choose to share a
-          report. New files are held for review until a scanner or authorized
-          person clears them. Files that are still being checked or rejected are
-          blocked from new reports, downloads, and sharing by default. AI
-          suggestions, when present, are private draft help only and do not
-          become verified facts or trust outcomes without human review.
+          packet or report. New files are held for review. Files that are still
+          being checked or rejected are blocked from reports, downloads, and
+          sharing by default. These files are blocked from new reports,
+          downloads, and sharing until review allows use. Draft suggestions,
+          when present, stay private until a person reviews them.
         </p>
 
         {evidenceLibrary.length === 0 ? (
@@ -129,7 +146,7 @@ export default async function OrgEvidencePage({
                     </strong>
                   </div>
                   <div className="metric">
-                    <span>AI assistance</span>
+                    <span>Draft help</span>
                     <strong>{item.aiSuggestionLabel}</strong>
                   </div>
                   <div className="metric">
@@ -187,10 +204,10 @@ export default async function OrgEvidencePage({
 
                 {item.aiSuggestionSummaries.length > 0 ? (
                   <div className="inline-workflow">
-                    <strong>AI-assisted suggestions</strong>
+                    <strong>Draft suggestions</strong>
                     <p className="muted-copy">
-                      AI-assisted suggestions are private to your organization.
-                      Human review is required. A suggestion is not a verified
+                      Draft suggestions are private to your organization. A
+                      person must review them. A suggestion is not a verified
                       fact and does not affect score, ranking, verification, or
                       report trust context by itself.
                     </p>
@@ -386,31 +403,30 @@ export default async function OrgEvidencePage({
       <section className="section">
         <h2>Manual evidence entry</h2>
         <div className="notice" role="note">
-          Submit only evidence your organization is legally allowed to provide
-          and store. Evidence may be incomplete or require review. Mishava does
-          not guarantee funding, donations, ratings, certifications,
-          procurement decisions, or other outcomes from submitted evidence.
-          AI assistance is not enabled for raw-file processing in this slice;
-          future AI suggestions require human review before becoming structured
-          claim drafts.
+          Add what you have. You can add more later. Do not add information your
+          organization is not allowed to keep. Mishava does not give legal
+          advice or decide whether harm happened.
         </div>
         {canManageEvidence ? (
         <form action={createEvidenceAction} className="form-grid">
           <div className="field">
-            <label htmlFor="title">Evidence title</label>
-            <input id="title" name="title" placeholder="Business registration, program report, public source" required />
+            <label htmlFor="title">Proof title</label>
+            <input id="title" name="title" placeholder="Paystub, timecard, photo, message, or note" required />
           </div>
           <div className="field">
             <label htmlFor="source-name">Source name</label>
-            <input id="source-name" name="sourceName" placeholder="Agency, NGO, organization, public website" required />
+            <input id="source-name" name="sourceName" placeholder="Worker, NGO, employer, agency, or public website" required />
           </div>
           <div className="field">
             <label htmlFor="source-type">Source type</label>
-            <select id="source-type" name="sourceType" defaultValue="public_disclosure" required>
-              <option value="business_registration">Registration or public record</option>
-              <option value="public_disclosure">Public disclosure</option>
-              <option value="attestation">Attestation</option>
-              <option value="reference">Reference</option>
+            <select id="source-type" name="sourceType" defaultValue="worker_evidence" required>
+              <option value="worker_evidence">Worker proof</option>
+              <option value="worker_statement">Worker statement</option>
+              <option value="worksite_photo">Worksite photo</option>
+              <option value="pay_or_time_record">Pay or time record</option>
+              <option value="message_or_letter">Message or letter</option>
+              <option value="complaint_or_injury_record">Complaint or injury record</option>
+              <option value="public_record">Public record</option>
               <option value="ngo_report">NGO report</option>
               <option value="other">Other</option>
             </select>
@@ -427,7 +443,7 @@ export default async function OrgEvidencePage({
           <div className="field">
             <label htmlFor="visibility">Visibility</label>
             <select id="visibility" name="visibility" defaultValue="private">
-              <option value="private">Private</option>
+              <option value="private">Keep private</option>
               <option value="organization_shared">Organization shared</option>
               <option value="approved_viewer">Approved viewer</option>
               <option value="public_summary">Public summary</option>
@@ -444,6 +460,99 @@ export default async function OrgEvidencePage({
             <label htmlFor="url">Source URL</label>
             <input id="url" name="url" placeholder="https://example.org/source" />
           </div>
+          <div className="field">
+            <label htmlFor="worker-issue-category">What issue is this about?</label>
+            <select id="worker-issue-category" name="workerIssueCategory" defaultValue="">
+              <option value="">Not sure yet</option>
+              {workerRightsIssueCategories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="worker-industry-tag">What work is this about?</label>
+            <select id="worker-industry-tag" name="workerIndustryTag" defaultValue="">
+              <option value="">Not sure yet</option>
+              {workerRightsIndustryTags.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="actor-type">Who was involved?</label>
+            <select id="actor-type" name="actorType" defaultValue="">
+              <option value="">Not sure yet</option>
+              {workerRightsActorTypes.map((actor) => (
+                <option key={actor} value={actor}>
+                  {actor}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="worksite-or-employer">Employer or worksite</label>
+            <input
+              id="worksite-or-employer"
+              name="worksiteOrEmployer"
+              placeholder="Optional. Add only if safe."
+            />
+          </div>
+          <fieldset className="field full fieldset-panel">
+            <legend>Privacy and safety</legend>
+            <p className="muted-copy">
+              Names and contact details can stay private. Choose “Not sure” if
+              your team needs more time.
+            </p>
+            <div className="form-grid compact-form">
+              <div className="field">
+                <label htmlFor="share-outside-ngo">Can this be shared outside the NGO?</label>
+                <select id="share-outside-ngo" name="shareOutsideNgo" defaultValue="Not sure yet">
+                  <option>No</option>
+                  <option>Yes</option>
+                  <option>Only without names</option>
+                  <option>Not sure yet</option>
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="retaliation-concern">Is there a retaliation concern?</label>
+                <select id="retaliation-concern" name="retaliationConcern" defaultValue="Not sure">
+                  <option>Yes</option>
+                  <option>No</option>
+                  <option>Not sure</option>
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="worker-name-private">Should the worker's name stay private?</label>
+                <select id="worker-name-private" name="workerNamePrivate" defaultValue="Yes">
+                  <option>Yes</option>
+                  <option>No</option>
+                  <option>Not sure</option>
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="immigration-concern">Is there an immigration-related threat or fear?</label>
+                <select id="immigration-concern" name="immigrationConcern" defaultValue="Not sure">
+                  <option>Yes</option>
+                  <option>No</option>
+                  <option>Not sure</option>
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="safe-contact-method">Safe contact method</label>
+                <select id="safe-contact-method" name="safeContactMethod" defaultValue="Through the NGO only">
+                  <option>Phone</option>
+                  <option>Text</option>
+                  <option>Email</option>
+                  <option>Through the NGO only</option>
+                  <option>Not safe to contact yet</option>
+                </select>
+              </div>
+            </div>
+          </fieldset>
           <div className="field full">
             <label htmlFor="evidence-file">Private file attachment</label>
             <input
@@ -455,19 +564,17 @@ export default async function OrgEvidencePage({
             <p className="muted-copy">
               Optional. Raw files are private to your organization and are not
               shared by default. PDF, PNG, JPG, WebP, TXT, CSV, or DOCX only,
-              up to 10 MB. Shared reports expose selected summaries unless a
-              future explicit raw-file sharing control is added and used.
-              Upload acceptance does not mean a file is malware-free, reviewed,
-              or accepted for a report.
+              up to 10 MB. A file may still need review before it can support a
+              packet or report.
             </p>
           </div>
           <div className="field full">
             <label htmlFor="notes">Notes</label>
-            <textarea id="notes" name="notes" placeholder="What this evidence supports and what remains unverified" />
+            <textarea id="notes" name="notes" placeholder="What happened? What proof do you have? What is still missing?" />
           </div>
           <div className="field full">
             <button className="button primary" type="submit">
-              Save evidence
+              Save private proof
             </button>
           </div>
         </form>
@@ -484,8 +591,8 @@ export default async function OrgEvidencePage({
           <div className="card" key={type}>
             <h3>{type}</h3>
             <p>
-              Each item stores the source, who submitted it, who can see it,
-              review state, and whether AI help needs human confirmation.
+              Add what you have. It can stay private until your organization
+              reviews what is safe to share.
             </p>
           </div>
         ))}

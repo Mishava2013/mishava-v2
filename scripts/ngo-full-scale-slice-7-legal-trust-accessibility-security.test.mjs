@@ -85,10 +85,10 @@ test("NGO evidence, report, shared report, and billing disclaimers render", () =
   const shared = read("src/app/shared/ngo-reports/[grantId]/page.tsx");
   const billing = read("src/app/org/billing/page.tsx");
 
-  assert.match(evidence, /legally allowed to provide/);
-  assert.match(evidence, /Mishava does\s+not guarantee funding/);
+  assert.match(evidence, /Do not add information your\s+organization is not allowed to keep/);
+  assert.match(evidence, /Mishava does\s+not give legal\s+advice or decide whether harm happened/);
   assert.match(evidence, /Raw files are private to your organization/);
-  assert.match(evidence, /selected summaries/);
+  assert.match(evidence, /not\s+shared by default/);
 
   assert.match(report, /This report is based on selected evidence and may not represent a\s+complete record/);
   assert.match(report, /does not\s+guarantee funding/);

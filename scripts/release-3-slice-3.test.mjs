@@ -58,7 +58,7 @@ test("NGO reports store org linkage, evidence, accepted claims, and private defa
   assert.match(helper, /visibility: "private"/);
   assert.match(helper, /approval_status: "draft"/);
   assert.match(helper, /created_by: session\.user\.id/);
-  assert.match(reportsPage, /Save private draft report/);
+  assert.match(reportsPage, /Save private draft packet/);
 });
 
 test("reports reject another organization's evidence and non-accepted claims", () => {
@@ -81,7 +81,7 @@ test("report creation writes audit event and does not expose reports publicly by
   assert.match(helper, /action: "ngo_report\.draft_created"/);
   assert.match(helper, /subjectTable: "ngo_reports"/);
   assert.match(reportsPage, /Raw evidence remains private/);
-  assert.match(reportsPage, /Reports are private by default/);
+  assert.match(reportsPage, /Packets are private by default/);
   assert.match(reportsPage, /does not invent a score/);
   assert.match(reportsPage, /Sharing/);
   assert.match(reportsPage, /Open report to share/);

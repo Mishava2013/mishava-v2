@@ -6,35 +6,35 @@ import { ngoReportTemplates } from "@/lib/ngo";
 export default function NgoReportsPage() {
   return (
     <>
-      <PageHeader eyebrow="NGO reports" title="Reports that NGOs can control and share.">
-        Mishava helps organize evidence into clearer reports. You stay in
-        control of what is included, what is still missing, and when a report is
-        ready to share.
+      <PageHeader eyebrow="NGO packets and reports" title="Build a packet when your NGO is ready.">
+        Mishava helps organize proof into a clearer packet or report. A packet
+        can stay private. You choose what is included and what is safe to share.
       </PageHeader>
 
       <div className="notice">
-        Early NGO partners can use this flow to review report structure and give
-        feedback. Reports can be built when your information is ready.
+        Use a packet to review a case, prepare a complaint, show a pattern, or
+        share a public report later. Early NGO partners can use this flow to
+        review the structure and give feedback.
       </div>
 
       <section className="section">
-        <h2>Report templates</h2>
+        <h2>Packet and report types</h2>
         <div className="card-grid">
           {ngoReportTemplates.map((template) => (
             <div className="card" key={template}>
               <h3>{template}</h3>
               <p>
-                Reports can include approved evidence, photos, source notes,
-                manager approvals, export format, and viewer permissions.
+                Add reviewed proof, photos, source notes, and sharing choices.
+                Keep it private until your organization is ready.
               </p>
             </div>
           ))}
         </div>
       </section>
 
-      <EmptyState title="No approved report data yet">
-        Report output will remain empty until an NGO adds real evidence and a
-        manager approves the report contents.
+      <EmptyState title="No packet data yet">
+        Packets stay empty until your NGO adds real proof and chooses what is
+        ready to review.
       </EmptyState>
 
       <section className="section">

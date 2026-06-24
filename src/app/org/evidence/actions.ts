@@ -18,6 +18,30 @@ import { createStructuredClaimDraft } from "@/lib/ngo-evidence-reports";
 import { createEvidenceRecord } from "@/lib/release-2-5-workflows";
 import { createSupabaseAuthenticatedServerClient } from "@/lib/supabase/server";
 
+function optionalField(formData: FormData, name: string) {
+  const value = String(formData.get(name) ?? "").trim();
+  return value.length > 0 ? value : "Not sure";
+}
+
+function buildEvidenceNotes(formData: FormData) {
+  const notes = String(formData.get("notes") ?? "").trim();
+  const safetyNotes = [
+    `Issue: ${optionalField(formData, "workerIssueCategory")}`,
+    `Work type: ${optionalField(formData, "workerIndustryTag")}`,
+    `Who was involved: ${optionalField(formData, "actorType")}`,
+    `Employer or worksite: ${optionalField(formData, "worksiteOrEmployer")}`,
+    `Can this be shared outside the NGO: ${optionalField(formData, "shareOutsideNgo")}`,
+    `Retaliation concern: ${optionalField(formData, "retaliationConcern")}`,
+    `Worker name should stay private: ${optionalField(formData, "workerNamePrivate")}`,
+    `Immigration-related threat or fear: ${optionalField(formData, "immigrationConcern")}`,
+    `Safe contact method: ${optionalField(formData, "safeContactMethod")}`,
+  ].join("\n");
+
+  return [notes, "Worker-rights safety notes:", safetyNotes]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
 export async function createEvidenceAction(formData: FormData) {
   const { session, organizationId } = await requireCurrentOrganizationMembership();
   if (!canManageNgoEvidence(session, organizationId)) {
@@ -63,7 +87,7 @@ export async function createEvidenceAction(formData: FormData) {
       sourceName: String(formData.get("sourceName") ?? ""),
       sourceType: String(formData.get("sourceType") ?? ""),
       url: String(formData.get("url") ?? ""),
-      notes: String(formData.get("notes") ?? ""),
+      notes: buildEvidenceNotes(formData),
       visibility:
         formData.get("visibility") === "public_summary"
           ? "public_summary"

@@ -205,8 +205,8 @@ export default async function OrgReportDetailPage({
           <p>
             This report is based on selected evidence and may not represent a
             complete record. Evidence coverage and recency limits may apply. Raw
-            evidence files are not included unless explicitly shared in a future
-            approved workflow. Mishava does not guarantee outcomes or provide
+            evidence files are not included unless explicitly shared with a
+            future approved choice. Mishava does not guarantee outcomes or provide
             legal, financial, or procurement advice. Mishava also does not
             guarantee funding, donations, ratings, certifications, procurement
             decisions, or other outcomes from this draft report.

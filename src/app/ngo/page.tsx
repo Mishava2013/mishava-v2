@@ -55,10 +55,11 @@ export default function NgoPage() {
     <>
       <PageHeader
         eyebrow="NGO"
-        title="Start an NGO profile, then build clearer funder reports."
+        title="Keep NGO proof organized, private, and ready."
       >
-        Create your account, add your NGO name, and keep important proof in one
-        private place.
+        Mishava helps your organization keep proof in one private place. This
+        can include unpaid wages, unsafe work, retaliation, harassment,
+        discrimination, or other harm.
       </PageHeader>
 
       <section className="ngo-public-hero">
@@ -71,8 +72,8 @@ export default function NgoPage() {
           </Link>
         </div>
         <p className="ngo-trust-line">
-          Reports stay private until shared. Payment never changes trust
-          outcomes.
+          You choose what stays private and what can be shared later. A plan
+          never changes trust outcomes.
         </p>
       </section>
 
@@ -89,10 +90,10 @@ export default function NgoPage() {
       </section>
 
       <section className="section">
-        <h2>Why NGOs need this</h2>
+        <h2>Why worker-rights groups and NGOs need this</h2>
         <p className="section-intro">
-          Mishava helps your team stop digging through folders and emails when
-          someone asks for proof.
+          Start with one case, one worksite, or one issue. Add proof now and
+          build a private packet or report later.
         </p>
         <div className="card-grid ngo-value-grid">
           {valueCards.map((card) => (
@@ -105,27 +106,27 @@ export default function NgoPage() {
       </section>
 
       <section className="section ngo-guardrails">
-        <h2>Built for trust without overclaiming</h2>
+        <h2>Built for careful evidence</h2>
         <div className="card-grid">
           <div className="card">
-            <h3>Evidence-based, not absolute</h3>
+            <h3>Private first</h3>
             <p>
-              Reports can explain what is supported, incomplete, provisional, or
-              still waiting for review.
+              Worker names, files, and notes stay private unless your
+              organization chooses to share them.
             </p>
           </div>
           <div className="card">
-            <h3>Payment buys tools, not credibility</h3>
+            <h3>Missing proof is okay</h3>
             <p>
-              Plan tier can unlock capacity and workflows. It does not change
-              trust outcomes, rankings, verification, or evidence truth.
+              You can start with what you have. Add more proof later when it is
+              safe or available.
             </p>
           </div>
           <div className="card">
-            <h3>Human review stays central</h3>
+            <h3>Review before sharing</h3>
             <p>
-              AI assistance can help draft or organize where available, but it
-              does not replace human review or create final trust outcomes.
+              A person reviews what is known, what is missing, and what is safe
+              to share.
             </p>
           </div>
         </div>
@@ -145,7 +146,6 @@ export default function NgoPage() {
                 <th>Tier</th>
                 <th>Best fit</th>
                 <th>Price</th>
-                <th>AI access</th>
                 <th>Evidence</th>
                 <th>Reports</th>
               </tr>
@@ -156,7 +156,6 @@ export default function NgoPage() {
                   <td>{tier.name}</td>
                   <td>{planGuidance[tier.code]}</td>
                   <td>{tier.price}</td>
-                  <td>{tier.aiAccess}</td>
                   <td>{tier.evidenceLimit}</td>
                   <td>{tier.reportAccess}</td>
                 </tr>
@@ -165,8 +164,8 @@ export default function NgoPage() {
           </table>
         </div>
         <p className="ngo-pricing-note">
-          Payment unlocks tools, capacity, setup services, and reporting
-          workflows. It does not buy a better trust outcome.
+          Plans unlock tools, capacity, setup support, and reporting. They do
+          not buy a better trust outcome.
         </p>
       </section>
 

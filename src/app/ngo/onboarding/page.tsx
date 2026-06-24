@@ -4,7 +4,11 @@ import { PageHeader } from "@/components/PageHeader";
 import { SignInModalButton } from "@/components/SignInModal";
 import { WorkflowList } from "@/components/WorkflowList";
 import { getCurrentSession } from "@/lib/auth-server";
-import { evidenceIntakeTypes, ngoOnboardingSteps } from "@/lib/ngo";
+import {
+  evidenceIntakeTypes,
+  ngoOnboardingSteps,
+  workerRightsIssueCategories,
+} from "@/lib/ngo";
 import { createNgoOnboardingAction } from "./actions";
 
 export default async function NgoOnboardingPage({
@@ -19,7 +23,7 @@ export default async function NgoOnboardingPage({
     <>
       <PageHeader eyebrow="NGO setup" title="Create your NGO profile.">
         Create your free account first. Then add your NGO name and basic
-        details.
+        details. You can start with one case, one worksite, or one issue.
       </PageHeader>
 
       {params.error ? (
@@ -70,11 +74,11 @@ export default async function NgoOnboardingPage({
               </div>
               <div className="simple-list-item">
                 <strong>3. Upload or list evidence later.</strong>
-                <p>Reports and evidence stay private unless your organization shares them.</p>
+                <p>Proof can stay private until your organization is ready.</p>
               </div>
               <div className="simple-list-item">
-                <strong>4. Build a report when ready.</strong>
-                <p>Use reviewed information to prepare clearer reports later.</p>
+                <strong>4. Build a packet or report when ready.</strong>
+                <p>Use reviewed proof to prepare a private packet or report later.</p>
               </div>
             </div>
           </section>
@@ -120,6 +124,7 @@ export default async function NgoOnboardingPage({
                   <option value="" disabled>
                     Select a mission area
                   </option>
+                  <option>Worker rights</option>
                   <option>Food security</option>
                   <option>Education</option>
                   <option>Community support</option>
@@ -169,15 +174,34 @@ export default async function NgoOnboardingPage({
 
           <section className="section">
             <h2>What you can add later</h2>
+            <p className="section-intro">
+              It is okay if you do not have every item. Add what you have. You
+              can add more later.
+            </p>
             <div className="card-grid">
               {evidenceIntakeTypes.map((type) => (
                 <div className="card" key={type}>
                   <h3>{type}</h3>
                   <p>
-                    These records need a source, a review state, and clear
-                    privacy settings before they can support a shared report.
+                    Keep this private until your organization reviews what is
+                    safe to share.
                   </p>
                 </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="section">
+            <h2>Worker-rights issues you can track</h2>
+            <p className="section-intro">
+              Mishava can help your NGO organize proof about workplace harm.
+              Worker names can stay private.
+            </p>
+            <div className="tag-cloud" aria-label="Worker-rights issue examples">
+              {workerRightsIssueCategories.map((category) => (
+                <span className="tag" key={category}>
+                  {category}
+                </span>
               ))}
             </div>
           </section>

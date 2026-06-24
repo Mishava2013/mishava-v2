@@ -30,7 +30,7 @@ export const ngoTiers: Array<{
           : "included",
   evidenceLimit:
     plan.entitlements.evidenceItems === null
-      ? "Custom portfolio evidence workflows"
+      ? "Custom portfolio evidence support"
       : `${plan.entitlements.evidenceItems.toLocaleString()} active evidence items`,
   reportAccess:
     plan.entitlements.futureExports === "none"
@@ -44,41 +44,99 @@ export const ngoTiers: Array<{
 
 export const ngoOnboardingSteps = [
   {
-    title: "Organization identity",
-    body: "Capture legal name, public name, location, website, mission area, registration identifiers, and profile visibility.",
+    title: "NGO profile",
+    body: "Add your NGO name, country, mission area, and who can see the profile at first.",
   },
   {
-    title: "Evidence intake",
-    body: "Accept documents, photos, public links, attestations, and manual data entry with source type and visibility controls.",
+    title: "Add proof",
+    body: "Add files, photos, links, messages, notes, or other proof when your team is ready.",
   },
   {
-    title: "AI parse request",
-    body: "Run AI only when the plan or paid setup covers the cost, then convert extracted claims into manager-reviewable drafts.",
+    title: "Keep it private",
+    body: "Choose what stays inside your organization and what may be safe to share later.",
   },
   {
-    title: "Manager approval",
-    body: "Require approval before evidence, AI-drafted claims, reports, or shared views become final.",
+    title: "Review first",
+    body: "A person checks evidence before it supports a packet or report.",
   },
   {
-    title: "Scoped sharing",
-    body: "Let NGOs grant funders, donors, press reviewers, or partners limited access by report, date range, and visibility level.",
+    title: "Share only when ready",
+    body: "Share a private packet, pattern report, or public report only when your NGO chooses.",
   },
 ];
 
 export const ngoReportTemplates = [
-  "Public trust profile summary",
+  "Private case packet",
+  "Evidence packet",
+  "Pattern report",
   "Funder evidence packet",
-  "Program impact report",
-  "Donation transparency report",
-  "Photo-supported field report",
+  "Program report",
+  "Photo-supported report",
   "Custom report builder",
 ];
 
 export const evidenceIntakeTypes = [
-  "Registration or public record",
+  "Paystub or timecard",
+  "Work schedule",
+  "Text message or letter",
+  "Photo or worksite photo",
+  "Handwritten hours",
+  "Complaint form",
+  "Witness note",
+  "Injury record",
   "Program document",
-  "Photo evidence",
-  "Financial or donation summary",
-  "Partner or beneficiary reference",
-  "Published report or public link",
+  "Public link",
+];
+
+export const workerRightsIssueCategories = [
+  "Unpaid wages",
+  "Unpaid overtime",
+  "Missed breaks",
+  "Stolen tips",
+  "Unsafe work",
+  "Heat or weather danger",
+  "Injury at work",
+  "Retaliation",
+  "Threats",
+  "Harassment",
+  "Sexual harassment",
+  "Discrimination",
+  "Immigration-related threat",
+  "Labor contractor problem",
+  "Staffing agency problem",
+  "Housing tied to work",
+  "Transportation tied to work",
+  "Other workplace harm",
+];
+
+export const workerRightsIndustryTags = [
+  "Farm work",
+  "Restaurant",
+  "Retail",
+  "Day labor",
+  "Warehouse",
+  "Delivery",
+  "Garment",
+  "Car wash",
+  "Construction",
+  "Domestic work",
+  "Cleaning",
+  "Food processing",
+  "Other",
+];
+
+export const workerRightsActorTypes = [
+  "Worker",
+  "Employer",
+  "Boss or supervisor",
+  "Labor contractor",
+  "Staffing agency",
+  "Worksite",
+  "Brand or company connected to the work",
+  "Landlord or housing provider tied to work",
+  "Transportation provider tied to work",
+  "Witness",
+  "Government agency",
+  "Legal aid partner",
+  "Other",
 ];

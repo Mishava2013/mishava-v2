@@ -34,9 +34,9 @@ export default async function OrgReportsPage({
 
   return (
     <>
-      <PageHeader eyebrow="Reports" title="Build private NGO reports.">
-        Build a private report from evidence your organization chooses. Reports
-        stay private until you share them.
+      <PageHeader eyebrow="Packets and reports" title="Build private NGO packets.">
+        Build a private case packet, evidence packet, pattern report, or public
+        report later. Packets stay private until you choose to share them.
       </PageHeader>
 
       {params.created ? (
@@ -52,36 +52,36 @@ export default async function OrgReportsPage({
       ) : null}
 
       <section className="section">
-        <h2>Create draft report</h2>
+        <h2>Create draft packet</h2>
         <p className="section-intro">
-          Reports are private by default. Choose the evidence and reviewed facts
+          Packets are private by default. Choose the proof and reviewed facts
           you want to include. Mishava does not invent a score when scoring is
           incomplete.
         </p>
 
         {!canManageReports ? (
-          <EmptyState title="Report editing requires member access">
-            Your role can view allowed report drafts, but cannot create or edit
-            NGO reports.
+          <EmptyState title="Packet editing requires member access">
+            Your role can view allowed draft packets, but cannot create or edit
+            NGO packets.
           </EmptyState>
         ) : workspace.templates.length === 0 || workspace.evidence.length === 0 ? (
           <EmptyState title="Evidence and templates are required">
-            Add evidence first. A report template must also be available before
-            you can create a report.
+            Add evidence first. A packet template must also be available before
+            you can create a packet.
           </EmptyState>
         ) : (
           <form action={createNgoReportDraftAction} className="form-grid">
             <div className="field">
-              <label htmlFor="title">Report title</label>
+              <label htmlFor="title">Packet title</label>
               <input
                 id="title"
                 name="title"
-                placeholder="Spring donor transparency packet"
+                placeholder="Private case packet or pattern report"
                 required
               />
             </div>
             <div className="field">
-              <label htmlFor="templateId">Report template</label>
+              <label htmlFor="templateId">Packet template</label>
               <select id="templateId" name="templateId" required>
                 {workspace.templates.map((template) => (
                   <option key={template.id} value={template.id}>
@@ -150,7 +150,7 @@ export default async function OrgReportsPage({
 
             <div className="field full">
               <button className="button primary" type="submit">
-                Save private draft report
+                Save private draft packet
               </button>
             </div>
           </form>
@@ -158,11 +158,11 @@ export default async function OrgReportsPage({
       </section>
 
       <section className="section">
-        <h2>Draft reports</h2>
+        <h2>Draft packets</h2>
         {workspace.reports.length === 0 ? (
-          <EmptyState title="No report drafts yet">
-            Report drafts will appear here after you choose evidence and save a
-            report.
+          <EmptyState title="No draft packets yet">
+            Draft packets will appear here after you choose proof and save a
+            packet.
           </EmptyState>
         ) : (
           <div className="evidence-library">
